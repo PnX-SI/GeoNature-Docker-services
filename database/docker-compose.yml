@@ -1,0 +1,21 @@
+services:
+  postgres:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file:
+      - .env.local
+    volumes:
+      - "postgres-data:/var/lib/postgresql/data"
+      - "raw-data:/tmp/"
+    networks:
+      - databases
+
+networks:
+  databases:
+    external: true
+
+volumes:
+  postgres-data:
+  raw-data:
+    external: true
