@@ -1,4 +1,4 @@
-#Infrastructre du projet 
+# Infrastructre du projet 
 
 L'idée de ce repository est de mettre à disposition une infrastructure du projet GeoNature. Il met en place un service 
 de base de données (POSTGIS) ainsi qu'un reverse proxy (Traefik). Pour utiliser ce repository, il vous suffit de le 
@@ -12,7 +12,7 @@ docker network create web
 docker volume create raw-data
 ```
 
-##Base de données
+## Base de données
 
 Le service de base de données mis en place repose sur l'image [mdillon](https://hub.docker.com/r/mdillon/postgis/) 
 reposant elle-même sur l'image officielle postgres.
@@ -23,7 +23,7 @@ docker-compose -p database -f docker-compose.yml up --build
 ```
 
 
-##Reverse proxy 
+## Reverse proxy 
 Le projet vient avec un traefik permettant de rediriger les requêtes vers les containers appropriés, notamment pour les
 services usershub et taxhub.
 
