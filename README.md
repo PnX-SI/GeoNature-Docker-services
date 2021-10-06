@@ -18,7 +18,7 @@ Le service de base de données mis en place repose sur l'image [mdillon](https:/
 reposant elle-même sur l'image officielle postgres.
 Pour lancer la base de données:
 ```bash
-cd infra/database
+cd infra-as-code/database
 docker-compose -p database -f docker-compose.yml up --build
 ```
 
@@ -28,7 +28,7 @@ Le projet vient avec un traefik permettant de rediriger les requêtes vers les c
 services usershub et taxhub.
 
 ```bash
-cd infra/gateway
+cd infra-as-code/gateway
 docker-compose -p gateway -f docker-compose.yml up --build
 ```
 
