@@ -2,7 +2,7 @@
 
 L'idée de ce repository est de mettre à disposition une infrastructure du projet GeoNature. Il met en place un service 
 de base de données (POSTGIS) ainsi qu'un reverse proxy (Traefik). Pour utiliser ce repository, il vous suffit de le 
-cloner `git clone http://ic-prod1.patnat.mnhn.fr:8083/gitlab/geonature/infra-as-code.git` et de suivre les étapes 
+cloner `git clone http://outils-patrinat.mnhn.fr/gitlab/geonature/infra-as-code.git` et de suivre les étapes 
 décrites ci-après.
 
 Le projet nécessite la mise en place de volumes et de networks docker. Pour les initialiser:
