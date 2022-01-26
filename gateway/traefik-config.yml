@@ -1,0 +1,29 @@
+# General configuration
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+serversTransport:
+  insecureSkipVerify: false
+  maxIdleConnsPerHost: 10 # maximum idle (keep-alive) connections to keep per-host
+  forwardingTimeouts:
+    dialTimeout: 30s # maximum duration allowed for a connection to a backend server to be established
+    idleConnTimeout: 60s # maximum amount of time an idle (keep-alive) connection will remain idle before closing itself
+providers:
+  docker: # Enable docker swarm label discovering
+    watch: true
+    swarmMode: false
+    exposedByDefault: false
+    network: "web"
+    endpoint: "unix:///var/run/docker.sock"
+    swarmModeRefreshSeconds: 10s
+entryPoints:
+  web:
+    address: ":80"
+  web-secure:
+    address: ":443"
+
+# Traefik API and dashboard exposed at :8080/dashboard
+api:
+  dashboard: true
+  insecure: true
+  debug: false
