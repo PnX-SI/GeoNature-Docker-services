@@ -17,12 +17,12 @@ Le service de base de données mis en place repose sur l'image [postgis](https:/
 reposant elle-même sur l'image officielle postgres.
 Pour lancer la base de données en local:
 ```bash
-cd infra-as-code/database
+cd database
 docker-compose --env-file .env.local -p database -f docker-compose.local.yml up --build
 ```
 Pour lancer la base de données en production:
 ```bash
-cd infra-as-code/database
+cd database
 docker-compose --env-file .env -p database -f docker-compose.yml up --build
 ```
 Le fichier .env devra entre autres contqenir le nom de la base de données, l'utilisateur ainsi que son mot de passe. 
@@ -32,14 +32,14 @@ services usershub et taxhub.
 
 Pour lancer le reverse proxy en local:
 ```bash
-cd infra-as-code/gateway
+cd gateway
 docker-compose -p gateway -f docker-compose.local.yml up --build
 ```
 
 
 Pour lancer le reverse proxy en production:
 ```bash
-cd infra-as-code/gateway
+cd gateway
 docker-compose -p gateway -f docker-compose.local.yml up --build
 ```
 
