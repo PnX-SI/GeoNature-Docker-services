@@ -3,6 +3,7 @@ version: "3.7"
 services:
 
   traefik:
+    restart: unless-stopped
     image: traefik:2.1.1
     command:
      - "--configFile=/etc/traefik/traefik.yml"
