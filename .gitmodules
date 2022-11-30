@@ -1,0 +1,12 @@
+[submodule "GeoNature"]
+	path = GeoNature
+	url = https://github.com/PnX-SI/GeoNature.git
+	branch = feat/docker-action
+[submodule "TaxHub"]
+	path = TaxHub
+	url = https://github.com/PnX-SI/TaxHub.git
+	branch = develop
+[submodule "UsersHub"]
+	path = UsersHub
+	url = https://github.com/PnX-SI/UsersHub.git
+	branch = develop
