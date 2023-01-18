@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:13-3.2}
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+
+  usershub:
+    depends_on:
+      - postgres
+
+  taxhub:
+    depends_on:
+      - postgres
+
+  geonature-worker:
+    depends_on:
+      - postgres
+
+  geonature-backend:
+    depends_on:
+      - postgres
+
+volumes:
+  postgres:

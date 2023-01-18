@@ -1,0 +1,13 @@
+services:
+  usershub:
+    extra_hosts:
+      - "postgres:host-gateway"
+  taxhub:
+    extra_hosts:
+      - "postgres:host-gateway"
+  geonature-backend:
+    extra_hosts:
+      - "postgres:host-gateway"
+  geonature-worker:
+    extra_hosts:
+      - "postgres:host-gateway"

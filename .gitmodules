@@ -10,3 +10,9 @@
 	path = UsersHub
 	url = https://github.com/PnX-SI/UsersHub.git
 	branch = develop
+[submodule "gn_module_export"]
+	path = gn_module_export
+	url = https://github.com/PnX-SI/gn_module_export.git
+[submodule "gn_module_import"]
+	path = gn_module_import
+	url = https://github.com/PnX-SI/gn_module_import.git

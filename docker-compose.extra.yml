@@ -1,0 +1,16 @@
+services:
+  geonature-worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-geonature-backend
+      target: prod-extra
+  geonature-backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-geonature-backend
+      target: prod-extra
+  geonature-frontend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-geonature-frontend
+      target: prod-extra
