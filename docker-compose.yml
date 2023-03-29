@@ -50,6 +50,7 @@ services:
     depends_on:
       - redis
     volumes:
+      - ./media/:/dist/media/
       - ./config/geonature/:/dist/config/
     user: ${UID:-1000}:${GID:-1000}
     env_file:
@@ -67,6 +68,7 @@ services:
       target: prod-full
     environment:
       - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX:-/}
+      - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX:-/}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX:-/}`)"
