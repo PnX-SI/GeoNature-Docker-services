@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  traefik:
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      # - ${TRAEFIK_PORT:-8888}:80
+      - ${TRAEFIK_DASHBOARD_PORT:-8889}:8080
+
