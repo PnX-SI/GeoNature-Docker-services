@@ -11,3 +11,6 @@ services:
       # - ${TRAEFIK_PORT:-8888}:80
       - ${TRAEFIK_DASHBOARD_PORT:-8889}:8080
 
+  postgres:
+    ports:
+      - 5432:5432
