@@ -1,0 +1,35 @@
+#############################################
+# GeoNature backend global configuration file
+#############################################
+
+# Remplacer par une clé alétoire complexe
+SECRET_KEY = 'fiezbhefzbihrzfbfziboazj2222'
+
+# Langue principale par défaut
+DEFAULT_LANGUAGE='fr'
+
+#######################################################################################
+###### Si vous souhaitez surcoucher certains paramètres,
+###### compléter les sections ci-dessous à partir du modèle default_config.toml.example
+#######################################################################################
+
+# Configuration liée à la page d’accueil
+[HOME]
+TITLE = "Bienvenue dans GeoNature"
+INTRODUCTION = "Texte d'introduction, configurable pour le modifier régulièrement ou le masquer"
+FOOTER = ""
+
+# Configuration liée aux ID de BDD
+[BDD]
+
+# Configuration générale du frontend
+[FRONTEND]
+
+# Configuration de la Synthese
+[SYNTHESE]
+
+# Configuration cartographique
+[MAPCONFIG]
+
+# Configuration médias
+[MEDIAS]
