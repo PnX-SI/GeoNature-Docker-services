@@ -1,7 +1,3 @@
 FROM ghcr.io/pnx-si/geonature-backend:develop
 
-ARG UID=1000
-ARG GID=1000
-
-
-COPY --chown=${UID}:${GID} db/startup.sh /dist/geonature/.
+COPY --chmod=755 db/startup.sh /dist/geonature/.
