@@ -5,7 +5,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *geonature-defaults
   environment:
     - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-    - GEONATURE_URL_APPLICATION="${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOST}${GEONATURE_FRONTEND_PREFIX:-/}"
+    - GEONATURE_URL_APPLICATION="${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOST}${GEONATURE_FRONTEND_PREFIX}"
     - GEONATURE_API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX:-/}"
     - GEONATURE_API_TAXHUB="${TAXHUB_PROTOCOL}://${TAXHUB_HOST}${TAXHUB_API_PREFIX}"
     - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
@@ -19,7 +19,11 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - install_grid_layer=${GEONATURE_INSTALL_GRID_LAYER:-false}
     - install_ref_sensitivity=${GEONATURE_INSTALL_REF_SENSITIVITY:-false}
     - install_default_dem=${GEONATURE_INSTALL_DEFAULT_DEM:-false}
-    - vectorise_dem=${GEONATURE_VECTORISE_DEM:-false}
+    - vectorise_dem=${GEONATURE_INSTALL_VECTORISE_DEM:-false}
+    - usershub=${GEONATURE_INSTALL_USERSHUB:-true}
+    - usershub_samples=${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
+    - taxhub=${GEONATURE_INSTALL_TAXHUB:-true}
+    - taxhub_samples=${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
 
 services:
   redis:
@@ -46,11 +50,15 @@ services:
     environment:
       - USERSHUB_URL_APPLICATION="${USERSHUB_PROTOCOL:-http}://${USERSHUB_HOST}${USERSHUB_PREFIX:-/}"
       - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-config.py}
+      - USERSHUB_SECRET_KEY=${USERSHUB_SECRET_KEY:-ABCDEFGH123}
+      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
+      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
+      - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
+      - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
       - PYTHONPATH=/dist/config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX:-/}`)"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_DOMAIN}`) && PathPrefix(`${USERSHUB_PREFIX:-/}`)"
       - "traefik.http.routers.usershub.entrypoints=web"
 
   taxhub:
@@ -67,7 +75,7 @@ services:
       - PYTHONPATH=/dist/config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX:-/}`)"
+      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_DOMAIN}`) && PathPrefix(`${TAXHUB_PREFIX:-/}`)"
       - "traefik.http.routers.taxhub.entrypoints=web"
 
   geonature-worker:
@@ -90,7 +98,7 @@ services:
       - ./config/geonature/:/dist/config/
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=PathPrefix(`${GEONATURE_BACKEND_PREFIX:-/}`)"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX:-/}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=web"
     command:
       - ./startup.sh
@@ -107,7 +115,7 @@ services:
       - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature.rule=PathPrefix(`${GEONATURE_FRONTEND_PREFIX:-/}`)"
+      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX:-/}`)"
       - "traefik.http.routers.geonature.entrypoints=web"
 
   traefik:

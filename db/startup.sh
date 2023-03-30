@@ -59,6 +59,25 @@ then
     fi
 fi
 
+if [ "$usershub" = true ];
+then
+    geonature db upgrade usershub@head
+    if [ "$usershub_samples" = true ];
+    then
+        geonature db upgrade usershub-samples@head
+    fi
+fi
+
+if [ "$taxhub" = true ];
+then
+    geonature db upgrade taxhub@head
+    if [ "$taxhub_samples" = true ];
+    then
+        geonature db upgrade taxhub-admin@head
+    fi
+fi
+ 
 geonature db autoupgrade -x local-srid=$srid_local
+geonature upgrade-modules-db
 
 exec "$@"
