@@ -1,36 +1,18 @@
 # syntax=docker/dockerfile:1.2
 
-FROM ghcr.io/pnx-si/geonature-frontend:develop-source AS source-extra
+FROM ghcr.io/pnx-si/geonature-frontend:develop
 
-WORKDIR /build/external_modules/import
-COPY ./gn_module_import/frontend/ .
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev --omit=peer
-
-WORKDIR /build/external_modules/exports
-COPY ./gn_module_export/frontend/ .
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev --omit=peer
-
-WORKDIR /build/src/conf/
-COPY ./GeoNature/frontend/src/conf/app.config.ts .
-
-WORKDIR /build/external_modules/occtax/app/
-COPY ./GeoNature/contrib/occtax/frontend/app/module.config.ts .
-
-WORKDIR /build/external_modules/gn_module_occhab/app/
-COPY ./GeoNature/contrib/gn_module_occhab/frontend/app/module.config.ts .
-
-WORKDIR /build/external_modules/gn_module_validation/app/
-COPY ./GeoNature/contrib/gn_module_validation/frontend/app/module.config.ts .
-
-
-FROM source-extra AS build-extra
-
-WORKDIR /build/
-RUN npm run build
-
-
-FROM ghcr.io/pnx-si/geonature-frontend:develop-nginx AS prod-extra
-
-COPY --from=build-extra /build/dist /usr/share/nginx/html
+RUN echo -e '\
+    server { \n\
+    listen 80; \n\
+    location / { \n\
+    root /usr/share/nginx/html; \n\
+    index index.html index.htm; \n\
+    try_files $uri $uri/ /index.html; \n\
+    } \n\
+    error_page 500 502 503 504 /50x.html; \n\
+    location = /50x.html { \n\
+    root /usr/share/nginx/html; \n\
+    } \n\
+    } \n\
+    ' > /etc/nginx/templates/default.conf.template
