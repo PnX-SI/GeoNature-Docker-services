@@ -16,3 +16,6 @@
 [submodule "gn_module_import"]
 	path = gn_module_import
 	url = https://github.com/PnX-SI/gn_module_import.git
+[submodule "gn_module_dashboard"]
+	path = gn_module_dashboard
+	url = https://github.com/PnX-SI/gn_module_dashboard.git

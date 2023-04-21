@@ -97,6 +97,7 @@ services:
       - redis
       - postgres
     volumes:
+      - ./media/:/dist/media/
       - ./config/geonature/:/dist/config/
     labels:
       - "traefik.enable=true"
@@ -114,7 +115,7 @@ services:
     image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend:latest}
     environment:
       - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX:-/}
-      - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX}"
+      - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX:-/}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX:-/}`)"
