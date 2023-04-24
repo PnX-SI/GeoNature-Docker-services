@@ -19,3 +19,6 @@
 [submodule "gn_module_dashboard"]
 	path = gn_module_dashboard
 	url = https://github.com/PnX-SI/gn_module_dashboard.git
+[submodule "gn_module_monitoring"]
+	path = gn_module_monitoring
+	url = https://github.com/PnX-SI/gn_module_monitoring

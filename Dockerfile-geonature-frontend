@@ -19,13 +19,15 @@ COPY ./gn_module_dashboard/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 
-
+WORKDIR /build/external_modules/monitorings
+COPY ./gn_module_monitoring/frontend/ .
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --omit=peer
 
 FROM source-extra AS build-extra
 
 WORKDIR /build/
 RUN npm run build
-
 
 FROM ghcr.io/pnx-si/geonature-frontend:develop-nginx AS prod-extra
 RUN echo -e '\
@@ -43,5 +45,4 @@ RUN echo -e '\
     } \n\
     ' > /etc/nginx/templates/default.conf.template
 
-
-#COPY --from=build-extra /build/dist /usr/share/nginx/html
+COPY --from=build-extra /build/dist /usr/share/nginx/html

@@ -23,6 +23,10 @@ WORKDIR /build/
 COPY /gn_module_dashboard .
 RUN python setup.py bdist_wheel
 
+FROM build AS build-monitoring
+WORKDIR /build/
+COPY /gn_module_monitoring .
+RUN python setup.py bdist_wheel
 
 FROM ghcr.io/pnx-si/geonature-backend:develop-wheels AS prod-extra
 
@@ -33,6 +37,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
 COPY --from=build-import /build/dist/*.whl .
 COPY --from=build-export /build/dist/*.whl .
 COPY --from=build-dashboard /build/dist/*.whl .
+COPY --from=build-monitoring /build/dist/*.whl .
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
 RUN rm -f *.whl
