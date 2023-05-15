@@ -33,7 +33,3 @@ FOOTER = ""
 
 # Configuration médias
 [MEDIAS]
-
-[CELERY]
-  broker_url="redis://redis"
-  result_backend="redis://redis"

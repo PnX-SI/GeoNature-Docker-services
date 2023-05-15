@@ -14,6 +14,8 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - GEONATURE_STATIC_FOLDER=${GEONATURE_STATIC_FOLDER:-/dist/static}
     - GEONATURE_CUSTOM_STATIC_FOLDER=${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
     - GEONATURE_MEDIA_FOLDER=${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
+    - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
     - srid_local=${GEONATURE_SRID_LOCAL-2154}
     - add_sample_data=${GEONATURE_ADD_SAMPLE_DATA:-false}
     - install_bdc_statuts=${GEONATURE_INSTALL_BDC_STATUTS:-true}
