@@ -30,23 +30,34 @@ Dockerisation de geonature et d'application associées
     https://github.com/PnX-SI/TaxHub/blob/master/.github/workflows/docker.yml
 
 
+## Configuration
 
-## Commandes
+- .env.prod
+    - utilise les images docker des application taggées en `:latest`
+        - `ghcr.io/pnx-si/geonature-backend:latest`
+        - `ghcr.io/pnx-si/usershub-backend:latest`
+        - `ghcr.io/pnx-si/taxhub-backend:latest`
+    - protocole `HTTPS`
+    - ports `80/443`
+
+- env.dev
+    - utilise les images docker des application taggées en `:develop`
+    - protocole `HTPP`
+    - url des applications suffixées par `:<PORT>` (par exemple `localhost:8000` pour le service `geonature-backend`)
+    - ports `8081/8183`
+
+- env.current
+    - similaire à env.dev
+    - on build les images pour GeoNature (`FRONTEND` et `BACKEND`) (voir [build_geonature_all.sh](./build/build_geonature_all.sh)
+      - à partir du code des sous-modules github
+      - pour GeoNature seul
+      - pour GeoNature avec les 4 modules principaux (`IMPORT`, `EXPORT`, `DASHBOARD`, `MONITORING`)
+    - pour `UH` et `TH` on utilise (`:latest`)
+      - TODO builder les applis à partir du code des sous-modules github
+    - permet de pouvoir builder des images aux versions souhaitées (pour GeoNature et les modules) sans dépendre des versions releasées.
 
 
-- Pour pouvoir tester GeoNature avec les 4 modules
-
-```
-cp .env.dev .env
-source .env
-
-# Idéalement ces images seraient publié sur le dépot de geonature
-docker build -f Dockerfile-geonature-frontend -t ${GEONATURE_FRONTEND_IMAGE} .
-docker build -f Dockerfile-geonature-backend -t ${GEONATURE_BACKEND_IMAGE} .
-
-docker-compose up
-```
-
+## Schema des services
 
 ```
 SERVICE              PORTS
