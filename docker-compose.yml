@@ -2,7 +2,7 @@ version: "3.9"
 
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
-  
+
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
   environment:
@@ -17,6 +17,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
     - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
     - srid_local=${GEONATURE_SRID_LOCAL-2154}
+    - GEONATURE_POPULATE_DB=${GEONATURE_POPULATE_DB:-true}
     - add_sample_data=${GEONATURE_ADD_SAMPLE_DATA:-false}
     - install_bdc_statuts=${GEONATURE_INSTALL_BDC_STATUTS:-true}
     - install_sig_layers=${GEONATURE_INSTALL_SIG_LAYERS:-false}
@@ -34,7 +35,7 @@ services:
     image: ${REDIS_IMAGE:-redis:7-alpine}
     volumes:
       - redis:/data
-  
+
   postgres:
     image: ${POSTGRES_IMAGE:-postgis/postgis:13-3.2}
     environment:
@@ -42,7 +43,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - ./db:/docker-entrypoint-initdb.d/
+      - ${POSTGRES_INIT_DB_DIR-./GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
   usershub:
     <<: *defaults
@@ -105,14 +106,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX:-/}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=web"
-    command:
-      - ./startup.sh
-      - gunicorn
-      - geonature:create_app() 
-      - --name=geonature 
-      - --workers=2 
-      - --threads=2 
-      - --bind=0.0.0.0:8000
   geonature-frontend:
     image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend:latest}
     environment:
