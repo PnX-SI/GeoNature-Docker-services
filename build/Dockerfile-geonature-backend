@@ -1,4 +1,5 @@
-# FROM ghcr.io/pnx-si/geonature-backend:develop
+ARG GEONATURE_BACKEND_IMAGE
+
 FROM python:3.9-bullseye AS build
 
 ENV PIP_ROOT_USER_ACTION=ignore
@@ -11,12 +12,10 @@ WORKDIR /build/
 COPY /gn_module_import .
 RUN python setup.py bdist_wheel
 
-
 FROM build AS build-export
 WORKDIR /build/
 COPY /gn_module_export .
 RUN python setup.py bdist_wheel
-
 
 FROM build AS build-dashboard
 WORKDIR /build/
@@ -28,7 +27,7 @@ WORKDIR /build/
 COPY /gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
-FROM ghcr.io/pnx-si/geonature-backend:develop-wheels AS prod-extra
+FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
 
 WORKDIR /dist/geonature
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -41,5 +40,3 @@ COPY --from=build-monitoring /build/dist/*.whl .
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
 RUN rm -f *.whl
-
-COPY --chmod=755 db/startup.sh .
