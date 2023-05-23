@@ -11,6 +11,10 @@ source .env
 # GN FRONTEND SOURCE
 docker build -f GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-source --target=source GeoNature/
 
+# GN FRONTEND NGINX
+docker build -f GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-nginx --target=prod-base GeoNature/
+
+
 # GN BACKEND WHEELS
 docker build -f GeoNature/backend/Dockerfile -t ${GEONATURE_BACKEND_CURRENT_IMAGE}-wheels --target=wheels GeoNature/
 

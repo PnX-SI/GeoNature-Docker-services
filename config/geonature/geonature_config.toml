@@ -13,7 +13,7 @@ DEFAULT_LANGUAGE='fr'
 ###### compléter les sections ci-dessous à partir du modèle default_config.toml.example
 #######################################################################################
 
-# Configuration liée à la page d’accueil
+# Configuration liée à la page d’accuei
 [HOME]
 TITLE = "Bienvenue dans GeoNature"
 INTRODUCTION = "Texte d'introduction, configurable pour le modifier régulièrement ou le masquer"
