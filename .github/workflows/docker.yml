@@ -46,7 +46,7 @@ jobs:
         with:
           context: ./GeoNature
           file: ./GeoNature/backend/Dockerfile
-          tags: "${{env.GN_BACKEND_TAG}}"
+          tags: "${{env.GN_BACKEND_TAGS}}"
           push: true
           target: prod
 
@@ -55,7 +55,7 @@ jobs:
         with:
           context: ./GeoNature
           file: ./GeoNature/backend/Dockerfile
-          tags: "${{env.GN_BACKEND_TAG}}-wheels"
+          tags: "${{env.GN_BACKEND_TAGS}}-wheels"
           push: true
           target: wheels
 
@@ -64,13 +64,13 @@ jobs:
         with:
           context: .
           file: ./build/Dockerfile-geonature-backend
-          tags: "${{env.GN_BACKEND_4M_TAG}}"
+          tags: "${{env.GN_BACKEND_4M_TAGS}}"
           labels: |
             org.opencontainers.image.title=Application GeoNature + 4 modules principaux
             org.opencontainers.image.description=${{env.GN_4M_DESCRIPTION}}
             ${{env.GN_LABELS}}
           push: true
-          build-args: GEONATURE_BACKEND_IMAGE=${{env.GN_BACKEND_TAG}}
+          build-args: GEONATURE_BACKEND_IMAGE=${{env.GN_BACKEND_IMAGE}}
 
 
   frontend:
@@ -110,7 +110,7 @@ jobs:
           context: ./GeoNature
           file: ./GeoNature/frontend/Dockerfile
           target: source
-          tags: "${{env.GN_FRONTEND_TAG}}-source"
+          tags: "${{env.GN_FRONTEND_TAGS}}-source"
           push: true
 
       - name: Build and export frontend nginx
@@ -119,7 +119,7 @@ jobs:
           context: ./GeoNature
           file: ./GeoNature/frontend/Dockerfile
           target: prod-base
-          tags: "${{env.GN_FRONTEND_TAG}}-nginx"
+          tags: "${{env.GN_FRONTEND_TAGS}}-nginx"
           push: true
 
       - name: Build and export frontend app image
@@ -127,7 +127,7 @@ jobs:
         with:
           context: ./GeoNature
           file: ./GeoNature/frontend/Dockerfile
-          tags: "${{env.GN_FRONTEND_TAG}}"
+          tags: "${{env.GN_FRONTEND_TAGS}}"
           push: true
           target: prod
 
@@ -136,7 +136,7 @@ jobs:
         with:
           context: .
           file: ./build/Dockerfile-geonature-frontend
-          tags: "${{env.GN_FRONTEND_4M_TAG}}"
-          build-args: GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_TAG}}
+          tags: "${{env.GN_FRONTEND_4M_TAGS}}"
+          build-args: GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_IMAGE}}
           push: true
 
