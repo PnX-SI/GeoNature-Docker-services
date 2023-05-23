@@ -4,22 +4,22 @@ ARG GEONATURE_FRONTEND_IMAGE
 FROM ${GEONATURE_FRONTEND_IMAGE}-source AS source-extra
 
 WORKDIR /build/external_modules/import
-COPY ./gn_module_import/frontend/ .
+COPY ./sources/gn_module_import/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 
 WORKDIR /build/external_modules/exports
-COPY ./gn_module_export/frontend/ .
+COPY ./sources/gn_module_export/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 
 WORKDIR /build/external_modules/dashboard
-COPY ./gn_module_dashboard/frontend/ .
+COPY ./sources/gn_module_dashboard/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 
 WORKDIR /build/external_modules/monitorings
-COPY ./gn_module_monitoring/frontend/ .
+COPY ./sources/gn_module_monitoring/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 

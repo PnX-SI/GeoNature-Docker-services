@@ -1,24 +1,24 @@
 [submodule "GeoNature"]
-	path = GeoNature
+	path = sources/GeoNature
 	url = https://github.com/PnX-SI/GeoNature.git
 	branch = feat/docker-action
 [submodule "TaxHub"]
-	path = TaxHub
+	path = sources/TaxHub
 	url = https://github.com/PnX-SI/TaxHub.git
 	branch = develop
 [submodule "UsersHub"]
-	path = UsersHub
+	path = sources/UsersHub
 	url = https://github.com/PnX-SI/UsersHub.git
 	branch = develop
 [submodule "gn_module_export"]
-	path = gn_module_export
+	path = sources/gn_module_export
 	url = https://github.com/PnX-SI/gn_module_export.git
 [submodule "gn_module_import"]
-	path = gn_module_import
+	path = sources/gn_module_import
 	url = https://github.com/PnX-SI/gn_module_import.git
 [submodule "gn_module_dashboard"]
-	path = gn_module_dashboard
+	path = sources/gn_module_dashboard
 	url = https://github.com/PnX-SI/gn_module_dashboard.git
 [submodule "gn_module_monitoring"]
-	path = gn_module_monitoring
+	path = sources/gn_module_monitoring
 	url = https://github.com/PnX-SI/gn_module_monitoring

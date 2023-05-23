@@ -57,6 +57,30 @@ Dockerisation de geonature et d'application associées
     - permet de pouvoir builder des images aux versions souhaitées (pour GeoNature et les modules) sans dépendre des versions releasées.
 
 
+## Package et versionnement
+
+Une actions permet la publication d'image dockers sur les packages du dépôt.
+
+- **gds-geonature-4-modules-frontend:<VERSION>**
+- **gds-geonature-4-modules-backend:<VERSION>**
+- **gds-geonature-backend:<VERSION>**
+- **gds-geonature-backend:<VERSION>**
+
+La valeur de `VERSION` est calculée comme ceci:
+
+Si le build a été fait:
+- depuis une branche on lui donne le nom de la branche (du dépôt courrant), on aura alors
+   - `develop`: version en cours de développement
+   - `main`: correspond en gros à la dernière release
+
+- depuis un tag ou une release, on aura alors:
+  - `<VERSION du dépôt courrant>__<VERSION de GeoNature>`
+  - par exemple 
+    - `0.0.1__2.12.3`
+    - `0.0.2__2.12.3`
+    - `0.0.3__2.13.1`
+
+On suppose ici qu'une version ne va comporter que des états versionnées de GéoNature et de ses modules.
 ## Schema des services
 
 ```

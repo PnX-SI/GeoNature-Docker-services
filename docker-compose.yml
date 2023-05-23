@@ -44,7 +44,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ${POSTGRES_INIT_DB_DIR-./GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
-      - postgres:/var/lib/postgresql/data
+      - ${POSTGRES_DIRECTORY:-./app/postgres}:/var/lib/postgresql/data
   usershub:
     <<: *geonature-backend-defaults
     image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
@@ -57,7 +57,7 @@ services:
       - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       - USERSHUB_SECRET_KEY=${USERSHUB_SECRET_KEY:-ABCDEFGH123}
       - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
-      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
+      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-t  rue}
       - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
       - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
       - PYTHONPATH=/dist/config

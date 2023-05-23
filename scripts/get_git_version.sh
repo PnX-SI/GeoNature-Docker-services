@@ -22,15 +22,15 @@ cd $dir
 GIT_TAG=$(git describe --exact-match --tags $(git log -n1 --pretty='%h'))
 GIT_BRANCH=$(git branch --show-current)
 FILE_VERSION=$(cat VERSION)
-# echo $1 $2 $GIT_BRANCH $GIT_TAG
+echo $1 $2 $GIT_BRANCH $GIT_TAG
+
 if [[ ! -z "${GIT_BRANCH}" ]]; then
     assign_git_version="export ${preffix}_GIT_VERSION=${GIT_BRANCH}; export ${preffix}_IS_TAG=false";
 
 elif [[ (! -z "${GIT_TAG}") ]]; then
     assign_git_version="export ${preffix}_GIT_VERSION=${GIT_TAG}; export ${preffix}_IS_TAG=true";
-
 else
-    assign_git_version="export ${preffix}_GIT_VERSION=''; export ${preffix}_IS_TAG=''"
+    assign_git_version="export ${preffix}_GIT_VERSION=''; export ${preffix}_IS_TAG=false"
 fi
 
 eval $assign_git_version

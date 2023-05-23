@@ -9,22 +9,22 @@ RUN --mount=type=cache,target=/root/.cache \
 
 FROM build AS build-import
 WORKDIR /build/
-COPY /gn_module_import .
+COPY ./sources/gn_module_import .
 RUN python setup.py bdist_wheel
 
 FROM build AS build-export
 WORKDIR /build/
-COPY /gn_module_export .
+COPY ./sources/gn_module_export .
 RUN python setup.py bdist_wheel
 
 FROM build AS build-dashboard
 WORKDIR /build/
-COPY /gn_module_dashboard .
+COPY ./sources/gn_module_dashboard .
 RUN python setup.py bdist_wheel
 
 FROM build AS build-monitoring
 WORKDIR /build/
-COPY /gn_module_monitoring .
+COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
