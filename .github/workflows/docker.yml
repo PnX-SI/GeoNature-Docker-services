@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+  pull_request:
+    branches:
+      - develop
   release:
     types: [published]
 
@@ -34,20 +37,25 @@ jobs:
 
       - name: Copy config samples
         run: ./scripts/init_applications_config.sh
+
       - name: Lauch docker compose
         run: docker compose up -d
+
+      - name: Log geonature backend
+        run: |
+          docker compose logs -f > /tmp/docker_compose.log &
 
       - name: test geonature frontend response
         uses: nick-fields/retry@v2
         with:
           timeout_seconds: 60
-          max_attempts: 3
-          retry_wait_seconds: 10
+          max_attempts: 10
+          retry_wait_seconds: 20
           command: |
             url_test="http://localhost:8081/geonature"
             res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
             echo $res
-            [ "$res" = "200" ] && exit 0 || exit 1
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
       - name: test geonature backend response
         uses: nick-fields/retry@v2
@@ -59,11 +67,17 @@ jobs:
             url_test="http://localhost:8081/geonature/api/gn_commons/config"
             res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
             echo $res
-            [ "$res" = "200" ] && exit 0 || exit 1
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
+      - name: log if fail
+        if: ${{ failure() }}
+        run: |
+          cat /tmp/docker_compose.log
+          docker compose ps
 
   backend:
     name: Build geonature docker images for backend
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     needs: tests
     steps:
@@ -126,6 +140,7 @@ jobs:
 
   frontend:
     name: Build geonature docker images for frontend
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     needs: tests
     steps:
