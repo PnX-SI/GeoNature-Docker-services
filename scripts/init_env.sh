@@ -61,4 +61,4 @@ echo "GN_4M_DESCRIPTION=$GN_4M_DESCRIPTION"
 echo "GN_LABELS=$GN_LABELS"
 echo "BUILD_DATE=$BUILD_DATE"
 
-exit $SCRIPT_DIR/check_env.sh
+. $SCRIPT_DIR/check_env.sh
