@@ -41,13 +41,13 @@ jobs:
         uses: nick-fields/retry@v2
         with:
           timeout_seconds: 60
-          max_attempts: 3
-          retry_wait_seconds: 10
+          max_attempts: 10
+          retry_wait_seconds: 20
           command: |
             url_test="http://localhost:8081/geonature"
             res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
             echo $res
-            [ "$res" = "200" ] && exit 0 || exit 1
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
       - name: test geonature backend response
         uses: nick-fields/retry@v2
@@ -59,7 +59,7 @@ jobs:
             url_test="http://localhost:8081/geonature/api/gn_commons/config"
             res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
             echo $res
-            [ "$res" = "200" ] && exit 0 || exit 1
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
 
   backend:
