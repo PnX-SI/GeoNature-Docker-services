@@ -2,6 +2,6 @@
 data/apps/*/config/*
 data/apps/taxhub/static/*
 data/apps/geonature/media/*
-data/postgres/*
+data/db/*
 !data/**/.gitkeep
 !data/**/*.sample

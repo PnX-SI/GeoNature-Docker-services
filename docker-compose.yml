@@ -44,7 +44,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ${POSTGRES_INIT_DB_DIR-./sources/GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
-      - ${GDS_POSTGRES_DIRECTORY:-./data/postgres}:/var/lib/postgresql/data
+      - ${GDS_POSTGRES_DIRECTORY:-./data/db/postgres}:/var/lib/postgresql/data
   usershub:
     <<: *geonature-backend-defaults
     image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
