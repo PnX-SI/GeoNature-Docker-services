@@ -43,7 +43,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - ${POSTGRES_INIT_DB_DIR-./GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
+      - ${POSTGRES_INIT_DB_DIR-./sources/GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
       - ${GDS_POSTGRES_DIRECTORY:-./data/postgres}:/var/lib/postgresql/data
   usershub:
     <<: *geonature-backend-defaults
@@ -91,7 +91,7 @@ services:
       - redis
       - postgres
     volumes:
-      - ${CONFIG_DIRECTORY:-./app/config}/geonature/:/dist/config/
+      - ${CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config/
     command: celery -A geonature.celery_app:app worker
 
   geonature-backend:
