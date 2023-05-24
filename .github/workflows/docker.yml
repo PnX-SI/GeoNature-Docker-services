@@ -12,6 +12,8 @@ jobs:
   tests:
     name: Build geonature images locally and test services
     runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
