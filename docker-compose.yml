@@ -13,7 +13,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
     - GEONATURE_STATIC_FOLDER=${GEONATURE_STATIC_FOLDER:-/dist/static}
     - GEONATURE_CUSTOM_STATIC_FOLDER=${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
-    - GEONATURE_MEDIA_FOLDER=${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - GEONATURE_MEDIA_FOLDER=${GEONATURE_MEDIA_FOLDER:-/dist/geonature_media}
     - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
     - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
     - srid_local=${GEONATURE_SRID_LOCAL-2154}
@@ -44,14 +44,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ${POSTGRES_INIT_DB_DIR-./GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
-      - ${POSTGRES_DIRECTORY:-./app/postgres}:/var/lib/postgresql/data
+      - ${POSTGRES_DIRECTORY:-./data/postgres}:/var/lib/postgresql/data
   usershub:
     <<: *geonature-backend-defaults
     image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
     depends_on:
       - postgres
     volumes:
-      - ${CONFIG_DIRECTORY:-./app/config}/usershub/:/dist/config/
+      - ${GDS_USERSHUB_CONFIG_DIRECTORY:-./data/apps/usershub/config}:/dist/config/
     environment:
       - USERSHUB_URL_APPLICATION="${USERSHUB_PROTOCOL:-http}://${USERSHUB_HOST}${USERSHUB_PREFIX:-/}"
       - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
@@ -72,7 +72,8 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ${CONFIG_DIRECTORY:-./app/config}/taxhub/:/dist/config/
+      - ${GDS_TAXHUB_CONFIG_DIRECTORY:-./data/apps/taxhub/config}:/dist/config
+      - ${GDS_TAXHUB_STATIC_DIRECTORY:-./data/apps/taxhub/static}:/dist/static
     environment:
       - TAXHUB_APPLICATION_ROOT="${TAXHUB_PREFIX:-/}"
       - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
@@ -100,8 +101,8 @@ services:
       - redis
       - postgres
     volumes:
-      - ${MEDIA_DIRECTORY:-./app/media}:/dist/media/
-      - ${CONFIG_DIRECTORY:-./app/config}/geonature/:/dist/config/
+      - ${GDS_GEONATURE_CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config
+      - ${GDS_GEONATURE_MEDIA_DIRECTORY:-./data/apps/geonature/media}:/dist/media
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX:-/}`)"

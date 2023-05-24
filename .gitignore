@@ -1,11 +1,7 @@
 .env
-app/media/*
-!app/media/.gitkeep
-app/postgres/*
-!app/postgres/.gitkeep
-app/config/geonature/*
-app/config/geonature/*.example
-app/config/usershub/*
-app/config/usershub/*.example
-app/config/taxhub/*
-app/config/taxhub/*.example
+data/apps/*/config/*
+data/apps/taxhub/static/*
+data/apps/geonature/media/*
+data/postgres/*
+!data/**/.gitkeep
+!data/**/*.sample
