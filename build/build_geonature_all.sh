@@ -26,12 +26,12 @@ docker build -f sources/GeoNature/backend/Dockerfile -t ${GEONATURE_FRONTEND_CUR
 
 # GN FRONTEND 4 MODULE
 docker build \
-    --build-arg GEONATURE_FRONTEND_IMAGE=$GEONATURE_FRONTEND_CURRENT_IMAGE \
+    --build-arg GDS_GEONATURE_FRONTEND_IMAGE=$GEONATURE_FRONTEND_CURRENT_IMAGE \
     -f ./build/Dockerfile-geonature-frontend \
     -t ${GEONATURE_FRONTEND_CURRENT_4_MODULES_IMAGE} .
 
 # GN BACKEND 4 MODULES
 docker build \
-    --build-arg GEONATURE_BACKEND_IMAGE=$GEONATURE_BACKEND_CURRENT_IMAGE \
+    --build-arg GDS_GEONATURE_BACKEND_IMAGE=$GEONATURE_BACKEND_CURRENT_IMAGE \
     -f ./build/Dockerfile-geonature-backend \
     -t ${GEONATURE_BACKEND_CURRENT_4_MODULES_IMAGE} .

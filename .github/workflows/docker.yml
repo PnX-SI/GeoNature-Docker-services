@@ -136,7 +136,7 @@ jobs:
             org.opencontainers.image.description=${{env.GN_4M_DESCRIPTION}}
             ${{env.GN_LABELS}}
           push: true
-          build-args: GEONATURE_BACKEND_IMAGE=${{env.GN_BACKEND_IMAGE}}
+          build-args: GDS_GEONATURE_BACKEND_IMAGE=${{env.GN_BACKEND_IMAGE}}
 
   frontend:
     name: Build geonature docker images for frontend
@@ -203,5 +203,5 @@ jobs:
           context: .
           file: ./build/Dockerfile-geonature-frontend
           tags: "${{env.GN_FRONTEND_4M_TAGS}}"
-          build-args: GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_IMAGE}}
+          build-args: GDS_GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_IMAGE}}
           push: true
