@@ -12,7 +12,7 @@ services:
       - 8000:8000
 
   geonature-frontend:
-    image: ${GEONATURE_FRONTEND_IMAGE:-node:16-bullseye}
+    image: ${GDS_GEONATURE_FRONTEND_IMAGE:-node:16-bullseye}
     working_dir: /home/node/app
     volumes:
       - ./GeoNature/frontend:/home/node/app
