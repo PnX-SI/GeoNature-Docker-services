@@ -219,10 +219,10 @@ https://github.com/PnX-SI/Taxhub
 
 Une actions permet la publication d'image dockers sur les packages du dépôt.
 
-- **gds-geonature-4-modules-frontend:<VERSION>**
-- **gds-geonature-4-modules-backend:<VERSION>**
-- **gds-geonature-backend:<VERSION>**
-- **gds-geonature-backend:<VERSION>**
+- `gds-geonature-4-modules-frontend:<VERSION>`
+- `gds-geonature-4-modules-backend:<VERSION>`
+- `gds-geonature-backend:<VERSION>`
+- `gds-geonature-frontend:<VERSION>`
 
 La valeur de `VERSION` est calculée comme ceci:
 
@@ -237,5 +237,7 @@ Si le build a été fait:
     - `0.0.1__2.12.3`
     - `0.0.2__2.12.3`
     - `0.0.3__2.13.1`
+
+    - et `latest` qui correspond à la dernière release buildée
 
 On suppose ici qu'une version ne va comporter que des états versionnées de GéoNature et de ses modules.
