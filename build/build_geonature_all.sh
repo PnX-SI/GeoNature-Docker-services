@@ -8,12 +8,15 @@ source .env
 # GEONATURE_FRONTEND_CURRENT_4_MODULES_IMAGE="gn_frontend_4_cur"
 # GEONATURE_BACKEND_CURRENT_4_MODULES_IMAGE="gn_backend_4_cur"
 
+# GN ATLAS
+docker build -f sources/GeoNature-atlas/Dockerfile -t ${GEONATURE_ATLAS_CURRENT_IMAGE}  sources/GeoNature-atlas/
+
+
 # GN FRONTEND SOURCE
 docker build -f sources/GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-source --target=source sources/GeoNature/
 
 # GN FRONTEND NGINX
 docker build -f sources/GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-nginx --target=prod-base sources/GeoNature/
-
 
 # GN BACKEND WHEELS
 docker build -f sources/GeoNature/backend/Dockerfile -t ${GEONATURE_BACKEND_CURRENT_IMAGE}-wheels --target=wheels sources/GeoNature/

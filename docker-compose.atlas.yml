@@ -1,0 +1,30 @@
+services:
+  atlas:
+    image: ${GDS_ATLAS_IMAGE}
+    depends_on:
+      - postgres
+      - geonature-backend
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT= ${POSTGRES_PORT:-5432}
+      - ATLAS_ALTITUDES=${ATLAS_ALTITUDES:-(0 500 1000 1500 2000 2500 3000 3500 4000)}
+      - ATLAS_TYPE_TERRITOIRE=${ATLAS_TYPE_TERRITOIRE:-'PEC'}
+      - ATLAS_TYPE_MAILLE=${ATLAS_TYPE_MAILLE:-'M1'}
+      - ATLAS_INSTALL_SCHEMA=${ATLAS_INSTALL_SCHEMA:-false}
+      - ATLAS_RESET_SCHEMA=${ATLAS_RESET_SCHEMA:-false}
+      - ATLAS_URL_APPLICATION="${GDS_ATLAS_PROTOCOL:-http}://${GDS_ATLAS_HOST}${GDS_ATLAS_PREFIX:-/atlas}"
+      - ATLAS_APPLICATION_ROOT="${GDS_ATLAS_PREFIX:-/atlas}"
+      - ATLAS_REMOTE_MEDIAS_URL="${GDS_TAXHUB_PROTOCOL:-http}://${GDS_TAXHUB_HOST}${GDS_TAXHUB_PREFIX:-/taxhub}/"
+      - ATLAS_TAXHUB_URL="${GDS_TAXHUB_PROTOCOL:-http}://${GDS_TAXHUB_HOST}${GDS_TAXHUB_PREFIX:-/taxhub}"
+      - ATLAS_REDIMENSIONNEMENT_IMAGE=${ATLAS_REDIMENSIONNEMENT_IMAGE:-true}
+      - ATLAS_database_connection=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+    volumes:
+      - ${GDS_GEONATURE_ATLAS_CONFIG_DIRECTORY:-./data/apps/atlas/config}:/dist/config
+      - ${GDS_GEONATURE_ATLAS_CUSTOM_DIRECTORY:-./data/apps/atlas/custom}:/dist/static/custom
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.atlas.rule=Host(`${GDS_ATLAS_DOMAIN}`) && PathPrefix(`${GDS_ATLAS_PREFIX:-/atlas}`)"
+      - "traefik.http.routers.atlas.entrypoints=web"

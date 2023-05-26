@@ -107,6 +107,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_BACKEND_PREFIX:-/geonature/api}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=web"
+
   geonature-frontend:
     image: ${GDS_GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend:latest}
     environment:

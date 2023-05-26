@@ -76,7 +76,11 @@ Voir la documentation des différentes applications pour renseigner les fichiers
   - Il faut au moins renseigner la variable `SECRET_KEY`.
 - [fichier exemple pour UsersHub](./sources/UsersHub/config/config.py.sample)
 - [fichier exemple pour TaxHub](./sources/TaxHub/apptax/config.py.sample)
+<<<<<<< HEAD
 - [fichier exemple pour GeoNature-atlas](./sources/GeoNature-atlas/atlas/configuration/config.py.sample)
+=======
+- [fichier exemple pour Geonature-atlas](./sources/GeoNature-atlas/atlas/configuration/config.py.sample )
+>>>>>>> geonature atlas wip
 
 à noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [docker-compose](./docker-compose.yml))
 
