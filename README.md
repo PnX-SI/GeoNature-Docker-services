@@ -35,7 +35,7 @@ usershub             5001/tcp
 - rapatrier le dépôt
 - se placer dans le répertoire du dépôt
 - créer un fichier   `.env` (copier ou s'inspirer des fichiers `.env` exemples)
-- créer les fichiers de configuration (vous pouver copier les fichiers  `.sample` d'un seul coup avec la commande `./scrits/init_applications_config.sh`)
+- créer les fichiers de configuration (vous pouver copier les fichiers de config *vide* d'un seul coup avec la commande `./scrits/init_applications_config.sh`)
 - lancer les dockers avec la commande `docker compose up -d`
 - les logs sont accessibles avec la commande `docker compose logs -f` ou `docker compose -f <nom du service>`
 
@@ -67,6 +67,15 @@ Par défaut, la structure des fichiers est la suivante
 ```
 
 Voir la documentation des différentes applications pour renseigner les fichiers de configuration
+
+- [fichier exemple pour GeoNature](./sources/GeoNature/config/geonature_config.toml.sample)
+  - Il faut au moins renseigner la variable `SECRET_KEY`.
+- [fichier exemple pour UsersHub](./sources/UsersHub/config/config.py.sample)
+- [fichier exemple pour TaxHub](./sources/TaxHub/apptax/config.py.sample)
+
+à noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [docker-compose](./docker-compose.yml))
+
+comme par exemple `URL_APPLICATION` ou `SQLALCHEMY_DATABASE_URI`
 
 ### Variables d'environnement
 

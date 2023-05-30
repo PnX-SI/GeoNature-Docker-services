@@ -32,11 +32,11 @@ jobs:
       - name: copy cur environment
         run: cp .env.current .env
 
-      - name: Build all images
-        run: ./build/build_geonature_all.sh
-
       - name: Copy config samples
         run: ./scripts/init_applications_config.sh
+
+      - name: Build all images
+        run: ./build/build_geonature_all.sh
 
       - name: Lauch docker compose
         run: docker compose up -d
@@ -69,12 +69,6 @@ jobs:
             echo $res
             [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
-      - name: Log if fail
-        if: ${{ failure() }}
-        run: |
-          cat /tmp/docker_compose.log
-          docker compose ps
-
       - name: Test usershub response
         uses: nick-fields/retry@v2
         with:
@@ -86,12 +80,6 @@ jobs:
             res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
             echo $res
             [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
-
-      - name: Log if fail
-        if: ${{ failure() }}
-        run: |
-          cat /tmp/docker_compose.log
-          docker compose ps
 
       - name: Test taxhub response
         uses: nick-fields/retry@v2
