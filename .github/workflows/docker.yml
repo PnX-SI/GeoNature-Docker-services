@@ -57,7 +57,7 @@ jobs:
             echo $res
             [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
-      - name: test geonature backend response
+      - name: Test geonature backend response
         uses: nick-fields/retry@v2
         with:
           timeout_seconds: 60
@@ -69,11 +69,48 @@ jobs:
             echo $res
             [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
 
-      - name: log if fail
+      - name: Log if fail
         if: ${{ failure() }}
         run: |
           cat /tmp/docker_compose.log
           docker compose ps
+
+      - name: Test usershub response
+        uses: nick-fields/retry@v2
+        with:
+          timeout_seconds: 60
+          max_attempts: 3
+          retry_wait_seconds: 5
+          command: |
+            url_test="http://localhost:8081/usershub/login"
+            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
+            echo $res
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
+
+      - name: Log if fail
+        if: ${{ failure() }}
+        run: |
+          cat /tmp/docker_compose.log
+          docker compose ps
+
+      - name: Test taxhub response
+        uses: nick-fields/retry@v2
+        with:
+          timeout_seconds: 60
+          max_attempts: 3
+          retry_wait_seconds: 5
+          command: |
+            url_test="http://localhost:8081/taxhub/"
+            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
+            echo $res
+            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
+
+      - name: Log if fail
+        if: ${{ failure() }}
+        run: |
+          cat /tmp/docker_compose.log
+          docker compose ps
+
 
   backend:
     name: Build geonature docker images for backend
