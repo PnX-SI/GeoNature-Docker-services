@@ -60,9 +60,13 @@ Par défaut, la structure des fichiers est la suivante
                 - config/
                     - geonature_config.toml
                 - media/
-            - usershub
+            - usershub/
                 - config/
                     - config.py
+            - atlas/
+                - config/
+                    - config.py
+                - custom/
 
 ```
 
@@ -72,11 +76,14 @@ Voir la documentation des différentes applications pour renseigner les fichiers
   - Il faut au moins renseigner la variable `SECRET_KEY`.
 - [fichier exemple pour UsersHub](./sources/UsersHub/config/config.py.sample)
 - [fichier exemple pour TaxHub](./sources/TaxHub/apptax/config.py.sample)
+- [fichier exemple pour GeoNature-atlas](./sources/GeoNature-atlas/atlas/configuration/config.py.sample)
 
 à noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [docker-compose](./docker-compose.yml))
 
-comme par exemple `URL_APPLICATION` ou `SQLALCHEMY_DATABASE_URI`
-
+comme par exemple:
+  - `URL_APPLICATION`
+  - `SQLALCHEMY_DATABASE_URI`
+  - ...
 ### Variables d'environnement
 
 Ces variable peuvent être définie dans un fichier `.env`.

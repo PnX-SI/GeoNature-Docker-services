@@ -7,3 +7,4 @@ fi
 
 touch data/apps/taxhub/config/config.py
 touch data/apps/usershub/config/config.py
+touch data/apps/atlas/config/config.py
