@@ -1,6 +1,6 @@
 # GeoNature Docker Services
 
-Dockerisation de geonature et d'application associées
+Dockerisation de GeoNature et d'applications associées
 
 ## Les services
 
@@ -9,7 +9,7 @@ Dockerisation de geonature et d'application associées
  - `taxhub`
  - `geonature-backend`
  - `geonature-frontend`
- - `geonature-worker`: `worker` qui peut reprendre certaine tâches de geonature (import, export, mail, etc...)
+ - `geonature-worker`: `worker` qui peut reprendre certaines tâches de geonature (import, export, mail, etc...)
  - `redis`
 
 - `traefik`
@@ -34,14 +34,14 @@ usershub             5001/tcp
 
 - rapatrier le dépôt
 - se placer dans le répertoire du dépôt
-- créer un fichier   `.env` (copier ou s'inspirer des fichiers `.env` exemples)
-- créer les fichiers de configuration (vous pouver copier les fichiers de config *vide* d'un seul coup avec la commande `./scrits/init_applications_config.sh`)
-- lancer les dockers avec la commande `docker compose up -d`
+- créer un fichier `.env` (copier ou s'inspirer des fichiers `.env` exemples)
+- créer les fichiers de configuration (vous pouvez copier les fichiers de config *vide* d'un seul coup avec la commande `./scrits/init_applications_config.sh`)
+- lancer les services avec la commande `docker compose up -d`
 - les logs sont accessibles avec la commande `docker compose logs -f` ou `docker compose -f <nom du service>`
 
 ## Configuration
 
-Il y a deux moyen pour configurer les applications: les fichiers de configuration et les variables d'environnement.
+Il y a deux moyens pour configurer les applications : les fichiers de configuration et les variables d'environnement.
 
 ### Dossiers et fichiers
 
@@ -50,7 +50,7 @@ Par défaut, la structure des fichiers est la suivante
 ```
     -
         - db/
-            - postgres (volume (ou point de montage ??) pour la bdd ())
+            - postgres (volume pour la bdd)
         - apps/
             - taxhub/
                 - config/
@@ -76,11 +76,6 @@ Voir la documentation des différentes applications pour renseigner les fichiers
   - Il faut au moins renseigner la variable `SECRET_KEY`.
 - [fichier exemple pour UsersHub](./sources/UsersHub/config/config.py.sample)
 - [fichier exemple pour TaxHub](./sources/TaxHub/apptax/config.py.sample)
-<<<<<<< HEAD
-- [fichier exemple pour GeoNature-atlas](./sources/GeoNature-atlas/atlas/configuration/config.py.sample)
-=======
-- [fichier exemple pour Geonature-atlas](./sources/GeoNature-atlas/atlas/configuration/config.py.sample )
->>>>>>> geonature atlas wip
 
 à noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [docker-compose](./docker-compose.yml))
 
@@ -90,13 +85,16 @@ comme par exemple:
   - ...
 ### Variables d'environnement
 
-Ces variable peuvent être définie dans un fichier `.env`.
+Ces variables peuvent être définies dans un fichier `.env`.
 
 #### Configuration des applications
 
-Il est possible de passer par les variables d'environnemnt pour configurer les applications.
+Il est possible de passer par les variables d'environnement pour configurer les applications.
 
-Par exemple toutes les variables préfixée par `GEONATURE_` seront traduite par un configuration de l'application GéoNature (`USERSHUB_` pour usershub, et `TAXHUB_` pour taxhub) (voir https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env).
+Par exemple toutes les variables préfixées par `GEONATURE_` seront traduites par
+une variable de configuration propre à GeoNature (respectivement `USERSHUB_`
+pour usershub, et `TAXHUB_` pour taxhub) (voir
+https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env).
 
 Par exemple:
 - `GEONATURE_SQLALCHEMY_DATABASE_URI` pour `app.config['SQLALCHEMY_DATABASE_URI']`
@@ -104,7 +102,7 @@ Par exemple:
 
 #### Configuration des services
 
-Les variable d'environnement qui servent au fichier docker-compose seront préfixées `GDS_` (comme GeoNature-Docker-Services)
+Les variables d'environnement qui servent au fichier docker-compose seront préfixées par `GDS_` (comme GeoNature-Docker-Services)
 
 `GDS_<nom_de_lavariable>` (`<valeur par defaut`)
 
@@ -163,14 +161,14 @@ Les variable d'environnement qui servent au fichier docker-compose seront préfi
 `GDS_<nom_de_lavariable>` (`<valeur par defaut`)
 
 - env.dev
-    - utilise les images docker des application taggées en `:develop`
-    - protocole `HTPP`
+    - utilise les images docker des applications taggées en `:develop`
+    - protocole `HTTP`
     - url des applications suffixées par `:<PORT>` (par exemple `localhost:8000` pour le service `geonature-backend`)
     - ports `8081/8183`
 
 - env.current
     - similaire à env.dev
-    - on build les images pour GeoNature (`FRONTEND` et `BACKEND`) (voir [build_geonature_all.sh](./build/build_geonature_all.sh)
+    - on build les images pour GeoNature (`FRONTEND` et `BACKEND`) (voir [build_geonature_all.sh](./build/build_geonature_all.sh))
       - à partir du code des sous-modules github
       - pour GeoNature seul
       - pour GeoNature avec les 4 modules principaux (`IMPORT`, `EXPORT`, `DASHBOARD`, `MONITORING`)
@@ -178,7 +176,7 @@ Les variable d'environnement qui servent au fichier docker-compose seront préfi
       - TODO builder les applis à partir du code des sous-modules github
     - permet de pouvoir builder des images aux versions souhaitées (pour GeoNature et les modules) sans dépendre des versions releasées.
 ##### `env.prod`
-- utilise les images docker des application taggées en `:latest`
+- utilise les images docker des applications taggées en `:latest`
     - `ghcr.io/pnx-si/geonature-backend:latest`
     - `ghcr.io/pnx-si/usershub:latest`
     - `ghcr.io/pnx-si/taxhub-backend:latest`
@@ -186,8 +184,8 @@ Les variable d'environnement qui servent au fichier docker-compose seront préfi
 - ports `80/443`
 
 ##### `env.dev`
-- utilise les images docker des application taggées en `:develop`
-- protocole `HTPP`
+- utilise les images docker des applications taggées en `:develop`
+- protocole `HTTP`
 - url des applications suffixées par `:<PORT>` (par exemple `localhost:8000` pour le service `geonature-backend`)
 - ports `8081/8183`
 
@@ -203,11 +201,11 @@ Les variable d'environnement qui servent au fichier docker-compose seront préfi
 
 ##### `env.lattest-versions`
 
-Permet de référencer les version de tags des dernières applications (équivalent à lattest mais avec des numéro de version codées en *dur*)
+Permet de référencer les versions de tags des dernières applications (équivalent à latest mais avec des numéros de version codées en *dur*)
 
-À titre informatif, il y a aussi les version des applicaitons et des modules utilisés.
+À titre informatif, il y a aussi les versions des applications et des modules utilisés.
 
-Ces version sont aussi renseignées dans [le fichier changelog du dépôt)[./docs/changelog.md]
+Ces versions sont aussi renseignées dans [le fichier changelog du dépôt](./docs/changelog.md)
 
 ### Liens utiles
 ## Geonature
@@ -237,7 +235,7 @@ https://github.com/PnX-SI/Taxhub
 
 ## Package et versionnement
 
-Une actions permet la publication d'image dockers sur les packages du dépôt.
+Une action permet la publication d'images docker sur les packages du dépôt.
 
 - `gds-geonature-4-modules-frontend:<VERSION>`
 - `gds-geonature-4-modules-backend:<VERSION>`
@@ -260,4 +258,4 @@ Si le build a été fait:
 
     - et `latest` qui correspond à la dernière release buildée
 
-On suppose ici qu'une version ne va comporter que des états versionnées de GéoNature et de ses modules.
+On suppose ici qu'une version ne va comporter que des états versionnées de GeoNature et de ses modules.
