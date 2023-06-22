@@ -1,40 +1,79 @@
 # script docker GN all
-set -x 
+set -xeof pipefail
 source .env
 
+current_dir="$(pwd)"
 # A Définir au préalable
-# GEONATURE_BACKEND_CURRENT_IMAGE="gn_backend_cur"
-# GEONATURE_FRONTEND_CURRENT_IMAGE="gn_frontend_cur"
-# GEONATURE_FRONTEND_CURRENT_4_MODULES_IMAGE="gn_frontend_4_cur"
-# GEONATURE_BACKEND_CURRENT_4_MODULES_IMAGE="gn_backend_4_cur"
-
-# GN ATLAS
-docker build -f sources/GeoNature-atlas/Dockerfile -t ${GEONATURE_ATLAS_CURRENT_IMAGE}  sources/GeoNature-atlas/
+# GEONATURE_BACKEND_IMAGE="gn_backend_cur"
+# GEONATURE_FRONTEND_IMAGE="gn_frontend_cur"
+# GEONATURE_FRONTEND_4_MODULES_IMAGE="gn_frontend_4_cur"
+# GEONATURE_BACKEND_4_MODULES_IMAGE="gn_backend_4_cur"
 
 
-# GN FRONTEND SOURCE
-docker build -f sources/GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-source --target=source sources/GeoNature/
+# BUILD des applications
 
-# GN FRONTEND NGINX
-docker build -f sources/GeoNature/frontend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE}-nginx --target=prod-base sources/GeoNature/
+# - ATLAS
 
-# GN BACKEND WHEELS
-docker build -f sources/GeoNature/backend/Dockerfile -t ${GEONATURE_BACKEND_CURRENT_IMAGE}-wheels --target=wheels sources/GeoNature/
+docker build -f sources/GeoNature-atlas/Dockerfile -t ${GDS_ATLAS_IMAGE}  sources/GeoNature-atlas/
 
-# GN FRONTEND
-docker build -f sources/GeoNature/frontend/Dockerfile -t ${GEONATURE_BACKEND_CURRENT_IMAGE} sources/GeoNature/
 
-# GN BACKEND
-docker build -f sources/GeoNature/backend/Dockerfile -t ${GEONATURE_FRONTEND_CURRENT_IMAGE} sources/GeoNature/
+# - USERSHUB
 
-# GN FRONTEND 4 MODULE
+# chargement des sous modules git
+cd sources/UsersHub
+git submodule init
+git submodule update
+cd ${current_dir}
+
+docker build -f sources/UsersHub/Dockerfile -t ${GDS_USERSHUB_IMAGE}  sources/UsersHub/
+
+
+# - TAXHUB
+
+# chargement des sous modules git
+cd sources/TaxHub
+git submodule init
+git submodule update
+cd ${current_dir}
+
+docker build -f sources/TaxHub/Dockerfile -t ${GDS_TAXHUB_IMAGE}  sources/TaxHub/
+
+
+# - GEONATURE
+
+# chargement des sous modules git
+cd sources/GeoNature
+git submodule init
+git submodule update
+cd ${current_dir}
+
+#   - FRONTEND
+
+#     - SOURCES
+
+docker build -f sources/GeoNature/frontend/Dockerfile -t ${GDS_GEONATURE_FRONTEND_IMAGE}-source --target=source sources/GeoNature/
+
+#     - NGINX
+
+docker build -f sources/GeoNature/frontend/Dockerfile -t ${GDS_GEONATURE_FRONTEND_IMAGE}-nginx --target=prod-base sources/GeoNature/
+
+#     - APP + 4 MODULES
+
 docker build \
-    --build-arg GDS_GEONATURE_FRONTEND_IMAGE=$GEONATURE_FRONTEND_CURRENT_IMAGE \
+    --build-arg GEONATURE_FRONTEND_IMAGE=${GDS_GEONATURE_FRONTEND_IMAGE} \
     -f ./build/Dockerfile-geonature-frontend \
-    -t ${GEONATURE_FRONTEND_CURRENT_4_MODULES_IMAGE} .
+    -t ${GDS_GEONATURE_FRONTEND_IMAGE} .
 
-# GN BACKEND 4 MODULES
+
+#  - BACKEND
+
+#    - WHEELS
+
+docker build -f sources/GeoNature/backend/Dockerfile -t ${GDS_GEONATURE_BACKEND_IMAGE}-wheels --target=wheels sources/GeoNature/
+
+#    - APP
+
 docker build \
-    --build-arg GDS_GEONATURE_BACKEND_IMAGE=$GEONATURE_BACKEND_CURRENT_IMAGE \
+    --build-arg GEONATURE_BACKEND_IMAGE=${GDS_GEONATURE_BACKEND_IMAGE} \
     -f ./build/Dockerfile-geonature-backend \
-    -t ${GEONATURE_BACKEND_CURRENT_4_MODULES_IMAGE} .
+    -t ${GDS_GEONATURE_BACKEND_IMAGE} .

@@ -36,6 +36,19 @@ services:
     volumes:
       - redis:/data
 
+  traefik:
+    image: traefik:2.9
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - ${GDS_HTTP_PORT:-80}:80
+      - ${GDS_HTTPS_PORT:-443}:443
+
   postgres:
     image: ${POSTGRES_IMAGE:-postgis/postgis:13-3.2}
     environment:
@@ -45,8 +58,8 @@ services:
     volumes:
       - ${POSTGRES_INIT_DB_DIR-./sources/GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
       - ${GDS_POSTGRES_DIRECTORY:-./data/db/postgres}:/var/lib/postgresql/data
+
   usershub:
-    <<: *geonature-backend-defaults
     image: ${GDS_USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
     depends_on:
       - postgres
@@ -67,7 +80,6 @@ services:
       - "traefik.http.routers.usershub.entrypoints=web"
 
   taxhub:
-    <<: *geonature-backend-defaults
     image: ${GDS_TAXHUB_IMAGE:-ghcr.io/pnx-si/taxhub:latest}
     depends_on:
       - postgres
@@ -117,19 +129,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_FRONTEND_PREFIX:-/}`)"
       - "traefik.http.routers.geonature.entrypoints=web"
-
-  traefik:
-    image: traefik:2.9
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - ${GDS_HTTP_PORT:-80}:80
-      - ${GDS_HTTPS_PORT:-443}:443
 
 volumes:
   redis:

@@ -1,4 +1,4 @@
-ARG GDS_GEONATURE_BACKEND_IMAGE
+ARG GEONATURE_BACKEND_IMAGE
 
 FROM python:3.9-bullseye AS build
 
@@ -27,7 +27,7 @@ WORKDIR /build/
 COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
-FROM ${GDS_GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
+FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
 
 WORKDIR /dist/geonature
 RUN --mount=type=cache,target=/var/cache/apt \

@@ -1,18 +1,12 @@
 services:
+
   usershub:
     image: ${GDS_USERSHUB_IMAGE:-usershub}
-    build: ./UsersHub/
+    build: ./sources/UsersHub/
 
   taxhub:
     image: ${GDS_TAXHUB_IMAGE:-taxhub}
-    build: ./TaxHub/
-
-  geonature-worker:
-    image: ${GDS_GEONATURE_BACKEND_IMAGE:-geonature-backend}
-    build:
-      context: ./GeoNature/
-      dockerfile: ./backend/Dockerfile
-      target: prod-full
+    build: ./sources/TaxHub/
 
   geonature-backend:
     image: ${GDS_GEONATURE_BACKEND_IMAGE:-geonature-backend}

@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - current
   pull_request:
     branches:
       - develop
@@ -13,7 +14,7 @@ on:
 
 jobs:
   tests:
-    name: Build geonature images locally and test services
+    name: Build containers and process tests
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -22,12 +23,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: True
-
-      - name: Git GeoNature Sumbodule Update
-        run: |
-          git submodule init
-          git submodule update
-        working-directory: sources/GeoNature
 
       - name: copy cur environment
         run: cp .env.current .env
@@ -45,53 +40,14 @@ jobs:
         run: |
           docker compose logs -f > /tmp/docker_compose.log &
 
-      - name: test geonature frontend response
-        uses: nick-fields/retry@v2
-        with:
-          timeout_seconds: 60
-          max_attempts: 10
-          retry_wait_seconds: 20
-          command: |
-            url_test="http://localhost:8081/geonature"
-            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
-            echo $res
-            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
-
-      - name: Test geonature backend response
+      - name: test apps
         uses: nick-fields/retry@v2
         with:
           timeout_seconds: 60
           max_attempts: 15
           retry_wait_seconds: 20
           command: |
-            url_test="http://localhost:8081/geonature/api/gn_commons/config"
-            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
-            echo $res
-            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
-
-      - name: Test usershub response
-        uses: nick-fields/retry@v2
-        with:
-          timeout_seconds: 60
-          max_attempts: 3
-          retry_wait_seconds: 5
-          command: |
-            url_test="http://localhost:8081/usershub/login"
-            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
-            echo $res
-            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
-
-      - name: Test taxhub response
-        uses: nick-fields/retry@v2
-        with:
-          timeout_seconds: 60
-          max_attempts: 3
-          retry_wait_seconds: 5
-          command: |
-            url_test="http://localhost:8081/taxhub/"
-            res=$(curl -o /dev/null --silent --head --write-out '%{http_code}\n' "${url_test}")
-            echo $res
-            [ "$res" = "200" ] || [ "$res" = "301" ] && exit 0 || exit 1
+            ./scripts/test_docker.sh
 
       - name: Log if fail
         if: ${{ failure() }}
@@ -99,9 +55,8 @@ jobs:
           cat /tmp/docker_compose.log
           docker compose ps
 
-
-  backend:
-    name: Build geonature docker images for backend
+  geonature-backend:
+    name: Build and push container for geonature-backend
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     needs: tests
@@ -117,10 +72,6 @@ jobs:
           git submodule update
         working-directory: sources/GeoNature
 
-      - name: Set Environnement variables
-        run: |
-          scripts/init_env.sh >> $GITHUB_ENV
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -132,101 +83,113 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and export backend app image
-        uses: docker/build-push-action@v4
+      - name: Generate metadata for wheels image
+        id: meta-wheels
+        uses: docker/metadata-action@v4
         with:
-          context: ./sources/GeoNature
-          file: ./sources/GeoNature/backend/Dockerfile
-          tags: "${{env.GN_BACKEND_TAGS}}"
-          push: true
-          target: prod
+          images: ghcr.io/${{ github.repository_owner }}/gds-geonature-backend
+          flavor: |
+            suffix=-wheels
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
 
-      - name: Build and export backend wheels image
+      - name: Build and export geonature backend wheels image
+        id: build-wheels
         uses: docker/build-push-action@v4
         with:
           context: ./sources/GeoNature
           file: ./sources/GeoNature/backend/Dockerfile
-          tags: "${{env.GN_BACKEND_TAGS}}-wheels"
-          push: true
           target: wheels
+          push: true
+          tags: ${{ steps.meta-wheels.outputs.tags }}
+          labels: ${{ steps.meta-wheels.outputs.labels }}
 
-      - name: Build and export backend app + 4 modules
+      - name: Generate metadata for prod image
+        id: meta-prod
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gds-geonature-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Build and export geonature backend image (+ 4 modules)
+        id: build-prod
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./build/Dockerfile-geonature-backend
-          tags: "${{env.GN_BACKEND_4M_TAGS}}"
-          labels: |
-            org.opencontainers.image.title=Application GeoNature + 4 modules principaux
-            org.opencontainers.image.description=${{env.GN_4M_DESCRIPTION}}
-            ${{env.GN_LABELS}}
-          push: true
-          build-args: GDS_GEONATURE_BACKEND_IMAGE=${{env.GN_BACKEND_IMAGE}}
+          target: prod-extra
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-prod.outputs.tags }}
+          labels: ${{ steps.meta-prod.outputs.labels }}
+          build-args: GEONATURE_BACKEND_IMAGE=${{steps.meta-prod.outputs.tags[0]}}
 
-  frontend:
-    name: Build geonature docker images for frontend
-    if: ${{ github.event_name != 'pull_request' }}
-    runs-on: ubuntu-latest
-    needs: tests
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: True
+  # geonature-frontend:
+  #   name: Build geonature docker images for frontend
+  #   if: ${{ github.event_name != 'pull_request' }}
+  #   runs-on: ubuntu-latest
+  #   needs: tests
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         submodules: True
 
-      - name: Git GeoNature Sumbodule Update
-        run: |
-          git submodule init
-          git submodule update
-        working-directory: ./sources/GeoNature
+  #     - name: Git GeoNature Sumbodule Update
+  #       run: |
+  #         git submodule init
+  #         git submodule update
+  #       working-directory: ./sources/GeoNature
 
-      - name: Set Environnement variables
-        run: |
-          scripts/init_env.sh >> $GITHUB_ENV
+  #     - name: Set Environnement variables
+  #       run: |
+  #         scripts/init_env.sh >> $GITHUB_ENV
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
 
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        if: github.event_name != 'pull_request'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Login to GHCR
+  #       uses: docker/login-action@v2
+  #       if: github.event_name != 'pull_request'
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and export frontend source
-        uses: docker/build-push-action@v4
-        with:
-          context: ./sources/GeoNature
-          file: ./sources/GeoNature/frontend/Dockerfile
-          target: source
-          tags: "${{env.GN_FRONTEND_TAGS}}-source"
-          push: true
+  #     - name: Build and export frontend source
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: ./sources/GeoNature
+  #         file: ./sources/GeoNature/frontend/Dockerfile
+  #         target: source
+  #         tags: "${{env.GN_FRONTEND_TAGS}}-source"
+  #         push: true
 
-      - name: Build and export frontend nginx
-        uses: docker/build-push-action@v4
-        with:
-          context: ./sources/GeoNature
-          file: ./sources/GeoNature/frontend/Dockerfile
-          target: prod-base
-          tags: "${{env.GN_FRONTEND_TAGS}}-nginx"
-          push: true
+  #     - name: Build and export frontend nginx
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: ./sources/GeoNature
+  #         file: ./sources/GeoNature/frontend/Dockerfile
+  #         target: prod-base
+  #         tags: "${{env.GN_FRONTEND_TAGS}}-nginx"
+  #         push: true
 
-      - name: Build and export frontend app image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./sources/GeoNature
-          file: ./sources/GeoNature/frontend/Dockerfile
-          tags: "${{env.GN_FRONTEND_TAGS}}"
-          push: true
-          target: prod
+  #     - name: Build and export frontend app image
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: ./sources/GeoNature
+  #         file: ./sources/GeoNature/frontend/Dockerfile
+  #         tags: "${{env.GN_FRONTEND_TAGS}}"
+  #         push: true
+  #         target: prod
 
-      - name: Build and export frontend + 4 modules
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./build/Dockerfile-geonature-frontend
-          tags: "${{env.GN_FRONTEND_4M_TAGS}}"
-          build-args: GDS_GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_IMAGE}}
-          push: true
+  #     - name: Build and export frontend + 4 modules
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: .
+  #         file: ./build/Dockerfile-geonature-frontend
+  #         tags: "${{env.GN_FRONTEND_4M_TAGS}}"
+  #         build-args: GEONATURE_FRONTEND_IMAGE=${{env.GN_FRONTEND_IMAGE}}
+  #         push: true
