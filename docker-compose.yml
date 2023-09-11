@@ -2,14 +2,17 @@ version: "3.9"
 
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
+  environment:
+    - http_proxy=${HTTP_PROXY:-}
+    - https_proxy=${HTTPS_PROXY:-}
 
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
   environment:
     - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-    - GEONATURE_URL_APPLICATION="${GDS_GEONATURE_FRONTEND_PROTOCOL}://${GDS_GEONATURE_FRONTEND_HOST}${GDS_GEONATURE_FRONTEND_PREFIX:-}"
-    - GEONATURE_API_ENDPOINT="${GDS_GEONATURE_BACKEND_PROTOCOL}://${GDS_GEONATURE_BACKEND_HOST}${GDS_GEONATURE_BACKEND_PREFIX:-/}"
-    - GEONATURE_API_TAXHUB="${GDS_TAXHUB_PROTOCOL}://${GDS_TAXHUB_HOST}${GDS_TAXHUB_API_PREFIX}"
+    - GEONATURE_URL_APPLICATION="${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOST}${GEONATURE_FRONTEND_PREFIX:-}"
+    - GEONATURE_API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX:-/}"
+    - GEONATURE_API_TAXHUB="${TAXHUB_PROTOCOL}://${TAXHUB_HOST}${TAXHUB_API_PREFIX}"
     - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
     - GEONATURE_STATIC_FOLDER=${GEONATURE_STATIC_FOLDER:-/dist/static}
     - GEONATURE_CUSTOM_STATIC_FOLDER=${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
@@ -31,95 +34,8 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - taxhub_samples=${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
 
 services:
-  redis:
-    image: ${REDIS_IMAGE:-redis:7-alpine}
-    volumes:
-      - redis:/data
-
-  postgres:
-    image: ${POSTGRES_IMAGE:-postgis/postgis:13-3.2}
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ${POSTGRES_INIT_DB_DIR-./sources/GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
-      - ${GDS_POSTGRES_DIRECTORY:-./data/db/postgres}:/var/lib/postgresql/data
-  usershub:
-    <<: *geonature-backend-defaults
-    image: ${GDS_USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
-    depends_on:
-      - postgres
-    volumes:
-      - ${GDS_USERSHUB_CONFIG_DIRECTORY:-./data/apps/usershub/config}:/dist/config/
-    environment:
-      - USERSHUB_URL_APPLICATION="${GDS_USERSHUB_PROTOCOL:-http}://${GDS_USERSHUB_HOST}${GDS_USERSHUB_PREFIX:-/usershub}"
-      - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - USERSHUB_SECRET_KEY=${USERSHUB_SECRET_KEY:-ABCDEFGH123}
-      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
-      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
-      - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
-      - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
-      - PYTHONPATH=/dist/config
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.usershub.rule=Host(`${GDS_USERSHUB_DOMAIN}`) && PathPrefix(`${GDS_USERSHUB_PREFIX:-/usershub}`)"
-      - "traefik.http.routers.usershub.entrypoints=web"
-
-  taxhub:
-    <<: *geonature-backend-defaults
-    image: ${GDS_TAXHUB_IMAGE:-ghcr.io/pnx-si/taxhub:latest}
-    depends_on:
-      - postgres
-    volumes:
-      - ${GDS_TAXHUB_CONFIG_DIRECTORY:-./data/apps/taxhub/config}:/dist/config
-      - ${GDS_TAXHUB_STATIC_DIRECTORY:-./data/apps/taxhub/static}:/dist/static
-    environment:
-      - TAXHUB_APPLICATION_ROOT="${GDS_TAXHUB_PREFIX:-/taxhub}"
-      - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - TAXHUB_SETTINGS=${TAXHUB_SETTINGS:-config.py}
-      - PYTHONPATH=/dist/config
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.taxhub.rule=Host(`${GDS_TAXHUB_DOMAIN}`) && PathPrefix(`${GDS_TAXHUB_PREFIX:-/taxhub}`)"
-      - "traefik.http.routers.taxhub.entrypoints=web"
-
-  geonature-worker:
-    <<: *geonature-backend-defaults
-    image: ${GDS_GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend:latest}
-    depends_on:
-      - redis
-      - postgres
-    volumes:
-      - ${CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config/
-    command: celery -A geonature.celery_app:app worker
-
-  geonature-backend:
-    <<: *geonature-backend-defaults
-    image: ${GDS_GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend:latest}
-    depends_on:
-      - redis
-      - postgres
-    volumes:
-      - ${GDS_GEONATURE_CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config
-      - ${GDS_GEONATURE_MEDIA_DIRECTORY:-./data/apps/geonature/media}:/dist/media
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_BACKEND_PREFIX:-/geonature/api}`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=web"
-
-  geonature-frontend:
-    image: ${GDS_GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend:latest}
-    environment:
-      - NGINX_LOCATION=${GDS_GEONATURE_FRONTEND_PREFIX:-/}
-      - API_ENDPOINT="${GDS_GEONATURE_BACKEND_PROTOCOL}://${GDS_GEONATURE_BACKEND_HOST}${GDS_GEONATURE_BACKEND_PREFIX:-/}"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.geonature.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_FRONTEND_PREFIX:-/}`)"
-      - "traefik.http.routers.geonature.entrypoints=web"
-
   traefik:
-    image: traefik:2.9
+    image: traefik:2.10.4
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -127,9 +43,115 @@ services:
       - "--entrypoints.websecure.address=:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik/certs:/certs
     ports:
-      - ${GDS_HTTP_PORT:-80}:80
-      - ${GDS_HTTPS_PORT:-443}:443
+      - ${HTTP_PORT:-80}:80
+      - ${HTTPS_PORT:-443}:443
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    <<: *defaults
+    image: ${USERSHUB_IMAGE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/usershub:/dist/config/
+    environment:
+      - USERSHUB_URL_APPLICATION="${USERSHUB_PROTOCOL}://${USERSHUB_HOST}${USERSHUB_PREFIX}"
+      - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
+      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
+      - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
+      - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
+      - PYTHONPATH=/dist/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_DOMAIN}`) && PathPrefix(`${USERSHUB_PREFIX:-/usershub}`)"
+      - "traefik.http.routers.usershub.entrypoints=web"
+
+  taxhub:
+    <<: *defaults
+    image: ${TAXHUB_IMAGE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/taxhub:/dist/config
+      - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
+    environment:
+      - TAXHUB_APPLICATION_ROOT="${TAXHUB_PREFIX}"
+      - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      - TAXHUB_SETTINGS=${TAXHUB_SETTINGS:-config.py}
+      - PYTHONPATH=/dist/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_DOMAIN}`) && PathPrefix(`${TAXHUB_PREFIX:-/taxhub}`)"
+      - "traefik.http.routers.taxhub.entrypoints=web"
+
+  geonature-worker:
+    <<: *geonature-backend-defaults
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${CONFIG_DIRECTORY:-./config/geonature}:/dist/config/
+    command: celery -A geonature.celery_app:app worker
+
+  geonature-backend:
+    <<: *geonature-backend-defaults
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${GEONATURE_CONFIG_DIRECTORY:-./config/geonature}:/dist/config
+      - ${GEONATURE_MEDIA_DIRECTORY:-./data/geonature/media}:/dist/media
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX:-/geonature/api}`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=web"
+
+  geonature-frontend:
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
+    environment:
+      - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX}
+      - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOST}${GEONATURE_BACKEND_PREFIX}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_DOMAIN}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX:-/}`)"
+      - "traefik.http.routers.geonature.entrypoints=web"
 
 volumes:
   redis:
