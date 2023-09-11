@@ -1,7 +1,6 @@
 .env
-config/*
-data/taxhub/static/*
-data/geonature/media/*
+/config/
+/data/
 !data/**/.gitkeep
 !data/**/*.sample
 *.swp
