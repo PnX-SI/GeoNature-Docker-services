@@ -3,14 +3,17 @@ version: "3.9"
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
 
+x-geonature-depends-on-defaults: &geonature-depends-on-defaults
+  redis:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
   image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
   depends_on:
-    redis:
-      condition: service_healthy
-    postgres:
-      condition: service_healthy
+    <<: *geonature-depends-on-defaults
   volumes:
     - ./config/geonature:/dist/config
     - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
@@ -93,6 +96,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
     volumes:
       - ./config/usershub:/dist/config/
     environment:
@@ -117,6 +122,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
     volumes:
       - ./config/taxhub:/dist/config
       - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
@@ -133,17 +140,26 @@ services:
       - "traefik.http.routers.taxhub.entrypoints=websecure"
       - "traefik.http.routers.taxhub.tls.certResolver=acme-resolver"
 
+  geonature-install-db:
+    <<: *geonature-backend-defaults
+    command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+
   geonature-worker:
     <<: *geonature-backend-defaults
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    entrypoint: []
     command: celery -A geonature.celery_app:app worker
 
   geonature-backend:
     <<: *geonature-backend-defaults
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
-      - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    entrypoint: []
     command:
       - "gunicorn"
       - "geonature:create_app()"
@@ -154,6 +170,11 @@ services:
       - "--bind=0.0.0.0:8000"
       - "--reload"
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
+      - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
 
   geonature-frontend:
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
