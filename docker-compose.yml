@@ -2,25 +2,31 @@ version: "3.9"
 
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
-  environment:
-    - http_proxy=${HTTP_PROXY:-}
-    - https_proxy=${HTTPS_PROXY:-}
 
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
+  image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+  volumes:
+    - ./config/geonature:/dist/config
+    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
   environment:
+    - http_proxy=${HTTP_PROXY:-}
+    - https_proxy=${HTTPS_PROXY:-}
     - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-    - GEONATURE_URL_APPLICATION="${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX:-}"
-    - GEONATURE_API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX:-/}"
-    - GEONATURE_API_TAXHUB="${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}"
+    - GEONATURE_URL_APPLICATION=${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
+    - GEONATURE_API_ENDPOINT=${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
+    - GEONATURE_API_TAXHUB=${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
     - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
-    - GEONATURE_STATIC_FOLDER=${GEONATURE_STATIC_FOLDER:-/dist/static}
-    - GEONATURE_CUSTOM_STATIC_FOLDER=${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
-    - GEONATURE_MEDIA_FOLDER=${GEONATURE_MEDIA_FOLDER:-/dist/geonature_media}
     - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
     - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
-    - srid_local=${GEONATURE_SRID_LOCAL-2154}
-    - GEONATURE_POPULATE_DB=${GEONATURE_POPULATE_DB:-true}
+    - srid_local=${GEONATURE_LOCAL_SRID}
+    - GEONATURE_SKIP_POPULATE_DB=${GEONATURE_SKIP_POPULATE_DB:-false}
     - add_sample_data=${GEONATURE_ADD_SAMPLE_DATA:-false}
     - install_bdc_statuts=${GEONATURE_INSTALL_BDC_STATUTS:-true}
     - install_sig_layers=${GEONATURE_INSTALL_SIG_LAYERS:-false}
@@ -90,6 +96,8 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     environment:
+      - http_proxy=${HTTP_PROXY:-}
+      - https_proxy=${HTTPS_PROXY:-}
       - USERSHUB_URL_APPLICATION="${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
       - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
@@ -113,6 +121,8 @@ services:
       - ./config/taxhub:/dist/config
       - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
     environment:
+      - http_proxy=${HTTP_PROXY:-}
+      - https_proxy=${HTTPS_PROXY:-}
       - TAXHUB_APPLICATION_ROOT="${TAXHUB_PREFIX}"
       - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       - TAXHUB_SETTINGS=${TAXHUB_SETTINGS:-config.py}
@@ -125,32 +135,25 @@ services:
 
   geonature-worker:
     <<: *geonature-backend-defaults
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ${CONFIG_DIRECTORY:-./config/geonature}:/dist/config/
     command: celery -A geonature.celery_app:app worker
 
   geonature-backend:
     <<: *geonature-backend-defaults
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ${GEONATURE_CONFIG_DIRECTORY:-./config/geonature}:/dist/config
-      - ${GEONATURE_MEDIA_DIRECTORY:-./data/geonature/media}:/dist/media
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=websecure"
       - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
+    command:
+      - "gunicorn"
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=2"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
 
   geonature-frontend:
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
