@@ -3,11 +3,25 @@ version: "3.9"
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
 
+x-env-defaults: &env-defaults
+  http_proxy: ${HTTP_PROXY:-}
+  https_proxy: ${HTTPS_PROXY:-}
+
 x-geonature-depends-on-defaults: &geonature-depends-on-defaults
   redis:
     condition: service_healthy
   postgres:
     condition: service_healthy
+
+x-geonature-backend-env: &geonature-backend-env
+  <<: &env-defaults
+  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
+  GEONATURE_API_TAXHUB: ${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
+  GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+  GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
+  GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
 
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
@@ -19,26 +33,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
     - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
   environment:
-    - http_proxy=${HTTP_PROXY:-}
-    - https_proxy=${HTTPS_PROXY:-}
-    - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-    - GEONATURE_URL_APPLICATION=${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
-    - GEONATURE_API_ENDPOINT=${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
-    - GEONATURE_API_TAXHUB=${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
-    - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
-    - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
-    - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
-    - srid_local=${GEONATURE_LOCAL_SRID}
-    - GEONATURE_SKIP_POPULATE_DB=${GEONATURE_SKIP_POPULATE_DB:-false}
-    - add_sample_data=${GEONATURE_ADD_SAMPLE_DATA:-false}
-    - install_bdc_statuts=${GEONATURE_INSTALL_BDC_STATUTS:-true}
-    - install_sig_layers=${GEONATURE_INSTALL_SIG_LAYERS:-false}
-    - install_grid_layer=${GEONATURE_INSTALL_GRID_LAYER:-false}
-    - install_ref_sensitivity=${GEONATURE_INSTALL_REF_SENSITIVITY:-false}
-    - usershub=${GEONATURE_INSTALL_USERSHUB:-true}
-    - usershub_samples=${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
-    - taxhub=${GEONATURE_INSTALL_TAXHUB:-true}
-    - taxhub_samples=${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
+    <<: *geonature-backend-env
 
 services:
   traefik:
@@ -74,10 +69,10 @@ services:
   postgres:
     image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
     volumes:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
@@ -99,15 +94,14 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     environment:
-      - http_proxy=${HTTP_PROXY:-}
-      - https_proxy=${HTTPS_PROXY:-}
-      - USERSHUB_URL_APPLICATION="${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
-      - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
-      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
-      - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
-      - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
-      - PYTHONPATH=/dist/config
+      <<: &env-defaults
+      USERSHUB_URL_APPLICATION: "${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
@@ -126,12 +120,11 @@ services:
       - ./config/taxhub:/dist/config
       - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
     environment:
-      - http_proxy=${HTTP_PROXY:-}
-      - https_proxy=${HTTPS_PROXY:-}
-      - TAXHUB_APPLICATION_ROOT="${TAXHUB_PREFIX}"
-      - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - TAXHUB_SETTINGS=${TAXHUB_SETTINGS:-config.py}
-      - PYTHONPATH=/dist/config
+      <<: &env-defaults
+      TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
+      TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-config.py}
+      PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX}`)"
@@ -141,6 +134,18 @@ services:
   geonature-install-db:
     <<: *geonature-backend-defaults
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+    environment:
+      <<: *geonature-backend-env
+      srid_local: ${GEONATURE_LOCAL_SRID}
+      add_sample_data: ${GEONATURE_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_INSTALL_SIG_LAYERS:-false}
+      install_grid_layer: ${GEONATURE_INSTALL_GRID_LAYER:-false}
+      install_ref_sensitivity: ${GEONATURE_INSTALL_REF_SENSITIVITY:-false}
+      usershub: ${GEONATURE_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
+      taxhub: ${GEONATURE_INSTALL_TAXHUB:-true}
+      taxhub_samples: ${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
     <<: *geonature-backend-defaults
