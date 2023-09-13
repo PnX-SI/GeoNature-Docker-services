@@ -35,8 +35,6 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - install_sig_layers=${GEONATURE_INSTALL_SIG_LAYERS:-false}
     - install_grid_layer=${GEONATURE_INSTALL_GRID_LAYER:-false}
     - install_ref_sensitivity=${GEONATURE_INSTALL_REF_SENSITIVITY:-false}
-    - install_default_dem=${GEONATURE_INSTALL_DEFAULT_DEM:-false}
-    - vectorise_dem=${GEONATURE_INSTALL_VECTORISE_DEM:-false}
     - usershub=${GEONATURE_INSTALL_USERSHUB:-true}
     - usershub_samples=${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
     - taxhub=${GEONATURE_INSTALL_TAXHUB:-true}
