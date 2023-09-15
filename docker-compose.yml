@@ -14,7 +14,7 @@ x-geonature-depends-on-defaults: &geonature-depends-on-defaults
     condition: service_healthy
 
 x-geonature-backend-env: &geonature-backend-env
-  <<: &env-defaults
+  <<: *env-defaults
   GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
   GEONATURE_URL_APPLICATION: ${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
   GEONATURE_API_ENDPOINT: ${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
@@ -94,7 +94,7 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     environment:
-      <<: &env-defaults
+      <<: *env-defaults
       USERSHUB_URL_APPLICATION: "${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
       USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
@@ -120,7 +120,7 @@ services:
       - ./config/taxhub:/dist/config
       - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
     environment:
-      <<: &env-defaults
+      <<: *env-defaults
       TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
       TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-config.py}
