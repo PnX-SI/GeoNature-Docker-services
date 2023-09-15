@@ -3,133 +3,192 @@ version: "3.9"
 x-defaults: &defaults
   user: ${UID:-1000}:${GID:-1000}
 
+x-env-defaults: &env-defaults
+  http_proxy: ${HTTP_PROXY:-}
+  https_proxy: ${HTTPS_PROXY:-}
+
+x-geonature-depends-on-defaults: &geonature-depends-on-defaults
+  redis:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+
+x-geonature-backend-env: &geonature-backend-env
+  <<: *env-defaults
+  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
+  GEONATURE_API_TAXHUB: ${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
+  GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+  GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
+  GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
+
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
+  image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+  depends_on:
+    <<: *geonature-depends-on-defaults
+  volumes:
+    - ./config/geonature:/dist/config
+    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
   environment:
-    - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-    - GEONATURE_URL_APPLICATION="${GDS_GEONATURE_FRONTEND_PROTOCOL}://${GDS_GEONATURE_FRONTEND_HOST}${GDS_GEONATURE_FRONTEND_PREFIX:-}"
-    - GEONATURE_API_ENDPOINT="${GDS_GEONATURE_BACKEND_PROTOCOL}://${GDS_GEONATURE_BACKEND_HOST}${GDS_GEONATURE_BACKEND_PREFIX:-/}"
-    - GEONATURE_API_TAXHUB="${GDS_TAXHUB_PROTOCOL}://${GDS_TAXHUB_HOST}${GDS_TAXHUB_API_PREFIX}"
-    - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
-    - GEONATURE_STATIC_FOLDER=${GEONATURE_STATIC_FOLDER:-/dist/static}
-    - GEONATURE_CUSTOM_STATIC_FOLDER=${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
-    - GEONATURE_MEDIA_FOLDER=${GEONATURE_MEDIA_FOLDER:-/dist/geonature_media}
-    - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
-    - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
-    - srid_local=${GEONATURE_SRID_LOCAL-2154}
-    - GEONATURE_POPULATE_DB=${GEONATURE_POPULATE_DB:-true}
-    - add_sample_data=${GEONATURE_ADD_SAMPLE_DATA:-false}
-    - install_bdc_statuts=${GEONATURE_INSTALL_BDC_STATUTS:-true}
-    - install_sig_layers=${GEONATURE_INSTALL_SIG_LAYERS:-false}
-    - install_grid_layer=${GEONATURE_INSTALL_GRID_LAYER:-false}
-    - install_ref_sensitivity=${GEONATURE_INSTALL_REF_SENSITIVITY:-false}
-    - install_default_dem=${GEONATURE_INSTALL_DEFAULT_DEM:-false}
-    - vectorise_dem=${GEONATURE_INSTALL_VECTORISE_DEM:-false}
-    - usershub=${GEONATURE_INSTALL_USERSHUB:-true}
-    - usershub_samples=${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
-    - taxhub=${GEONATURE_INSTALL_TAXHUB:-true}
-    - taxhub_samples=${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
+    <<: *geonature-backend-env
 
 services:
+  traefik:
+    image: traefik:2.10.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
+      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
+      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik:/etc/traefik/dynamic
+      - ./data/traefik/certs:/etc/traefik/certs
+    ports:
+      - ${HTTP_PORT:-80}:80
+      - ${HTTPS_PORT:-443}:443
+
   redis:
     image: ${REDIS_IMAGE:-redis:7-alpine}
     volumes:
       - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
-    image: ${POSTGRES_IMAGE:-postgis/postgis:13-3.2}
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
     volumes:
-      - ${POSTGRES_INIT_DB_DIR-./sources/GeoNature/install/assets/db}:/docker-entrypoint-initdb.d/
-      - ${GDS_POSTGRES_DIRECTORY:-./data/db/postgres}:/var/lib/postgresql/data
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   usershub:
-    <<: *geonature-backend-defaults
-    image: ${GDS_USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
+    <<: *defaults
+    image: ${USERSHUB_IMAGE}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
     volumes:
-      - ${GDS_USERSHUB_CONFIG_DIRECTORY:-./data/apps/usershub/config}:/dist/config/
+      - ./config/usershub:/dist/config/
     environment:
-      - USERSHUB_URL_APPLICATION="${GDS_USERSHUB_PROTOCOL:-http}://${GDS_USERSHUB_HOST}${GDS_USERSHUB_PREFIX:-/usershub}"
-      - USERSHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - USERSHUB_SECRET_KEY=${USERSHUB_SECRET_KEY:-ABCDEFGH123}
-      - USERSHUB_SETTINGS=${USERSHUB_SETTINGS:-/dist/config/config.py}
-      - USERSHUB_ACTIVATE_APP=${USERSHUB_ACTIVATE_APP:-true}
-      - USERSHUB_ACTIVATE_API=${USERSHUB_ACTIVATE_API:-true}
-      - USERSHUB_COOKIE_EXPIRATION=${USERSHUB_COOKIE_EXPIRATION:-3600}
-      - PYTHONPATH=/dist/config
+      <<: *env-defaults
+      USERSHUB_URL_APPLICATION: "${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.usershub.rule=Host(`${GDS_USERSHUB_DOMAIN}`) && PathPrefix(`${GDS_USERSHUB_PREFIX:-/usershub}`)"
-      - "traefik.http.routers.usershub.entrypoints=web"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
+      - "traefik.http.routers.usershub.entrypoints=websecure"
+      - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
 
   taxhub:
-    <<: *geonature-backend-defaults
-    image: ${GDS_TAXHUB_IMAGE:-ghcr.io/pnx-si/taxhub:latest}
+    <<: *defaults
+    image: ${TAXHUB_IMAGE}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
     volumes:
-      - ${GDS_TAXHUB_CONFIG_DIRECTORY:-./data/apps/taxhub/config}:/dist/config
-      - ${GDS_TAXHUB_STATIC_DIRECTORY:-./data/apps/taxhub/static}:/dist/static
+      - ./config/taxhub:/dist/config
+      - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
     environment:
-      - TAXHUB_APPLICATION_ROOT="${GDS_TAXHUB_PREFIX:-/taxhub}"
-      - TAXHUB_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - TAXHUB_SETTINGS=${TAXHUB_SETTINGS:-config.py}
-      - PYTHONPATH=/dist/config
+      <<: *env-defaults
+      TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
+      TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-config.py}
+      PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.taxhub.rule=Host(`${GDS_TAXHUB_DOMAIN}`) && PathPrefix(`${GDS_TAXHUB_PREFIX:-/taxhub}`)"
-      - "traefik.http.routers.taxhub.entrypoints=web"
+      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX}`)"
+      - "traefik.http.routers.taxhub.entrypoints=websecure"
+      - "traefik.http.routers.taxhub.tls.certResolver=acme-resolver"
+
+  geonature-install-db:
+    <<: *geonature-backend-defaults
+    command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+    environment:
+      <<: *geonature-backend-env
+      srid_local: ${GEONATURE_LOCAL_SRID}
+      add_sample_data: ${GEONATURE_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_INSTALL_SIG_LAYERS:-true}
+      install_grid_layer: ${GEONATURE_INSTALL_GRID_LAYER:-true}
+      install_ref_sensitivity: ${GEONATURE_INSTALL_REF_SENSITIVITY:-true}
+      usershub: ${GEONATURE_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
+      taxhub: ${GEONATURE_INSTALL_TAXHUB:-true}
+      taxhub_samples: ${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
     <<: *geonature-backend-defaults
-    image: ${GDS_GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend:latest}
     depends_on:
-      - redis
-      - postgres
-    volumes:
-      - ${CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config/
-    command: celery -A geonature.celery_app:app worker
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    entrypoint: []
+    command: celery -A geonature.celery_app:app worker --beat
 
   geonature-backend:
     <<: *geonature-backend-defaults
-    image: ${GDS_GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend:latest}
     depends_on:
-      - redis
-      - postgres
-    volumes:
-      - ${GDS_GEONATURE_CONFIG_DIRECTORY:-./data/apps/geonature/config}:/dist/config
-      - ${GDS_GEONATURE_MEDIA_DIRECTORY:-./data/apps/geonature/media}:/dist/media
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    entrypoint: []
+    command:
+      - "gunicorn"
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=2"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_BACKEND_PREFIX:-/geonature/api}`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=web"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
+      - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
 
   geonature-frontend:
-    image: ${GDS_GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend:latest}
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
     environment:
-      - NGINX_LOCATION=${GDS_GEONATURE_FRONTEND_PREFIX:-/}
-      - API_ENDPOINT="${GDS_GEONATURE_BACKEND_PROTOCOL}://${GDS_GEONATURE_BACKEND_HOST}${GDS_GEONATURE_BACKEND_PREFIX:-/}"
+      - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX}
+      - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature.rule=Host(`${GDS_GEONATURE_DOMAIN}`) && PathPrefix(`${GDS_GEONATURE_FRONTEND_PREFIX:-/}`)"
-      - "traefik.http.routers.geonature.entrypoints=web"
-
-  traefik:
-    image: traefik:2.9
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - ${GDS_HTTP_PORT:-80}:80
-      - ${GDS_HTTPS_PORT:-443}:443
+      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
+      - "traefik.http.routers.geonature.entrypoints=websecure"
+      - "traefik.http.routers.geonature.tls.certResolver=acme-resolver"
 
 volumes:
   redis:

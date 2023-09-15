@@ -1,8 +1,6 @@
 .env
-data/apps/*/config/*
-data/apps/taxhub/static/*
-data/apps/atlas/custom/*
-data/apps/geonature/media/*
-data/db/*
+/config/
+/data/
 !data/**/.gitkeep
 !data/**/*.sample
+*.swp
