@@ -1,6 +1,6 @@
 # GeoNature Docker Services
 
-Ce dépôt permet de déployer automatiquement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et en HTTPS.  
+Ce dépôt permet de déployer automatiquement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et accessible en HTTPS.  
 De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les modules du cœur (Occtax, Occhab, Validation), les modules suivants :
 
 - [Import](https://github.com/PnX-SI/gn_module_import)
@@ -81,14 +81,14 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## Mettre à jour GeoNature et ses modules
 
-- Vérifiez si la [dernière disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
+- Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
 - Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
 - Mettez à jour le contenu du dossier dans sa dernière version : `git pull`
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d`
 
 ## Images Docker publiées
 
-Une action permet la publication d'images Docker frontend et backend de GeoNature sur [les packages du dépôt](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature-Docker-services] :
+Une action permet la publication automatique d'images Docker frontend et backend de GeoNature sur [les packages du dépôt](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature-Docker-services) :
 
 - `ghcr.io/pnx-si/geonature-frontend-extra`
 - `ghcr.io/pnx-si/geonature-backend-extra`
