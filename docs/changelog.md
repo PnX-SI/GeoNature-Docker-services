@@ -1,18 +1,17 @@
 CHANGELOG
 =========
 
-0.0.1 (unreleased)
+0.1.0 (2023-09-15)
 ------------------
 
-**Versions**
+Première version fonctionnelle de GeoNature-Docker-services, permettant de déployer, avec un seul fichier `docker-compose`, GeoNature et ses 4 modules externes principaux, TaxHub, UsersHub et traefik (comme reverse proxy et pour générer automatiquement les certificats SSL pour que les applications soient accessibles en HTTPS lors de leur installation).
 
-```
-GDS_VERSION=0.0.1
-TAXHUB_VERSION=1.11.1
-USERSHUB_VERSION=2.3.3
-GEONATURE_VERSION=2.12.3
-GN_MODULE_DASHBOARD=1.4.0
-GN_MODULE_EXPORT=1.6.0
-GN_MODULE_IMPORT=2.2.0
-GN_MODULE_MONITORING=0.7.0
-```
+**🏷️ Versions**
+
+- GeoNature 2.12.3
+- TaxHub 1.12.1
+- UsersHub 2.3.4
+- GeoNature-dashboard 1.4.0
+- GeoNature-export1.6.0
+- GeoNature-import 2.2.1
+- GeoNature-monitoring 0.7.0
