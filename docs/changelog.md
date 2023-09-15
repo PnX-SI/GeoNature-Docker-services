@@ -4,7 +4,7 @@ CHANGELOG
 0.1.0 (2023-09-15)
 ------------------
 
-Première version fonctionnelle de GeoNature-Docker-services, permettant de déployer, avec un seul fichier `docker-compose`, GeoNature et ses 4 modules externes principaux, TaxHub, UsersHub et traefik (comme reverse proxy et pour générer automatiquement les certificats SSL pour que les applications soient accessibles en HTTPS lors de leur installation).
+Première version fonctionnelle de GeoNature-Docker-services, permettant de déployer, avec un seul fichier `docker-compose`, GeoNature et ses 4 modules externes principaux, TaxHub, UsersHub et traefik (comme reverse proxy et pour gérer les certificats SSL, générés automatiquement pour que les applications soient accessibles en HTTPS lors de leur installation).
 
 **🏷️ Versions**
 
