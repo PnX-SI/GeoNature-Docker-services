@@ -86,6 +86,10 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 - Mettez à jour le contenu du dossier dans sa dernière version : `git pull`
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d`
 
+## FAQ
+
+Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
+
 ## Images Docker publiées
 
 Une action permet la publication automatique d'images Docker frontend et backend de GeoNature sur [les packages du dépôt](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature-Docker-services) :
