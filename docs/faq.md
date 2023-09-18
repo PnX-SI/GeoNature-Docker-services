@@ -76,3 +76,21 @@ Par défaut un MNT de France métropolitaine avec un pas de 250m fourni par l'IG
 
 À noter : si le conteneur `postgres` est re-créé, l’installation de `raster2pgsql` et la copie du MNT dans le conteneur seront perdus.  
 Mais ces données ne sont normalement plus nécessaires une fois le MNT importé dans la base de données (qui elle est permanente).
+
+
+## Comment rediriger `/` vers `/geonature/` ?
+
+Éditer le fichier `docker-compose.yml` (ou créer un fichier `docker-compose.override.yml`) et ajouter au service `traefik` les labels suivant :
+
+```
+services:
+  traefik:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.root.rule=Host(`${HOST}`) && Path(`/`)"
+      - "traefik.http.routers.root.entrypoints=websecure"
+      - "traefik.http.routers.root.tls.certResolver=acme-resolver"
+      - "traefik.http.routers.root.middlewares=gnprefix"
+      - "traefik.http.middlewares.gnprefix.redirectregex.regex=(.)*"
+      - "traefik.http.middlewares.gnprefix.redirectregex.replacement=${GEONATURE_FRONTEND_PREFIX}/"
+```
