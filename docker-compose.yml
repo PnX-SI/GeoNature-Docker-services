@@ -155,7 +155,7 @@ services:
       geonature-install-db:
         condition: service_completed_successfully
     entrypoint: []
-    command: celery -A geonature.celery_app:app worker --beat
+    command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
     <<: *geonature-backend-defaults
