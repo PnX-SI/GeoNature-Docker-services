@@ -94,3 +94,15 @@ services:
       - "traefik.http.middlewares.gnprefix.redirectregex.regex=(.)*"
       - "traefik.http.middlewares.gnprefix.redirectregex.replacement=${GEONATURE_FRONTEND_PREFIX}/"
 ```
+
+## Comment connaître la version de GeoNature contenue dans l’image Docker ?
+
+```
+docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{index .Config.Labels "org.opencontainers.image.version"}}'
+```
+
+ou, pour plus d’informations :
+
+```
+docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Config.Labels}}' | jq
+```
