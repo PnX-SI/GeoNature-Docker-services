@@ -106,3 +106,31 @@ ou, pour plus d’informations :
 ```
 docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Config.Labels}}' | jq
 ```
+
+
+# Comment rebuilder localement les images Docker ?
+
+- Initialiser et cloner les sous-modules git :
+  ```bash
+  git submodule init
+  git submodule update
+  ```
+- Faire de même pour les sous-modules de GeoNature, TaxHub et UsersHub, exemple pour GeoNature :
+  ```bash
+  cd sources/GeoNature
+  git submodule init
+  git submodule update
+  cd ../..
+  ```
+- Apporter vos éventuelles modifications au code source.
+- Il est conseillé de renommer les images dans le fichier `.env` afin de ne pas rentrer en conflit avec les images officielles, par exemple en leur rajoutant un suffix `-local` :
+  ```env
+  USERSHUB_IMAGE="ghcr.io/pnx-si/usershub-local:latest"
+  TAXHUB_IMAGE="ghcr.io/pnx-si/taxhub-latest:latest"
+  GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
+  GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra-local:latest"
+  GEONATURE_FRONTEND_IMAGE="ghcr.io/pnx-si/geonature-frontend-local:latest"
+  GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra-local:latest"
+  ```
+- Lancer le script `build/build.sh` depuis la racine du dépôt.
+- Relancer `docker compose up -d` afin de recréer les conteneurs avec vos propres images Docker.
