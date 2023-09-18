@@ -137,16 +137,16 @@ services:
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
     environment:
       <<: *geonature-backend-env
-      srid_local: ${GEONATURE_LOCAL_SRID}
-      add_sample_data: ${GEONATURE_ADD_SAMPLE_DATA:-false}
-      install_bdc_statuts: ${GEONATURE_INSTALL_BDC_STATUTS:-true}
-      install_sig_layers: ${GEONATURE_INSTALL_SIG_LAYERS:-true}
-      install_grid_layer: ${GEONATURE_INSTALL_GRID_LAYER:-true}
-      install_ref_sensitivity: ${GEONATURE_INSTALL_REF_SENSITIVITY:-true}
-      usershub: ${GEONATURE_INSTALL_USERSHUB:-true}
-      usershub_samples: ${GEONATURE_INSTALL_USERSHUB_SAMPLES:-true}
-      taxhub: ${GEONATURE_INSTALL_TAXHUB:-true}
-      taxhub_samples: ${GEONATURE_INSTALL_TAXHUB_SAMPLES:-true}
+      srid_local: ${GEONATURE_DB_LOCAL_SRID}
+      add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_DB_INSTALL_SIG_LAYERS:-true}
+      install_grid_layer: ${GEONATURE_DB_INSTALL_GRID_LAYER:-true}
+      install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
+      usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
+      taxhub: ${GEONATURE_DB_INSTALL_TAXHUB:-true}
+      taxhub_samples: ${GEONATURE_DB_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
     <<: *geonature-backend-defaults
