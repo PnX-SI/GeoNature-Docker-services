@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+0.2.0 (unreleased)
+------------------
+
+**⚠️ Notes de version**
+
+Les modifications suivantes ont été apporté au fichier `docker-comopose` :
+
+- Ajout de la variable d’environnement `USERSHUB_FILL_MD5_PASS` au service UsersHub :
+
+```
+services:
+  usershub:
+    environment:
+      USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+```
+
 0.1.0 (2023-09-15)
 ------------------
 
