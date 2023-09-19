@@ -1,6 +1,6 @@
 # GeoNature Docker Services
 
-Ce dépôt permet de déployer automatiquement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et accessible en HTTPS.  
+Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et accessible en HTTPS.  
 De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les modules du cœur (Occtax, Occhab, Validation), les modules suivants :
 
 - [Import](https://github.com/PnX-SI/gn_module_import)
@@ -13,10 +13,11 @@ De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les mod
 
 - Installer Docker : [voir la documentation](https://docs.docker.com/engine/install/)
 - Ajouter votre utilisateur courant au groupe `docker` : `sudo usermod -aG docker $USER` puis réouvrir sa session Linux ([voir la documentation](https://docs.docker.com/engine/install/linux-postinstall))
+- Installer `git` (`sudo apt-get install git`)
 - Clôner le dépôt : `git clone https://github.com/PnX-SI/GeoNature-Docker-services` ou extraire une [archive](https://github.com/PnX-SI/GeoNature-Docker-services/releases)
 - Se placer dans le répertoire du dépôt : `cd GeoNature-Docker-services`
 - Créer le fichier `.env` à partir du fichier d’exemple : `cp .env.sample .env`. Compléter les paramètres importants (`HOST`, `ACME_EMAIL`, `GEONATURE_LOCAL_SRID`, `POSTGRES_PASSWORD`).
-- Lancer la commande `./init-config.sh` afin de créer les ficiers de configuration suivant, avec des clés secrètes générées aléatoirement :
+- Lancer la commande `./init-config.sh` afin de créer les fichiers de configuration suivants, avec des clés secrètes générées aléatoirement :
   - `config/geonature/geonature_config.toml`
   - `config/usershub/config.py`
   - `config/taxhub/config.py`
@@ -32,7 +33,7 @@ Les logs sont accessibles avec la commande `docker compose logs -f` ou `docker c
  - `taxhub` : la gestion du référentiel taxonomique
  - `geonature-backend` : l’API de GeoNature
  - `geonature-frontend` : l’interface web de GeoNature
- - `geonature-worker` : exécution de certaines tâches de GeoNature en arrière plan (import, export, mail, etc...)
+ - `geonature-worker` : exécution de certaines tâches de GeoNature en arrière-plan (import, export, mail, etc...)
  - `redis` : service de communication entre le worker et le backend
  - `traefik` : serveur web redirigeant les requêtes vers le bon service
 
@@ -60,7 +61,9 @@ Voir la documentation des différentes applications pour renseigner les fichiers
 - TaxHub : `./config/taxhub/config.py` ([fichier d’exemple](https://github.com/PnX-SI/TaxHub/apptax/config.py.sample))
 
 Ces fichiers doivent contenir *a minima* le paramètre `SECRET_KEY`.  
-Vous pouvez générer des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
+Vous pouvez générer automatiquement des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
+
+Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de TaxHub ou de UsersHub, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`).
 
 À noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [`.env`](./.env.sample) et [`docker-compose.yml`](./docker-compose.yml)), comme par exemple :
 
@@ -101,7 +104,7 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 
 ## Liens utiles
 
-### Geonature
+### GeoNature
 
 - [Dépôt](https://github.com/PnX-SI/GeoNature)
 - [`Dockerfile` backend](https://github.com/PnX-SI/GeoNature/blob/master/backend/Dockerfile)
