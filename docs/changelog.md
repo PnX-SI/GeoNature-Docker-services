@@ -26,7 +26,7 @@ CHANGELOG
 
 **⚠️ Notes de version**
 
-Les modifications suivantes ont été apportées au fichier `docker-comopose.yml` :
+Les modifications suivantes ont été apportées au fichier `docker-compose.yml` :
 
 - Ajout de la variable d’environnement `USERSHUB_FILL_MD5_PASS` au service UsersHub :
   ```
