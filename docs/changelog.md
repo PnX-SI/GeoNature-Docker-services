@@ -10,14 +10,14 @@ CHANGELOG
 - TaxHub 1.12.1
 - UsersHub 2.3.4
 - GeoNature-dashboard 1.4.0
-- GeoNature-export1.6.0
+- GeoNature-export 1.6.0
 - GeoNature-import 2.2.2
 - GeoNature-monitoring 0.7.0
 
 **✨ Améliorations**
 
 - Compléments de la documentation (Redirections, version, rebuild des images)
-- Ajout de variables dans le `.env` pour pouvoir intégrer ou non les données initiales (référentiel de sensibilité, BDC statuts, zonages administratifs, mailles et données d"exemple) 
+- Ajout de variables dans le `.env` pour pouvoir intégrer ou non les données initiales (référentiel de sensibilité, BDC statuts, zonages administratifs, mailles et données d'exemple) 
 
 **🐛 Corrections**
 
@@ -53,6 +53,6 @@ Première version fonctionnelle de GeoNature-Docker-services, permettant de dép
 - TaxHub 1.12.1
 - UsersHub 2.3.4
 - GeoNature-dashboard 1.4.0
-- GeoNature-export1.6.0
+- GeoNature-export 1.6.0
 - GeoNature-import 2.2.1
 - GeoNature-monitoring 0.7.0
