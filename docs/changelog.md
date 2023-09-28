@@ -1,23 +1,44 @@
 CHANGELOG
 =========
 
+2.13.2 (2023-09-28)
+------------------
+
+**🏷️ Versions**
+
+- GeoNature 2.13.2
+- TaxHub 1.12.1
+- UsersHub 2.3.4
+- GeoNature-dashboard 1.4.0
+- GeoNature-export 1.6.0
+- GeoNature-import 2.2.3
+- GeoNature-monitoring 0.7.0
+
+**✨ Améliorations**
+
+- Mise à jour de Python en version 3.11 dans l'image Docker de GeoNature (#17)
+
+**🐛 Corrections**
+
+- Correction du chargement de la customisation (au niveau de GeoNature)
+
 0.2.0 (2023-09-19)
 ------------------
 
 **🏷️ Versions**
 
-- GeoNature 2.12.3
+- GeoNature 2.13.1
 - TaxHub 1.12.1
 - UsersHub 2.3.4
 - GeoNature-dashboard 1.4.0
-- GeoNature-export1.6.0
+- GeoNature-export 1.6.0
 - GeoNature-import 2.2.2
 - GeoNature-monitoring 0.7.0
 
 **✨ Améliorations**
 
 - Compléments de la documentation (Redirections, version, rebuild des images)
-- Ajout de variables dans le `.env` pour pouvoir intégrer ou non les données initiales (référentiel de sensibilité, BDC statuts, zonages administratifs, mailles et données d"exemple) 
+- Ajout de variables dans le `.env` pour pouvoir intégrer ou non les données initiales (référentiel de sensibilité, BDC statuts, zonages administratifs, mailles et données d'exemple) 
 
 **🐛 Corrections**
 
@@ -26,7 +47,7 @@ CHANGELOG
 
 **⚠️ Notes de version**
 
-Les modifications suivantes ont été apportées au fichier `docker-comopose.yml` :
+Les modifications suivantes ont été apportées au fichier `docker-compose.yml` :
 
 - Ajout de la variable d’environnement `USERSHUB_FILL_MD5_PASS` au service UsersHub :
   ```
@@ -53,6 +74,6 @@ Première version fonctionnelle de GeoNature-Docker-services, permettant de dép
 - TaxHub 1.12.1
 - UsersHub 2.3.4
 - GeoNature-dashboard 1.4.0
-- GeoNature-export1.6.0
+- GeoNature-export 1.6.0
 - GeoNature-import 2.2.1
 - GeoNature-monitoring 0.7.0
