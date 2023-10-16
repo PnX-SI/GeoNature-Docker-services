@@ -124,7 +124,7 @@ services:
       <<: *env-defaults
       TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
       TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-config.py}
+      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-/dist/config/config.py}
       PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
