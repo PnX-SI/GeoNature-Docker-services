@@ -126,6 +126,10 @@ services:
       TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-/dist/config/config.py}
       PYTHONPATH: /dist/config
+      TAXHUB_UPLOAD_FOLDER: "medias"
+      TAXHUB_SQLALCHEMY_TRACK_MODIFICATIONS: False
+      TAXHUB_COOKIE_EXPIRATION: 3600
+      TAXHUB_PASS_METHOD: "hash"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX}`)"
