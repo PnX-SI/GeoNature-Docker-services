@@ -102,7 +102,6 @@ services:
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
-      PYTHONPATH: /dist/config
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
@@ -125,7 +124,6 @@ services:
       TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
       TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-/dist/config/config.py}
-      PYTHONPATH: /dist/config
       TAXHUB_UPLOAD_FOLDER: "medias"
       TAXHUB_SQLALCHEMY_TRACK_MODIFICATIONS: False
       TAXHUB_COOKIE_EXPIRATION: 3600
