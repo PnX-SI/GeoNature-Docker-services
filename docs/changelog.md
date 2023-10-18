@@ -1,6 +1,28 @@
 CHANGELOG
 =========
 
+2.13.3 (2023-10-18)
+------------------
+
+**🏷️ Versions**
+
+- GeoNature 2.13.3
+- TaxHub 1.12.1
+- UsersHub 2.3.4
+- GeoNature-dashboard 1.4.0
+- GeoNature-export 1.6.0
+- GeoNature-import 2.2.3
+- GeoNature-monitoring 0.7.0
+
+**🐛 Corrections**
+
+- Correction de la prise en compte de la configuration de TaxHub (#20)
+
+**⚠️ Notes de version**
+
+- Comme indiqué dans la procédure classique de mise à jour, vous devez télécharger la nouvelle version du dépôt (notamment pour mettre à jour le fichier `docker-compose.yml` qui a évolué dans cette version)
+- Si vous l'aviez modifié localement, reportez les évolutions du fichier `docker-compose.yml` (#20), en y ajoutant les paramètres de TaxHub
+
 2.13.2 (2023-09-28)
 ------------------
 
