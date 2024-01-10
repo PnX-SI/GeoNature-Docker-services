@@ -22,7 +22,10 @@ De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les mod
   - `config/taxhub/config.py`
 - Lancer les conteneurs : `docker compose up -d`
 
-Les logs sont accessibles avec la commande `docker compose logs -f` ou `docker compose -f <nom du service>` (avec l'option `-n100` pour ne renvoyer que les 100 dernières lignes des logs).
+Les logs de tous les services sont accessibles avec la commande `docker compose logs -f`.
+Pour n'afficher que les 100 dernières lignes, on utilise l'option `--tail 100` et donc la commande `docker compose logs -f --tail 100`.
+Pour n'afficher les logs que d'un service en particulier, on utilise la commande `docker compose logs -f <nom du service>`.
+
 
 ## Les services
 
