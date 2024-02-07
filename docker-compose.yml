@@ -2,6 +2,7 @@ version: "3.9"
 
 x-defaults: &defaults
   user: ${UID}:${GID}
+  restart: ${RESTART_POLICY:-unless-stopped}
 
 x-env-defaults: &env-defaults
   http_proxy: ${HTTP_PROXY:-}

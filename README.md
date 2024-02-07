@@ -70,6 +70,8 @@ Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules
 - `SQLALCHEMY_DATABASE_URI`
 - ...
 
+Vous pouvez personnaliser la [politique de redémarrage automatique des services](https://github.com/compose-spec/compose-spec/blob/master/spec.md#restart) en paramétrant la variable `RESTART_POLICY` du fichier `.env` (valeur par défaut: `unless-stopped`)
+
 ### Dossiers de configuration et de customisation
 
 - Les fichiers de configuration de GeoNature et de ses modules, de TaxHub et de UsersHub sont donc dans le dossier `GeoNature-Docker-services/config/`
