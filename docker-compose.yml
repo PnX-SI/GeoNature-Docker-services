@@ -1,5 +1,8 @@
 version: "3.9"
 
+x-restart-policy: &restart-policy
+  restart: ${RESTART_POLICY:-unless-stopped}
+
 x-defaults: &defaults
   user: ${UID}:${GID}
 
@@ -37,6 +40,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
 
 services:
   traefik:
+    <<: *restart-policy
     image: traefik:2.10.4
     command:
       - "--providers.docker=true"
@@ -57,6 +61,7 @@ services:
       - ${HTTPS_PORT:-443}:443
 
   redis:
+    <<: *restart-policy
     image: ${REDIS_IMAGE:-redis:7-alpine}
     volumes:
       - redis:/data
@@ -67,6 +72,7 @@ services:
       retries: 5
 
   postgres:
+    <<: *restart-policy
     image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -84,7 +90,7 @@ services:
       retries: 5
 
   usershub:
-    <<: *defaults
+    <<: [*restart-policy,*defaults]
     image: ${USERSHUB_IMAGE}
     depends_on:
       postgres:
@@ -109,7 +115,7 @@ services:
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
 
   taxhub:
-    <<: *defaults
+    <<: [*restart-policy,*defaults]
     image: ${TAXHUB_IMAGE}
     depends_on:
       postgres:
@@ -151,7 +157,7 @@ services:
       taxhub_samples: ${GEONATURE_DB_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
-    <<: *geonature-backend-defaults
+    <<: [*restart-policy,*geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
@@ -160,7 +166,7 @@ services:
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
-    <<: *geonature-backend-defaults
+    <<: [*restart-policy,*geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
@@ -183,6 +189,7 @@ services:
       - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
 
   geonature-frontend:
+    <<: *restart-policy
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
     environment:
       - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX}
