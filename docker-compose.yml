@@ -189,7 +189,7 @@ services:
       - API_ENDPOINT="${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
+      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && ( PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`) || PathPrefix(`/{file:[^/]+\\.[^/]+}`) || PathPrefix(`/assets/config.json`))"
       - "traefik.http.routers.geonature.entrypoints=websecure"
       - "traefik.http.routers.geonature.tls.certResolver=acme-resolver"
 
