@@ -1,0 +1,14 @@
+services:
+  geonature-frontend:
+    build:
+      context: .
+      dockerfile: build/Dockerfile-geonature-frontend
+      target: source-extra
+      args:
+        GEONATURE_FRONTEND_IMAGE: ghcr.io/pnx-si/geonature-frontend:latest
+    working_dir: /build/src/app
+    command: npm run start -- --host 0.0.0.0
+    expose:
+      - 4200
+    volumes:
+      - ./sources/GeoNature/frontend/src:/build/src
