@@ -1,7 +1,6 @@
 # GeoNature Docker Services
 
-Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et accessible en HTTPS.  
-De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les modules du cœur (Occtax, Occhab, Validation), les modules suivants :
+Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub et TaxHub dans un environnement dockerisé et accessible en HTTPS. De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les modules du cœur (Occtax, Occhab, Validation), les modules suivants :
 
 - [Import](https://github.com/PnX-SI/gn_module_import)
 - [Export](https://github.com/PnX-SI/gn_module_exports)
