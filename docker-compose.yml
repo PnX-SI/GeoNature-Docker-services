@@ -48,6 +48,8 @@ services:
       - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL}"
       - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
       - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+      # Enables the web UI and tells Traefik to listen to docker  
+      - "--api.insecure=true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./config/traefik:/etc/traefik/dynamic
@@ -55,6 +57,8 @@ services:
     ports:
       - ${HTTP_PORT:-80}:80
       - ${HTTPS_PORT:-443}:443
+      # The Web UI (enabled by --api.insecure=true)
+      - "127.0.0.1:${TRAEFIK_UI_PORT:-8080}:8080"
 
   redis:
     image: ${REDIS_IMAGE:-redis:7-alpine}
