@@ -18,7 +18,6 @@ x-geonature-backend-env: &geonature-backend-env
   GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
   GEONATURE_URL_APPLICATION: ${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
   GEONATURE_API_ENDPOINT: ${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
-  GEONATURE_API_TAXHUB: ${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
   GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
@@ -108,31 +107,6 @@ services:
       - "traefik.http.routers.usershub.entrypoints=websecure"
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
 
-  taxhub:
-    <<: *defaults
-    image: ${TAXHUB_IMAGE}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      geonature-install-db:
-        condition: service_completed_successfully
-    volumes:
-      - ./config/taxhub:/dist/config
-      - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
-    environment:
-      <<: *env-defaults
-      TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
-      TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-/dist/config/config.py}
-      TAXHUB_UPLOAD_FOLDER: "medias"
-      TAXHUB_SQLALCHEMY_TRACK_MODIFICATIONS: False
-      TAXHUB_COOKIE_EXPIRATION: 3600
-      TAXHUB_PASS_METHOD: "hash"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX}`)"
-      - "traefik.http.routers.taxhub.entrypoints=websecure"
-      - "traefik.http.routers.taxhub.tls.certResolver=acme-resolver"
 
   geonature-install-db:
     <<: *geonature-backend-defaults
