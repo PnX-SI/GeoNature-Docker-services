@@ -29,8 +29,6 @@ docker build \
     -f ./build/Dockerfile-geonature-frontend \
     -t ${GEONATURE_FRONTEND_EXTRA_IMAGE} .
 
-# TaxHub
-docker build -f sources/TaxHub/Dockerfile -t ${TAXHUB_IMAGE} --target=prod sources/TaxHub/
 
 # UsersHub
 docker build -f sources/UsersHub/Dockerfile -t ${USERSHUB_IMAGE} --target=prod sources/UsersHub/
