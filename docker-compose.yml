@@ -83,13 +83,23 @@ services:
       - postgres:/var/lib/postgresql/data
     healthcheck:
       # during db init, postgres is not listening on localhost so this avoid false healthy status
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}", "-h", "localhost"]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB}",
+          "-U",
+          "${POSTGRES_USER}",
+          "-h",
+          "localhost",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   usershub:
-    <<: [*restart-policy,*defaults]
+    <<: [*restart-policy, *defaults]
     image: ${USERSHUB_IMAGE}
     depends_on:
       postgres:
@@ -126,11 +136,9 @@ services:
       install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
       usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
       usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
-      taxhub: ${GEONATURE_DB_INSTALL_TAXHUB:-true}
-      taxhub_samples: ${GEONATURE_DB_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
-    <<: [*restart-policy,*geonature-backend-defaults]
+    <<: [*restart-policy, *geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
@@ -139,7 +147,7 @@ services:
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
-    <<: [*restart-policy,*geonature-backend-defaults]
+    <<: [*restart-policy, *geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
