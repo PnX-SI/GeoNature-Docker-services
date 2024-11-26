@@ -134,7 +134,6 @@ services:
       install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
       usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
       usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
-      GEONATURE_SKIP_POPULATE_DB: ${SKIP_POPULATE_DB:-false}
 
   geonature-worker:
     <<: [*restart-policy, *geonature-backend-defaults]
