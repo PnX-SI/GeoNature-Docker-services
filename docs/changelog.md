@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 2.15.0
+
+**🏷️ Versions**
+
+- GeoNature 2.15.0
+- UsersHub 2.4.4
+- GeoNature-dashboard 1.5.0
+- GeoNature-export 1.7.2
+- GeoNature-monitoring 0.7.3
+
+**⚠️ Notes de version**
+
+- TaxHub est intégré à GeoNature par conséquent il n'y auras plus de container TaxHub
+- Pour le fonctionnement de la base de donnée il faut installer l'extension ltree dans le container postgre, vous pouvez le faire avec la commande suivante :
+  - docker compose exec postgres psql -U {POSTGRES_USER} -d {POSTGRES_DB} -f /docker-entrypoint-initdb.d/add-extensions.sql
+
+
 ## 2.14.2 (2024-06-03)
 
 - GeoNature 2.14.2
