@@ -14,8 +14,8 @@
 
 - TaxHub est intégré à GeoNature par conséquent il n'y auras plus de container TaxHub
 - Pour le fonctionnement de la base de donnée il faut installer l'extension ltree dans le container postgre, vous pouvez le faire avec la commande suivante :
-  - docker compose exec postgres psql -U {POSTGRES_USER} -d {POSTGRES_DB} -f /docker-entrypoint-initdb.d/add-extensions.sql
-
+  `docker compose exec postgres psql -U [user_postgres] -d [nom_db_geonature] -f /docker-entrypoint-initdb.d/add-extensions.sql`
+- Depuis que TaxHub est intégré dans GeoNature, le dossier `config/taxhub` n'est plus utilisée.
 
 ## 2.14.2 (2024-06-03)
 
