@@ -135,6 +135,15 @@ Une fois que le code source du module est dans le dossier `sources`, vous devez 
    COPY --from=build-nom-module /build/dist/*.whl .
    ```
 
+3. Si votre module possède un frontend, ouvrez le fichier `Dockerfile-geonature-frontend` et ajouter les lignes suivantes **avant**`FROM source-extra AS build-extra` :
+
+```docker
+WORKDIR /build/external_modules/module_code
+COPY ./sources/nom_module/frontend/ .
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --omit=peer
+```
+
 ### Étape 3 : Ajouter le fichier de configuration (si applicable)
 
 Si votre module GeoNature nécessite un fichier de configuration spécifique, déposez-le dans le dossier `data/geonature/config`.
