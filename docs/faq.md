@@ -139,10 +139,6 @@ Une fois que le code source du module est dans le dossier `sources`, vous devez 
 
 Si votre module GeoNature nécessite un fichier de configuration spécifique, déposez-le dans le dossier `data/geonature/config`.
 
----
-
-Cette version simplifie légèrement les phrases tout en maintenant la clarté des étapes.
-
 ## Comment rebuilder localement les images Docker ?
 
 - Initialiser et cloner les sous-modules git :
