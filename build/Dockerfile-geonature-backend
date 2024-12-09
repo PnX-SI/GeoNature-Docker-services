@@ -22,6 +22,11 @@ WORKDIR /build/
 COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
+FROM build AS build-mtd-sync
+WORKDIR /build/
+COPY ./sources/mtd_sync .
+RUN python setup.py bdist_wheel
+
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
 
 WORKDIR /dist/geonature
@@ -31,6 +36,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
 COPY --from=build-export /build/dist/*.whl .
 COPY --from=build-dashboard /build/dist/*.whl .
 COPY --from=build-monitoring /build/dist/*.whl .
+COPY --from=build-mtd-sync /build/dist/*.whl .
 RUN --mount=type=cache,target=/root/.cache \
-    pip install *.whl sentry_sdk[flask]
+    pip install *.whl
 RUN rm -f *.whl
