@@ -8,7 +8,7 @@ Pour exécuter une commande `geonature`, lancer la commande :
 docker compose exec -it geonature-backend geonature nom_de_la_commande
 ```
 
-Exemples : 
+Exemples :
 
 ```
 docker compose exec -it geonature-backend geonature --help
@@ -33,8 +33,7 @@ Dans ce cas, vous pouvez utiliser un autre port : `-5433:5432`.
 La base de données sera alors accessible localement sur le port 5433.  
 Attention, le deuxième port est celui d’écoute dans le conteneur et doit rester à 5432.
 
-
-## Comment déployer GeoNature, TaxHub et UsersHub sur des domaines séparés ?
+## Comment déployer GeoNature et UsersHub sur des domaines séparés ?
 
 Modifier le fichier `.env` comme ceci (on suppose que `HOST="mon-domaine.org"`) :
 
@@ -42,11 +41,6 @@ Modifier le fichier `.env` comme ceci (on suppose que `HOST="mon-domaine.org"`) 
 USERSHUB_HOST="usershub.${HOST}"
 USERSHUB_HOSTPORT="usershub.${HOSTPORT}"
 USERSHUB_PREFIX="/"
-
-TAXHUB_HOST="taxhub.${HOST}"
-TAXHUB_HOSTPORT="taxhub.${HOSTPORT}"
-TAXHUB_PREFIX="/"
-TAXHUB_API_PREFIX="${TAXHUB_PREFIX}api"
 
 GEONATURE_BACKEND_HOST="geonature.${HOST}"
 GEONATURE_BACKEND_HOSTPORT="geonature.${HOSTPORT}"
@@ -59,8 +53,7 @@ GEONATURE_FRONTEND_PREFIX="/"
 
 Puis relancer `docker compose up -d`
 
-Vous pourrez alors accéder, par exemple, à GeoNature à l’adresse https://geonature.mon-domaine.org, TaxHub à l’adresse https://taxhub.mon-domaine.org et UsersHub à l'adresse https://usershub.mon-domaine.org.
-
+Vous pourrez alors accéder, par exemple, à GeoNature à l’adresse https://geonature.mon-domaine.org et UsersHub à l'adresse https://usershub.mon-domaine.org.
 
 ## Comment importer le MNT / DEM ?
 
@@ -76,7 +69,6 @@ Par défaut un MNT de France métropolitaine avec un pas de 250m fourni par l'IG
 
 À noter : si le conteneur `postgres` est recréé, l’installation de `raster2pgsql` et la copie du MNT dans le conteneur seront perdus.  
 Mais ces données ne sont normalement plus nécessaires une fois le MNT importé dans la base de données (qui elle est permanente).
-
 
 ## Comment rediriger `/` vers `/geonature/` ?
 
@@ -95,7 +87,6 @@ services:
       - "traefik.http.middlewares.gnprefix.redirectregex.replacement=${GEONATURE_FRONTEND_PREFIX}/"
 ```
 
-
 ## Comment connaître la version de GeoNature contenue dans l’image Docker ?
 
 ```
@@ -108,7 +99,6 @@ ou, pour plus d’informations :
 docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Config.Labels}}'
 ```
 
-
 ## Comment rebuilder localement les images Docker ?
 
 - Initialiser et cloner les sous-modules git :
@@ -116,7 +106,7 @@ docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Co
   git submodule init
   git submodule update
   ```
-- Faire de même pour les sous-modules de GeoNature, TaxHub et UsersHub, exemple pour GeoNature :
+- Faire de même pour les sous-modules de GeoNature et UsersHub, exemple pour GeoNature :
   ```bash
   cd sources/GeoNature
   git submodule init
@@ -127,7 +117,6 @@ docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Co
 - Il est conseillé de renommer les images dans le fichier `.env` afin de ne pas rentrer en conflit avec les images officielles, par exemple en leur rajoutant un suffix `-local` :
   ```env
   USERSHUB_IMAGE="ghcr.io/pnx-si/usershub-local:latest"
-  TAXHUB_IMAGE="ghcr.io/pnx-si/taxhub-local:latest"
   GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
   GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra-local:latest"
   GEONATURE_FRONTEND_IMAGE="ghcr.io/pnx-si/geonature-frontend-local:latest"
