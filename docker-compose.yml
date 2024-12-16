@@ -1,5 +1,8 @@
 version: "3.9"
 
+x-restart-policy: &restart-policy
+  restart: ${RESTART_POLICY:-unless-stopped}
+
 x-defaults: &defaults
   user: ${UID}:${GID}
 
@@ -18,7 +21,6 @@ x-geonature-backend-env: &geonature-backend-env
   GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
   GEONATURE_URL_APPLICATION: ${GEONATURE_FRONTEND_PROTOCOL}://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
   GEONATURE_API_ENDPOINT: ${GEONATURE_BACKEND_PROTOCOL}://${GEONATURE_BACKEND_HOSTPORT}${GEONATURE_BACKEND_PREFIX}
-  GEONATURE_API_TAXHUB: ${TAXHUB_PROTOCOL}://${TAXHUB_HOSTPORT}${TAXHUB_API_PREFIX}
   GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
@@ -37,6 +39,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
 
 services:
   traefik:
+    <<: *restart-policy
     image: traefik:2.10.4
     command:
       - "--providers.docker=true"
@@ -57,6 +60,7 @@ services:
       - ${HTTPS_PORT:-443}:443
 
   redis:
+    <<: *restart-policy
     image: ${REDIS_IMAGE:-redis:7-alpine}
     volumes:
       - redis:/data
@@ -67,6 +71,7 @@ services:
       retries: 5
 
   postgres:
+    <<: *restart-policy
     image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -78,13 +83,23 @@ services:
       - postgres:/var/lib/postgresql/data
     healthcheck:
       # during db init, postgres is not listening on localhost so this avoid false healthy status
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}", "-h", "localhost"]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB}",
+          "-U",
+          "${POSTGRES_USER}",
+          "-h",
+          "localhost",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   usershub:
-    <<: *defaults
+    <<: [*restart-policy, *defaults]
     image: ${USERSHUB_IMAGE}
     depends_on:
       postgres:
@@ -108,32 +123,6 @@ services:
       - "traefik.http.routers.usershub.entrypoints=websecure"
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
 
-  taxhub:
-    <<: *defaults
-    image: ${TAXHUB_IMAGE}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      geonature-install-db:
-        condition: service_completed_successfully
-    volumes:
-      - ./config/taxhub:/dist/config
-      - ./data/taxhub/medias:${TAXHUB_STATIC_FOLDER:-/dist/static}/medias
-    environment:
-      <<: *env-defaults
-      TAXHUB_APPLICATION_ROOT: "${TAXHUB_PREFIX}"
-      TAXHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      TAXHUB_SETTINGS: ${TAXHUB_SETTINGS:-/dist/config/config.py}
-      TAXHUB_UPLOAD_FOLDER: "medias"
-      TAXHUB_SQLALCHEMY_TRACK_MODIFICATIONS: False
-      TAXHUB_COOKIE_EXPIRATION: 3600
-      TAXHUB_PASS_METHOD: "hash"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.taxhub.rule=Host(`${TAXHUB_HOST}`) && PathPrefix(`${TAXHUB_PREFIX}`)"
-      - "traefik.http.routers.taxhub.entrypoints=websecure"
-      - "traefik.http.routers.taxhub.tls.certResolver=acme-resolver"
-
   geonature-install-db:
     <<: *geonature-backend-defaults
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
@@ -147,11 +136,9 @@ services:
       install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
       usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
       usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
-      taxhub: ${GEONATURE_DB_INSTALL_TAXHUB:-true}
-      taxhub_samples: ${GEONATURE_DB_INSTALL_TAXHUB_SAMPLES:-true}
 
   geonature-worker:
-    <<: *geonature-backend-defaults
+    <<: [*restart-policy, *geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
@@ -160,7 +147,7 @@ services:
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
-    <<: *geonature-backend-defaults
+    <<: [*restart-policy, *geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
@@ -183,6 +170,7 @@ services:
       - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
 
   geonature-frontend:
+    <<: *restart-policy
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
     environment:
       - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX}

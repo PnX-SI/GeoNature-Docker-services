@@ -1,8 +1,29 @@
 # CHANGELOG
 
+## 2.15.0
+
+**🏷️ Versions**
+
+- GeoNature 2.15.0
+- TaxHub 2.1.0
+- UsersHub 2.4.4
+- GeoNature-dashboard 1.5.0
+- GeoNature-export 1.7.2
+- GeoNature-monitoring 1.0.0
+
+**🚀 Nouveautés**
+
+- TaxHub est désormais intégré à GeoNature.
+
+**⚠️ Notes de version**
+
+- Avant d'effectuer la mise à jour de GeoNature, installer l'extension `ltree` dans le container `postgres` :
+  `docker compose exec postgres psql -U [user_postgres] -d [nom_db_geonature] -f /docker-entrypoint-initdb.d/add-extensions.sql`
+- La suppression du container TaxHub implique une modification du docker-compose, n'oubliez pas de récupérer les modifications de ce dernier ([Voir documentation](https://github.com/PnX-SI/GeoNature-Docker-services?tab=readme-ov-file#mettre-%C3%A0-jour-geonature-et-ses-modules))
+
 ## 2.14.2 (2024-06-03)
 
-- Geonature 2.14.2
+- GeoNature 2.14.2
 - TaxHub 1.14.1
 - UsersHub 2.4.3
 - GeoNature-dashboard 1.5.0
@@ -71,9 +92,7 @@
 - Comme indiqué dans la procédure classique de mise à jour, vous devez télécharger la nouvelle version du dépôt (notamment pour mettre à jour le fichier `docker-compose.yml` qui a évolué dans cette version)
 - Si vous l'aviez modifié localement, reportez les évolutions du fichier `docker-compose.yml` (#20), en y ajoutant les paramètres de TaxHub
 
-  2.13.2 (2023-09-28)
-
----
+## 2.13.2 (2023-09-28)
 
 **🏷️ Versions**
 
@@ -93,9 +112,7 @@
 
 - Correction du chargement de la customisation (au niveau de GeoNature)
 
-  0.2.0 (2023-09-19)
-
----
+## 0.2.0 (2023-09-19)
 
 **🏷️ Versions**
 
@@ -136,9 +153,7 @@ Les modifications suivantes ont été apportées au fichier `docker-compose.yml`
       command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
   ```
 
-  0.1.0 (2023-09-15)
-
----
+## 0.1.0 (2023-09-15)
 
 Première version fonctionnelle de GeoNature-Docker-services, permettant de déployer, avec un seul fichier `docker-compose`, GeoNature et ses 4 modules externes principaux, TaxHub, UsersHub et traefik (comme reverse proxy et pour gérer les certificats SSL, générés automatiquement pour que les applications soient accessibles en HTTPS lors de leur installation).
 
