@@ -5,17 +5,21 @@
 **🏷️ Versions**
 
 - GeoNature 2.15.0
+- TaxHub 2.1.0
 - UsersHub 2.4.4
 - GeoNature-dashboard 1.5.0
 - GeoNature-export 1.7.2
-- GeoNature-monitoring 0.7.3
+- GeoNature-monitoring 1.0.0
+
+**🚀 Nouveautés**
+
+- TaxHub est désormais intégré à GeoNature.
 
 **⚠️ Notes de version**
 
-- TaxHub est intégré à GeoNature par conséquent il n'y auras plus de container TaxHub
-- Pour le fonctionnement de la base de donnée il faut installer l'extension ltree dans le container postgre, vous pouvez le faire avec la commande suivante :
+- Avant d'effectuer la mise à jour de GeoNature, installer l'extension `ltree` dans le container `postgres` :
   `docker compose exec postgres psql -U [user_postgres] -d [nom_db_geonature] -f /docker-entrypoint-initdb.d/add-extensions.sql`
-- Depuis que TaxHub est intégré dans GeoNature, le dossier `config/taxhub` n'est plus utilisée.
+- La suppression du container TaxHub implique une modification du docker-compose, n'oubliez pas de récupérer les modifications de ce dernier ([Voir documentation](https://github.com/PnX-SI/GeoNature-Docker-services?tab=readme-ov-file#mettre-%C3%A0-jour-geonature-et-ses-modules))
 
 ## 2.14.2 (2024-06-03)
 
