@@ -13,7 +13,8 @@
 
 **🚀 Nouveautés**
 
-- TaxHub est désormais intégré à GeoNature.
+- TaxHub est désormais intégré à GeoNature
+- Ajout d'une politique de redémarrage automatique des services Docker (#26; par @lpofredc)
 
 **⚠️ Notes de version**
 
