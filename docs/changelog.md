@@ -20,6 +20,8 @@
 
 - Avant d'effectuer la mise à jour de GeoNature, installer l'extension `ltree` dans le container `postgres` :
   `docker compose exec postgres psql -U [user_postgres] -d [nom_db_geonature] -f /docker-entrypoint-initdb.d/add-extensions.sql`
+- Avec cette nouvelle version, les médias de TaxHub se trouvent dans le dossier `media` de GeoNature. Si vous mettez à jour votre GeoNature, déplacer les médias de TaxHub de l'ancien dossier (`GeoNature-Docker-services/data/taxhub/medias`) vers le nouveau (`GeoNature-Docker-services/data/geonature/media/taxhub`) : 
+`cp -r data/taxhub/medias/* data/geonature/media/taxhub`
 - La suppression du container TaxHub implique une modification du docker-compose, n'oubliez pas de récupérer les modifications de ce dernier ([Voir documentation](https://github.com/PnX-SI/GeoNature-Docker-services?tab=readme-ov-file#mettre-%C3%A0-jour-geonature-et-ses-modules))
 
 ## 2.14.2 (2024-06-03)
