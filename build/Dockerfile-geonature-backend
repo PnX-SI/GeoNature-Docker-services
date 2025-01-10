@@ -1,4 +1,4 @@
-ARG GEONATURE_BACKEND_IMAGE
+ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
 
 FROM python:3.11-bookworm AS build
 
@@ -23,6 +23,7 @@ COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
+
 
 WORKDIR /dist/geonature
 RUN --mount=type=cache,target=/var/cache/apt \
