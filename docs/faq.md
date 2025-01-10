@@ -103,8 +103,8 @@ docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Co
 
 - Initialiser et cloner les sous-modules git :
   ```bash
-  git submodule init
-  git submodule update
+  git submodule update --init --recursive
+  git submodule update --recursive 
   ```
 - Faire de même pour les sous-modules de GeoNature et UsersHub, exemple pour GeoNature :
   ```bash

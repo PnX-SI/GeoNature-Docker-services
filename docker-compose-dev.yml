@@ -1,0 +1,4 @@
+services:
+  geonature-backend:
+    volumes:
+      - ./sources/GeoNature:/sources/GeoNature
