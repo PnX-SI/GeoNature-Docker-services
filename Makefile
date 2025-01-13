@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-prod:
+launch: submodule_init
 	docker compose up -d
 
 submodule_init:
@@ -11,6 +11,11 @@ submodule_init:
 	git submodule update &&\
 	popd
 
-dev: submodule_init
-	build/build.sh
+build: submodule_init
+	buil/build.sh
+
+dev: build
 	docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+
+prod: submodule_init
+	 COMPOSE_FILE=docker-compose.yml docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d
