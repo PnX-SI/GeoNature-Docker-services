@@ -11,11 +11,11 @@ submodule_init:
 	git submodule update &&\
 	popd
 
-build: submodule_init
-	buil/build.sh
+build:
+	build/build.sh
 
-dev: build
-	docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+dev: submodule_init
+	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d
 
 prod: submodule_init
-	 COMPOSE_FILE=docker-compose.yml docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+	COMPOSE_FILE=docker-compose.yml docker compose up -d
