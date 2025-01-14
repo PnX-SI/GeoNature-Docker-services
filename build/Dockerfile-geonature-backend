@@ -22,9 +22,7 @@ WORKDIR /build/
 COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
-FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
-
-
+FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
 WORKDIR /dist/geonature
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
@@ -32,6 +30,19 @@ RUN --mount=type=cache,target=/var/cache/apt \
 COPY --from=build-export /build/dist/*.whl .
 COPY --from=build-dashboard /build/dist/*.whl .
 COPY --from=build-monitoring /build/dist/*.whl .
+
+
+FROM base_env AS dev
+RUN rm -f geonature-*
+COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature
+RUN --mount=type=cache,target=/root/.cache \
+    pip install -e /sources/GeoNature
+RUN --mount=type=cache,target=/root/.cache \
+    pip install *.whl sentry_sdk[flask]
+RUN rm -f *.whl
+
+
+FROM base_env AS prod-extra
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
 RUN rm -f *.whl

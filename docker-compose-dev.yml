@@ -44,14 +44,16 @@ services:
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
     build:
-      dockerfile: build/dev/Dockerfile-geonature-backend
+      dockerfile: build/Dockerfile-geonature-backend
+      target: dev
 
   geonature-worker:
     depends_on:
       base-backend:
         condition: service_completed_successfully
     build:
-      dockerfile: build/dev/Dockerfile-geonature-backend
+      dockerfile: build/Dockerfile-geonature-backend
+      target: dev
 
   geonature-frontend:
     depends_on:
