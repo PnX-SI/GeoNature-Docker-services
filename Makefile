@@ -4,12 +4,7 @@ launch: submodule_init
 	docker compose up -d
 
 submodule_init:
-	git submodule init
-	git submodule update
-	pushd sources/GeoNature &&\
-	git submodule init &&\
-	git submodule update &&\
-	popd
+	git submodule update --init --recursive
 
 build:
 	build/build.sh
