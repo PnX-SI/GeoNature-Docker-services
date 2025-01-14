@@ -1,4 +1,67 @@
 services:
+
+  #------------------------------------Builds section start-----------------------------------#
+  base-backend:
+    image: ${GEONATURE_BACKEND_IMAGE}-wheels
+    build:
+      context: sources/GeoNature
+      dockerfile: backend/Dockerfile
+      target: wheels
+    entrypoint: /bin/bash -c exit
+
+  base-frontend-source:
+    image: ${GEONATURE_FRONTEND_IMAGE}-source
+    build:
+      context: sources/GeoNature
+      dockerfile: frontend/Dockerfile
+      target: source
+    entrypoint: /bin/bash -c exit
+
+  base-frontend-nginx:
+    image: ${GEONATURE_FRONTEND_IMAGE}-nginx
+    build:
+      context: sources/GeoNature
+      dockerfile: frontend/Dockerfile
+      target: prod-base
+    entrypoint: /bin/sh -c exit
+
+  userhub-build:
+    image: ${USERSHUB_IMAGE}
+    build:
+      target: prod
+      context: sources/UsersHub
+    volumes:
+      - ./config/usershub:/dist/config/
+    entrypoint: /bin/sh -c exit
+  #------------------------------------Builds section end------------------------------------#
+
+
+
   geonature-backend:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+
+  geonature-worker:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+
+  geonature-frontend:
+    depends_on:
+      base-frontend-source:
+        condition: service_completed_successfully
+    build:
+      context: .
+      args:
+        - GEONATURE_FRONTEND_IMAGE=${GEONATURE_FRONTEND_IMAGE}
+      # TODO create a dev dockerfiles
+      dockerfile: build/Dockerfile-geonature-frontend
+
+# TODO rendre optionel la partie peuplement de la BDD
