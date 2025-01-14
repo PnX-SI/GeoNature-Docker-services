@@ -102,7 +102,8 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 ## Lancer une instance de développement 
 Commencez par vous assurer d'avoir installé make `sudo apt install make`.
 
-Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnent de dev.
+Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
+Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`. 
 
 Une fois cela fait, il ne vous reste plus qu'à lancer `make dev`. Selon vos préférences, si la commande 
 `make submodule_init` a déjà été lancé une fois, vous pouvez simplement lancer un `docker compose up`.
