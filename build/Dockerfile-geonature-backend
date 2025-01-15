@@ -32,16 +32,6 @@ COPY --from=build-dashboard /build/dist/*.whl .
 COPY --from=build-monitoring /build/dist/*.whl .
 
 
-FROM base_env AS dev
-RUN rm -f geonature-*
-COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature
-RUN --mount=type=cache,target=/root/.cache \
-    pip install -e /sources/GeoNature
-RUN --mount=type=cache,target=/root/.cache \
-    pip install *.whl sentry_sdk[flask]
-RUN rm -f *.whl
-
-
 FROM base_env AS prod-extra
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
