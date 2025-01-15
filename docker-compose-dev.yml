@@ -34,8 +34,12 @@ services:
       - ./config/usershub:/dist/config/
     entrypoint: /bin/sh -c exit
   #------------------------------------Builds section end------------------------------------#
-
-
+  geonature-install-db:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
 
   geonature-backend:
     depends_on:
@@ -43,17 +47,23 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
+      - ./sources/gn_module_export:/sources/gn_module_export
+      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
+      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
     build:
-      dockerfile: build/Dockerfile-geonature-backend
-      target: dev
+      dockerfile: build/dev/Dockerfile-geonature-backend
 
   geonature-worker:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    volumes:
+      - ./sources/GeoNature:/sources/GeoNature
+      - ./sources/gn_module_export:/sources/gn_module_export
+      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
+      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
     build:
-      dockerfile: build/Dockerfile-geonature-backend
-      target: dev
+      dockerfile: build/dev/Dockerfile-geonature-backend
 
   geonature-frontend:
     depends_on:

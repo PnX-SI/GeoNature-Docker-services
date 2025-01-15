@@ -3,7 +3,8 @@
 set -x
 set -o nounset
 # todo delete this file ? Unless we want people to be able to build without launching compose
-# Why Buildkit is used ?
+# Buildkit by default since 2023, we don't need to specify it no more ? Same thing with compose that use it by default
+# now
 export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
 source .env
