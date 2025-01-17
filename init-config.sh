@@ -22,6 +22,11 @@ if [ ! -f "$GEONATURE_CONFIG_DIR/usershub/config.py" ]; then
     echo "SECRET_KEY = \"$(openssl rand -hex 16)\"" > "$GEONATURE_CONFIG_DIR/usershub/config.py"
 fi
 
+if [ ! -f "./sources/GeoNature-atlas/atlas/configuration/config.py" ]; then
+    mkdir -p "./sources/GeoNature-atlas/atlas/configuration/config.py"
+    echo "SECRET_KEY = \"$(openssl rand -hex 16)\"" > "./sources/GeoNature-atlas/atlas/configuration/config.py"
+fi
+
 if [ ! -d "$GEONATURE_CONFIG_DIR/traefik" ]; then
     mkdir -p "$GEONATURE_CONFIG_DIR/traefik/certs"
 fi
