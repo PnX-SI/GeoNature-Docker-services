@@ -71,3 +71,11 @@ services:
       - "traefik.http.services.usershub.loadbalancer.server.port=5001"
     networks:
       - gn
+
+  geonature-atlas:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-atlas.rule=Host(`${ATLAS_HOST}`) && PathPrefix(`${ATLAS_PREFIX}`)"
+      - "traefik.http.routers.geonature-atlas.entrypoints=websecure"
+      - "traefik.http.routers.geonature-atlas.tls.certResolver=acme-resolver"
+    ports: !reset null
