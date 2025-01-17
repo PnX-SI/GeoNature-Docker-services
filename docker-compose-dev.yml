@@ -65,6 +65,22 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
 
+
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
+      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
+      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+    ports:
+      - "8080:8080"
+
   geonature-frontend:
     depends_on:
       base-frontend-source:
