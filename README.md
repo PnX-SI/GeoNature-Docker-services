@@ -108,8 +108,9 @@ Une fois le fichier .env rempli correctement, il faut créer les fichiers de con
 Une fois cela fait, il ne vous reste plus qu'à lancer `make dev`. Selon vos préférences, si la commande 
 `make submodule_init` a déjà été lancé une fois, vous pouvez simplement lancer un `docker compose up`.
 
-/!\ Attention pour l'instant, l'instance de développement ne lance en mode dev que le backend, pas le frontend ni 
-les autres services. /!\ 
+Vous pouvez visiter votre géonature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
+
+/!\ Attention pour l'instant, l'instance de développement ne lance en mode dev que le backend, pas le frontend. /!\ 
 
 ### GeoNature
 
