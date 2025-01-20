@@ -52,7 +52,7 @@ services:
       - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
       - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./config/traefik:/etc/traefik/dynamic
       - ./data/traefik/certs:/etc/traefik/certs
     ports:
