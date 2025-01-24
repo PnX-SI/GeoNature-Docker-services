@@ -100,17 +100,20 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 ## Liens utiles
 
 ## Lancer une instance de développement 
-Commencez par vous assurer d'avoir installé make `sudo apt install make`.
+Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`. 
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make dev`. Selon vos préférences, si la commande 
-`make submodule_init` a déjà été lancé une fois, vous pouvez simplement lancer un `docker compose up`.
+
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`. Selon vos préférences, si la commande 
+a déjà été lancé une fois, vous pouvez ensuite simplement lancer un `docker compose up`. Le premier lancement peut mettre quelques 
+dizaines de minutes. 
 
 Vous pouvez visiter votre géonature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
-/!\ Attention pour l'instant, l'instance de développement ne lance en mode dev que le backend, pas le frontend. /!\ 
+(Pour l'instant, pour que le frontend fonctionne, il faut aussi modifier le fichier 
+`sources/GeoNature/frontend/angular.json`. C'est fait de manière transparente dans le make dev.)
 
 ### GeoNature
 

@@ -82,14 +82,17 @@ services:
       - "8080:8080"
 
   geonature-frontend:
-    depends_on:
-      base-frontend-source:
-        condition: service_completed_successfully
-    build:
-      context: .
-      args:
-        - GEONATURE_FRONTEND_IMAGE=${GEONATURE_FRONTEND_IMAGE}
-      # TODO create a dev dockerfiles
-      dockerfile: build/Dockerfile-geonature-frontend
+      depends_on:
+        base-frontend-source:
+          condition: service_completed_successfully
+      command: npm run start -- --host 0.0.0.0 --port 4443
+      build:
+        context: .
+        dockerfile: build/Dockerfile-geonature-frontend
+        target: dev-extra
+        args:
+          GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
+      volumes:
+        - ./sources/GeoNature/frontend:/build
 
 # TODO rendre optionel la partie peuplement de la BDD
