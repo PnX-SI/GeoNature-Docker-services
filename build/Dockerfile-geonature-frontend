@@ -18,6 +18,15 @@ COPY ./sources/gn_module_monitoring/frontend/ .
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --omit=peer
 
+FROM source-extra as dev-extra
+WORKDIR /build
+RUN npm link @angular/cli
+RUN npm install
+EXPOSE 4443
+CMD ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "4443"]
+ENTRYPOINT []
+
+
 FROM source-extra AS build-extra
 
 WORKDIR /build/
