@@ -106,11 +106,12 @@ Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnem
 Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`. 
 
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`. Selon vos préférences, si la commande 
-a déjà été lancé une fois, vous pouvez ensuite simplement lancer un `docker compose up`. Le premier lancement peut mettre quelques 
-dizaines de minutes. 
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`. 
+Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
+cela ne fonctionnera pas sans relancer `make dev_init`.
+Le premier lancement peut mettre quelques dizaines de minutes. 
 
-Vous pouvez visiter votre géonature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
+Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
 (Pour l'instant, pour que le frontend fonctionne, il faut aussi modifier le fichier 
 `sources/GeoNature/frontend/angular.json`. C'est fait de manière transparente dans le make dev.)
