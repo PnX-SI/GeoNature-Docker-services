@@ -87,7 +87,7 @@ services:
       depends_on:
         base-frontend-source:
           condition: service_completed_successfully
-      command: bash -c "npm install --no-audit && npm run start -- --host 0.0.0.0 --port 4443"
+      command: npm run start -- --host 0.0.0.0 --port 4443
       build:
         context: .
         dockerfile: build/Dockerfile-geonature-frontend
@@ -96,5 +96,9 @@ services:
           GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
       volumes:
         - ./sources/GeoNature/frontend:/build
-
-# TODO rendre optionel la partie peuplement de la BDD
+        - ./sources/gn_module_dashboard/frontend:/build/external_modules/dashboard
+        - ./sources/gn_module_export/frontend:/build/external_modules/export
+        - ./sources/gn_module_monitoring/frontend:/build/external_modules/monitorings
+        - ./sources/GeoNature/contrib/gn_module_occhab/frontend:/build/external_modules/occhab
+        - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
+        - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
