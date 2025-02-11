@@ -15,6 +15,9 @@ build:
 
 dev: dev_init
 	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d
+	source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 prod:
+	./init-config.sh
 	COMPOSE_FILE=docker-compose.yml docker compose up -d
+	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
