@@ -10,3 +10,4 @@ if [ -d "external_modules" ]; then
     fi
   done
 fi
+npm run start -- --host 0.0.0.0 --port 4443

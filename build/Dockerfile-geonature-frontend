@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.npm \
 FROM source-extra as dev-extra
 WORKDIR /build
 RUN npm link @angular/cli
-COPY build/dev/frontend_entrypoint.sh /entrypoint.sh
+COPY ./build/dev/frontend_entrypoint.sh /entrypoint.sh
 ENTRYPOINT /entrypoint.sh
 RUN npm install
 EXPOSE 4443

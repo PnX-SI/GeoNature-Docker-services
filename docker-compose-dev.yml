@@ -67,6 +67,9 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
 
+  postgres:
+    ports:
+      - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
 
   traefik:
     command:
@@ -87,7 +90,6 @@ services:
       depends_on:
         base-frontend-source:
           condition: service_completed_successfully
-      command: npm run start -- --host 0.0.0.0 --port 4443
       build:
         context: .
         dockerfile: build/Dockerfile-geonature-frontend
@@ -102,3 +104,4 @@ services:
         - ./sources/GeoNature/contrib/gn_module_occhab/frontend:/build/external_modules/occhab
         - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
         - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
+        - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
