@@ -143,16 +143,16 @@ RUN --mount=type=cache,target=/root/.npm \
 
 Si votre module GeoNature nécessite un fichier de configuration spécifique, déposez-le dans le dossier `data/geonature/config`.
 
-
 ## Comment rebuilder localement les images Docker ?
 
 - Initialiser et cloner les sous-modules git :
+
   ```shell
   git submodule init
   git submodule update
   ```
 
-- Faire de même pour les sous-modules de GeoNature, TaxHub et UsersHub, exemple pour GeoNature :
+- Faire de même pour les sous-modules de GeoNature et UsersHub, exemple pour GeoNature :
   ```shell
   cd sources/GeoNature
   git submodule init
