@@ -66,6 +66,7 @@ services:
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   postgres:
     ports:
