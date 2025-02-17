@@ -44,6 +44,7 @@ jobs:
 
       - name: Build and export image
         uses: docker/build-push-action@v4
+        if: ${{ github.event_name == 'release' }}
         with:
           context: .
           file: ./build/Dockerfile-geonature-backend
@@ -52,6 +53,18 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:${{github.ref_name}}
+
+      - name: Build and export image
+        uses: docker/build-push-action@v4
+        if: ${{ github.event_name != 'release' }}
+        with:
+          context: .
+          file: ./build/Dockerfile-geonature-backend
+          target: prod-extra
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:latest
 
   frontend:
     name: Build geonature frontend docker image
@@ -85,6 +98,7 @@ jobs:
 
       - name: Build and export image
         uses: docker/build-push-action@v4
+        if: ${{ github.event_name == 'release' }}
         with:
           context: .
           file: ./build/Dockerfile-geonature-frontend
@@ -93,3 +107,15 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:${{github.ref_name}}
+
+      - name: Build and export image
+        uses: docker/build-push-action@v4
+        if: ${{ github.event_name != 'release' }}
+        with:
+          context: .
+          file: ./build/Dockerfile-geonature-frontend
+          target: prod-extra
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:latest
