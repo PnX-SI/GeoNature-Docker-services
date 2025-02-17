@@ -1,21 +1,39 @@
 # CHANGELOG
 
+## 2.15.2
+
+**🏷️ Versions**
+
+- GeoNature 2.15.2
+- TaxHub 2.1.1
+- UsersHub 2.4.4
+- GeoNature-dashboard 1.5.0
+- GeoNature-export 1.7.2
+- GeoNature-monitoring 1.0.0
+
 ## 2.15.0
 
 **🏷️ Versions**
 
 - GeoNature 2.15.0
+- TaxHub 2.1.0
 - UsersHub 2.4.4
 - GeoNature-dashboard 1.5.0
 - GeoNature-export 1.7.2
-- GeoNature-monitoring 0.7.3
+- GeoNature-monitoring 1.0.0
+
+**🚀 Nouveautés**
+
+- TaxHub est désormais intégré à GeoNature
+- Ajout d'une politique de redémarrage automatique des services Docker (#26; par @lpofredc)
 
 **⚠️ Notes de version**
 
-- TaxHub est intégré à GeoNature par conséquent il n'y auras plus de container TaxHub
-- Pour le fonctionnement de la base de donnée il faut installer l'extension ltree dans le container postgre, vous pouvez le faire avec la commande suivante :
-  - docker compose exec postgres psql -U {POSTGRES_USER} -d {POSTGRES_DB} -f /docker-entrypoint-initdb.d/add-extensions.sql
-
+- Avant d'effectuer la mise à jour de GeoNature, installer l'extension `ltree` dans le container `postgres` :
+  `docker compose exec postgres psql -U [user_postgres] -d [nom_db_geonature] -f /docker-entrypoint-initdb.d/add-extensions.sql`
+- Avec cette nouvelle version, les médias de TaxHub se trouvent dans le dossier `media` de GeoNature. Si vous mettez à jour votre GeoNature, déplacer les médias de TaxHub de l'ancien dossier (`GeoNature-Docker-services/data/taxhub/medias`) vers le nouveau (`GeoNature-Docker-services/data/geonature/media/taxhub`) :
+  `cp -r data/taxhub/medias/* data/geonature/media/taxhub`
+- La suppression du container TaxHub implique une modification du docker-compose, n'oubliez pas de récupérer les modifications de ce dernier ([Voir documentation](https://github.com/PnX-SI/GeoNature-Docker-services?tab=readme-ov-file#mettre-%C3%A0-jour-geonature-et-ses-modules))
 
 ## 2.14.2 (2024-06-03)
 
