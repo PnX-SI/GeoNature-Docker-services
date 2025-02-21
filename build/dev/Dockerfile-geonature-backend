@@ -3,9 +3,6 @@ ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
 
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
 WORKDIR /dist/geonature
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y libproj-dev proj-bin
 
 RUN rm -f geonature-*
 COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature

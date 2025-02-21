@@ -126,9 +126,6 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
-(Pour l'instant, pour que le frontend fonctionne, il faut aussi modifier le fichier
-`sources/GeoNature/frontend/angular.json`. C'est fait de manière transparente dans le make dev.)
-
 ### GeoNature
 
 - [Dépôt](https://github.com/PnX-SI/GeoNature)
