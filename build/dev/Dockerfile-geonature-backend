@@ -1,0 +1,17 @@
+ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
+
+
+FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
+WORKDIR /dist/geonature
+
+RUN rm -f geonature-*
+COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature
+COPY --chown=${UID}:${GUID} /sources/gn_module_export /sources/gn_module_export
+COPY --chown=${UID}:${GUID} /sources/gn_module_dashboard /sources/gn_module_dashboard
+COPY --chown=${UID}:${GUID} /sources/gn_module_monitoring /sources/gn_module_monitoring
+RUN --mount=type=cache,target=/root/.cache \
+    pip install *.whl sentry_sdk[flask]
+RUN pip install watchdog
+RUN --mount=type=cache,target=/root/.cache \
+    pip install -e /sources/GeoNature -e /sources/gn_module_export -e /sources/gn_module_dashboard -e /sources/gn_module_monitoring
+RUN rm -f *.whl

@@ -1,4 +1,4 @@
-ARG GEONATURE_BACKEND_IMAGE
+ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend:latest"
 
 FROM python:3.11-bookworm AS build
 
@@ -22,8 +22,7 @@ WORKDIR /build/
 COPY ./sources/gn_module_monitoring .
 RUN python setup.py bdist_wheel
 
-FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra
-
+FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
 WORKDIR /dist/geonature
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
@@ -31,6 +30,9 @@ RUN --mount=type=cache,target=/var/cache/apt \
 COPY --from=build-export /build/dist/*.whl .
 COPY --from=build-dashboard /build/dist/*.whl .
 COPY --from=build-monitoring /build/dist/*.whl .
+
+
+FROM base_env AS prod-extra
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
 RUN rm -f *.whl

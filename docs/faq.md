@@ -147,6 +147,12 @@ Si votre module GeoNature nécessite un fichier de configuration spécifique, d�
 
 - Initialiser et cloner les sous-modules git :
 
+Avec make : 
+  ```bash
+  make submodule_init
+  ```
+Sans make:
+
   ```shell
   git submodule init
   git submodule update
