@@ -13,11 +13,11 @@
 
 **🚀 Nouveautés**
 
-- [Développement] Ajout d'un docker compose dédié au développement de GeoNature (#47 par @Christophe-Ramet)
+- [Développement] Ajout d'un docker-compose dédié au développement de GeoNature (#47 par @Christophe-Ramet)
 
 **⚠️ Notes de version**
 
-- Pour mettre à jour GDS, il est maintenant nécessaire de spécifier la version GeoNature et UsersHub dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE` et `USERSHUB_IMAGE`. Les versions seront indiquées dans chaque note de release.
+- Pour mettre à jour GDS, il est maintenant nécessaire de spécifier la version GeoNature et UsersHub dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE` et `USERSHUB_IMAGE` du fichier `.env`. Les versions seront indiquées dans chaque note de version.
 
 ## 2.15.3
 
