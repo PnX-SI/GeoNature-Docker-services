@@ -82,6 +82,19 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 - Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
 - Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
 - Mettez à jour le contenu du dossier dans sa dernière version : `git pull`
+- Changez la version de GeoNature dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour passer de la version 2.15.2 à 2.15.3, effectuez les modifications suivantes :
+
+  ```env
+
+  USERSHUB_IMAGE="ghcr.io/pnx-si/usershub:2.4.4"
+  [...]
+  GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra:2.15.3"
+  [...]
+  GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
+  ```
+
+  Pour connaître la version de UsersHub, consultez la note de version.
+
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
 ## FAQ
@@ -98,6 +111,20 @@ Une action permet la publication automatique d'images Docker frontend et backend
 Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
 
 ## Liens utiles
+
+## Lancer une instance de développement
+
+Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
+
+Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
+Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`.
+
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
+Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
+cela ne fonctionnera pas sans relancer `make dev_init`.
+Le premier lancement peut mettre quelques dizaines de minutes.
+
+Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
 ### GeoNature
 
