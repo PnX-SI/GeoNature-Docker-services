@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## 2.15.4
+
+**🏷️ Versions**
+
+- GeoNature 2.15.4
+- TaxHub 2.1.2
+- UsersHub 2.4.4
+- GeoNature-dashboard 1.5.0
+- GeoNature-export 1.7.2
+- GeoNature-monitoring 1.0.1
+
+**🚀 Nouveautés**
+
+- [Développement] Ajout d'un docker compose dédié au développement de GeoNature (#47 par @Christophe-Ramet)
+
+**⚠️ Notes de version**
+
+- Pour mettre à jour GDS, il est maintenant nécessaire de spécifier la version GeoNature et UsersHub dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE` et `USERSHUB_IMAGE`. Les versions seront indiquées dans chaque note de release.
+
+## 2.15.3
+
+**🏷️ Versions**
+
+- GeoNature 2.15.3
+- TaxHub 2.1.2
+- UsersHub 2.4.4
+- GeoNature-dashboard 1.5.0
+- GeoNature-export 1.7.2
+- GeoNature-monitoring 1.0.1
+
 ## 2.15.2
 
 **🏷️ Versions**
