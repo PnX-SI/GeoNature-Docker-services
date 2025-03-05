@@ -52,6 +52,7 @@ services:
       - ./sources/gn_module_export:/sources/gn_module_export
       - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+      - ./sources/GeoNature/custom:/dist/custom
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
 
