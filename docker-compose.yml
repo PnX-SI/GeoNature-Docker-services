@@ -125,7 +125,31 @@ services:
       - "traefik.http.routers.usershub.entrypoints=websecure"
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
     profiles:
-      - usershub
+      - usershub_traefik
+
+  usershub_exposed:
+    <<: [*restart-policy, *defaults]
+    image: ${USERSHUB_IMAGE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/usershub:/dist/config/
+    environment:
+      <<: *env-defaults
+      USERSHUB_URL_APPLICATION: "http://${GEONATURE_USERSHUB_HOSTPORT_EXPOSED}${USERSHUB_PREFIX}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+    ports:
+      - ${GEONATURE_USERSHUB_PORT_EXPOSED}:5001
+    profiles:
+      - usershub_expose
 
   geonature-install-db:
     <<: *geonature-backend-defaults
@@ -152,7 +176,6 @@ services:
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
-    &backend
     <<: [*restart-policy, *geonature-backend-defaults]
     depends_on:
       <<: *geonature-depends-on-defaults
@@ -194,23 +217,49 @@ services:
 
 
   geonature-frontend-exposed:
-    <<: *frontend
+    <<: *restart-policy
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
     environment:
-      - API_ENDPOINT="http://${HOST}:8000${GEONATURE_BACKEND_PREFIX}"
+      - API_ENDPOINT="http://${GEONATURE_BACKEND_HOSTPORT_EXPOSED}${GEONATURE_BACKEND_PREFIX}"
+      - NGINX_LOCATION=${GEONATURE_FRONTEND_PREFIX}
+      - GEONATURE_URL_APPLICATION=http://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
+
     profiles:
       - expose
     ports:
       - "80:80"
       - "443:443"
 
+
   geonature-backend-exposed:
-    <<: *backend
-    environment:
-      - GEONATURE_API_ENDPOINT
+    <<: [*restart-policy, *geonature-backend-defaults]
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    entrypoint: []
+    command:
+      - "gunicorn"
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=2"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
     profiles:
       - expose
     ports:
-      - "8000:8000"
+      - ${GEONATURE_BACKEND_PORT_EXPOSED}:8000
+    environment:
+      - GEONATURE_SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      - GEONATURE_URL_APPLICATION=http://${GEONATURE_FRONTEND_HOSTPORT}${GEONATURE_FRONTEND_PREFIX}
+      - GEONATURE_API_ENDPOINT=http://${GEONATURE_BACKEND_HOSTPORT_EXPOSED}${GEONATURE_BACKEND_PREFIX}
+      - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+      - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
+      - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
+
 
 volumes:
   redis:
