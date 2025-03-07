@@ -89,8 +89,6 @@ services:
     <<: [*restart-policy, *defaults]
     image: ${USERSHUB_IMAGE}
     depends_on:
-      postgres:
-        condition: service_healthy
       geonature-install-db:
         condition: service_completed_successfully
     volumes:
@@ -116,8 +114,6 @@ services:
     <<: [*restart-policy, *defaults]
     image: ${USERSHUB_IMAGE}
     depends_on:
-      postgres:
-        condition: service_healthy
       geonature-install-db:
         condition: service_completed_successfully
     volumes:
@@ -250,7 +246,8 @@ services:
       - GEONATURE_CONFIG_FILE=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
       - GEONATURE_CELERY__broker_url=${GEONATURE_CELERY__broker_url:-redis://redis}
       - GEONATURE_CELERY__result_backend=${GEONATURE_CELERY__result_backend:-redis://redis}
-
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
 
 volumes:
   redis:
