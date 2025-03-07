@@ -7,11 +7,11 @@ x-defaults: &defaults
 x-env-defaults: &env-defaults
   http_proxy: ${HTTP_PROXY:-}
   https_proxy: ${HTTPS_PROXY:-}
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
 
 x-geonature-depends-on-defaults: &geonature-depends-on-defaults
   redis:
-    condition: service_healthy
-  postgres:
     condition: service_healthy
 
 x-geonature-backend-env: &geonature-backend-env
@@ -32,6 +32,7 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - ./config/geonature:/dist/config
     - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
     - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    - ./build/entrypoint:/entrypoint
   environment:
     <<: *geonature-backend-env
 
@@ -81,22 +82,6 @@ services:
     volumes:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
-    healthcheck:
-      # during db init, postgres is not listening on localhost so this avoid false healthy status
-      test:
-        [
-          "CMD",
-          "pg_isready",
-          "-d",
-          "${POSTGRES_DB}",
-          "-U",
-          "${POSTGRES_USER}",
-          "-h",
-          "localhost",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     profiles:
       - db
 
@@ -153,6 +138,7 @@ services:
 
   geonature-install-db:
     <<: *geonature-backend-defaults
+    entrypoint: [/entrypoint/entrypoint_wait_for_db.sh]
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
     environment:
       <<: *geonature-backend-env
@@ -172,7 +158,7 @@ services:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
         condition: service_completed_successfully
-    entrypoint: []
+    entrypoint: [/entrypoint/entrypoint_wait_for_db.sh]
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   geonature-backend:
@@ -181,7 +167,13 @@ services:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
         condition: service_completed_successfully
-    entrypoint: []
+    # TODO intégrer le script ou DOCKERIZE dans les images GN
+    volumes:
+      - ./config/geonature:/dist/config
+      - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+      - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+      - ./build/entrypoint:/entrypoint
+    entrypoint: [/entrypoint/entrypoint_wait_for_db.sh]
     command:
       - "gunicorn"
       - "geonature:create_app()"
@@ -201,7 +193,6 @@ services:
       - traefik
 
   geonature-frontend:
-    &frontend
     <<: *restart-policy
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
     environment:
@@ -237,7 +228,7 @@ services:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
         condition: service_completed_successfully
-    entrypoint: []
+    entrypoint: [/entrypoint/entrypoint_wait_for_db.sh]
     command:
       - "gunicorn"
       - "geonature:create_app()"
