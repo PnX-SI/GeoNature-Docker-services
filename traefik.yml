@@ -1,0 +1,47 @@
+services:
+  traefik:
+    image: traefik:2.10.4
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
+      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
+      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
+      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/traefik:/etc/traefik/dynamic
+      - ./data/traefik/certs:/etc/traefik/certs
+    ports:
+      - ${HTTP_PORT:-80}:80
+      - ${HTTPS_PORT:-443}:443
+      - 8080:8080
+
+  geonature-backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
+      - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
+    ports: !reset null
+  geonature-frontend:
+    environment:
+      - NGINX_LOCATION="${GEONATURE_FRONTEND_PREFIX}"
+      - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
+      - "traefik.http.routers.geonature.entrypoints=websecure"
+      - "traefik.http.routers.geonature.tls.certResolver=acme-resolver"
+    ports: !reset null
+
+  usershub:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
+      - "traefik.http.routers.usershub.entrypoints=websecure"
+      - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"

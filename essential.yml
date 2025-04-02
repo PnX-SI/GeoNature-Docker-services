@@ -1,0 +1,160 @@
+x-restart-policy: &restart-policy
+  restart: ${RESTART_POLICY:-unless-stopped}
+
+x-db-env: &db-env
+  POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
+  POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geonatadmin}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_HOST: ${POSTGRES_HOST:-172.17.0.1} # 172.17.0.1 is to fetch the ip address of the host localhost
+
+x-backend-env: &backend-env
+  <<: *db-env
+  GEONATURE_SECRET_KEY: ${GEONATURE_SECRET_KEY}
+  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
+  GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+  GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
+  GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
+
+services:
+  geonature-backend:
+    # <<: *restart-policy
+    platform: linux/x86_64
+    environment:
+      <<: *backend-env
+    ports:
+      - 8000:8000
+    image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
+    volumes:
+      - ./config/geonature:/dist/config
+      - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+      - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    entrypoint: []
+    command:
+      - "gunicorn"
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=2"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
+
+  geonature-frontend:
+    platform: linux/x86_64
+    image: ghcr.io/pnx-si/geonature-frontend-extra:2.15.4
+    ports:
+      - 80:80
+    environment:
+      - NGINX_LOCATION="/"
+      - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  geonature-worker:
+    image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
+    environment:
+      <<: *backend-env
+    entrypoint: []
+    command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    volumes:
+      - ./config/geonature:/dist/config
+      - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+      - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+
+  geonature-install-db:
+    # <<: *restart-policy
+    image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
+    profiles:
+      - db
+    command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+    volumes:
+      - ./config/geonature:/dist/config
+    environment:
+      <<: *backend-env
+      srid_local: ${GEONATURE_DB_LOCAL_SRID:-2154}
+      add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_DB_INSTALL_SIG_LAYERS:-true}
+      install_grid_layer: ${GEONATURE_DB_INSTALL_GRID_LAYER:-true}
+      install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
+      usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
+      GEONATURE_SKIP_POPULATE_DB: ${SKIP_POPULATE_DB:-false}
+
+  postgres:
+    # <<: *restart-policy
+    profiles:
+      - db
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPORT: ${POSTGRES_PORT:-5432}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB}",
+          "-U",
+          "${POSTGRES_USER}",
+          "-h",
+          "localhost",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    # <<: [*restart-policy, *defaults]
+    image: ghcr.io/pnx-si/usershub:2.4.7
+    profiles:
+      - usershub
+    entrypoint: ["/entrypoint.sh"]
+    command:
+      [
+        "gunicorn",
+        "app.app:create_app()",
+        "--bind=0.0.0.0:5001",
+        "--access-logfile=-",
+        "--error-logfile=-",
+        "--reload",
+        "--reload-extra-file=config/config.py",
+      ]
+    volumes:
+      - ./config/usershub:/dist/config/
+      - ./usershub_entrypoint.sh:/entrypoint.sh
+    environment:
+      <<: *db-env
+      USERSHUB_URL_APPLICATION: "${USERSHUB_PROTOCOL}://${USERSHUB_HOSTPORT}${USERSHUB_PREFIX}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+      USERSHUB_SECRET_KEY: "sqdgjqsldgjqlsdhqsldgjhqsdjflqsjdlqjsdflqkjsdflqshglsdjflqjfqmsldkfj"
+
+volumes:
+  redis:
+  postgres:
+# networks:
+#   geonature_1:
