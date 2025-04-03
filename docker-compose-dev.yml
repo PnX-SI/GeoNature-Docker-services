@@ -40,6 +40,9 @@ services:
         condition: service_completed_successfully
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        UID: ${UID}
+        GID: ${GID}
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
 
@@ -54,6 +57,9 @@ services:
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        UID: ${UID}
+        GID: ${GID}
 
   geonature-worker:
     depends_on:
