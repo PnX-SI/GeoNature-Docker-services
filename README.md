@@ -110,9 +110,8 @@ Une action permet la publication automatique d'images Docker frontend et backend
 
 Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
 
-## Liens utiles
-
-## Lancer une instance de développement
+## Developpement
+### Lancer une instance de développement
 
 Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
 
@@ -125,6 +124,26 @@ cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
+
+### Executer les test Cypress
+
+Vous devez avoir installé Cypress au préalable et lancé la stack.
+La commande `make cypress` vous permet ensuite de lancer les tests cypress.
+
+Si vous voulez que vos tests s'exécutent comme dans la CI Github, il faut, une base sans données saisie au préalable. 
+Puis, vous devez passer les migrations "samples" : 
+`          
+          geonature db upgrade occtax-samples-test@head
+          geonature db upgrade occhab-samples@head
+          geonature db upgrade import-samples@head
+`
+
+Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce 
+qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liées aux forms d'occtax : 
+
+`source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
+
+## Liens utiles
 
 ### GeoNature
 
