@@ -1,0 +1,113 @@
+services:
+
+  #------------------------------------Builds section start-----------------------------------#
+  base-backend:
+    image: ${GEONATURE_BACKEND_IMAGE}-wheels
+    build:
+      context: sources/GeoNature
+      dockerfile: backend/Dockerfile
+      target: wheels
+    entrypoint: /bin/bash -c exit
+
+  base-frontend-source:
+    image: ${GEONATURE_FRONTEND_IMAGE}-source
+    build:
+      context: sources/GeoNature
+      dockerfile: frontend/Dockerfile
+      target: source
+    entrypoint: /bin/bash -c exit
+
+  base-frontend-nginx:
+    image: ${GEONATURE_FRONTEND_IMAGE}-nginx
+    build:
+      context: sources/GeoNature
+      dockerfile: frontend/Dockerfile
+      target: prod-base
+    entrypoint: /bin/sh -c exit
+
+  userhub-build:
+    image: ${USERSHUB_IMAGE}
+    build:
+      target: prod
+      context: sources/UsersHub
+    volumes:
+      - ./config/usershub:/dist/config/
+    entrypoint: /bin/sh -c exit
+  #------------------------------------Builds section end------------------------------------#
+  geonature-install-db:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+    volumes:
+      - ./sources/GeoNature:/sources/GeoNature
+
+  geonature-backend:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    volumes:
+      - ./sources/GeoNature:/sources/GeoNature
+      - ./sources/gn_module_export:/sources/gn_module_export
+      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
+      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+
+  geonature-worker:
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    volumes:
+      - ./sources/GeoNature:/sources/GeoNature
+      - ./sources/gn_module_export:/sources/gn_module_export
+      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
+      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
+      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
+      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
+      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+
+  geonature-frontend:
+      depends_on:
+        base-frontend-source:
+          condition: service_completed_successfully
+      build:
+        context: .
+        dockerfile: build/Dockerfile-geonature-frontend
+        target: dev-extra
+        args:
+          GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
+      volumes:
+        - ./sources/GeoNature/frontend:/build
+        - ./sources/gn_module_dashboard/frontend:/build/external_modules/dashboard
+        - ./sources/gn_module_export/frontend:/build/external_modules/export
+        - ./sources/gn_module_monitoring/frontend:/build/external_modules/monitorings
+        - ./sources/GeoNature/contrib/gn_module_occhab/frontend:/build/external_modules/occhab
+        - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
+        - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
+        - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+
+  geonature-pre-built-db:
+    image: ${GEONATURE_PRE_BUILT_DB}
+    ports:
+      - ${POSTGRES_PORT_ON_HOST}:5432
+    environment:
+      user_pg: ${POSTGRES_USER}
+      password_pg: ${POSTGRES_PASSWORD}
+      pg_port: 5432
+    profiles:
+      - pre-built-db
