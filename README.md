@@ -99,7 +99,9 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## FAQ
 
-Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
+Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](#dev-faq). 
+
+Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
 
 ## Images Docker publiées
 
@@ -110,10 +112,9 @@ Une action permet la publication automatique d'images Docker frontend et backend
 
 Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
 
-## Developpement
-### Lancer une instance de développement
+## <a name="dev"></a> Lancer une instance de développement
 
-Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
+Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`.
@@ -143,8 +144,18 @@ qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en s
 
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
 
-## Liens utiles
 
+## <a name="dev"></a> FAQ de developpement
+
+* Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
+
+Assurez-vous de ne pas avoir activé la feature Bake de docker `COMPOSE_BAKE=true`
+
+* J'ai une question, à qui puis-je la poser ? 
+
+Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
+
+## Liens utiles
 ### GeoNature
 
 - [Dépôt](https://github.com/PnX-SI/GeoNature)
