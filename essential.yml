@@ -20,7 +20,6 @@ x-backend-env: &backend-env
 services:
   geonature-backend:
     <<: *restart-policy
-    platform: linux/x86_64
     user: ${UID}:${GID}
     environment:
       <<: *backend-env
@@ -44,7 +43,6 @@ services:
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
 
   geonature-frontend:
-    platform: linux/x86_64
     image: ghcr.io/pnx-si/geonature-frontend-extra:2.15.4
     ports:
       - 80:80

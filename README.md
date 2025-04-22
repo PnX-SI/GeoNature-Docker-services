@@ -98,7 +98,7 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
 ## FAQ
-### Geonature
+### GeoNature
 Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
 
 ## Images Docker publiées
