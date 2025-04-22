@@ -98,7 +98,7 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
 ## FAQ
-
+### GeoNature
 Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
 
 ## Images Docker publiées
@@ -109,8 +109,6 @@ Une action permet la publication automatique d'images Docker frontend et backend
 - `ghcr.io/pnx-si/geonature-backend-extra`
 
 Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
-
-## Liens utiles
 
 ## Lancer une instance de développement
 
@@ -126,6 +124,7 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
+## Liens utiles
 ### GeoNature
 
 - [Dépôt](https://github.com/PnX-SI/GeoNature)

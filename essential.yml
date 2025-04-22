@@ -10,7 +10,6 @@ x-db-env: &db-env
 
 x-backend-env: &backend-env
   <<: *db-env
-  GEONATURE_SECRET_KEY: ${GEONATURE_SECRET_KEY}
   GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
   GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION}
   GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
@@ -20,8 +19,8 @@ x-backend-env: &backend-env
 
 services:
   geonature-backend:
-    # <<: *restart-policy
-    platform: linux/x86_64
+    <<: *restart-policy
+    user: ${UID}:${GID}
     environment:
       <<: *backend-env
     ports:
@@ -44,7 +43,6 @@ services:
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
 
   geonature-frontend:
-    platform: linux/x86_64
     image: ghcr.io/pnx-si/geonature-frontend-extra:2.15.4
     ports:
       - 80:80
@@ -54,6 +52,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    user: redis:redis
     volumes:
       - redis:/data
     healthcheck:
@@ -64,6 +63,7 @@ services:
 
   geonature-worker:
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
+    user: ${UID}:${GID}
     environment:
       <<: *backend-env
     entrypoint: []
@@ -74,8 +74,8 @@ services:
       - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
 
   geonature-install-db:
-    # <<: *restart-policy
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
+    user: ${UID}:${GID}
     profiles:
       - db
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
@@ -94,7 +94,7 @@ services:
       GEONATURE_SKIP_POPULATE_DB: ${SKIP_POPULATE_DB:-false}
 
   postgres:
-    # <<: *restart-policy
+    <<: *restart-policy
     profiles:
       - db
     image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
@@ -106,6 +106,8 @@ services:
     volumes:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       # during db init, postgres is not listening on localhost so this avoid false healthy status
       test:
@@ -124,7 +126,7 @@ services:
       retries: 5
 
   usershub:
-    # <<: [*restart-policy, *defaults]
+    <<: [*restart-policy]
     image: ghcr.io/pnx-si/usershub:2.4.7
     profiles:
       - usershub
@@ -151,10 +153,7 @@ services:
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
-      USERSHUB_SECRET_KEY: "sqdgjqsldgjqlsdhqsldgjhqsdjflqsjdlqjsdflqkjsdflqshglsdjflqjfqmsldkfj"
 
 volumes:
   redis:
   postgres:
-# networks:
-#   geonature_1:

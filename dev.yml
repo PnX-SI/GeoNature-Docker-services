@@ -68,10 +68,6 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
-  postgres:
-    ports:
-      - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
-
   traefik:
     command:
       - "--api.insecure=true"
@@ -81,11 +77,9 @@ services:
       - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
       - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
       - "--entryPoints.websecure.address=:443"
-      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
       - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
       - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
-    ports:
-      - "8080:8080"
 
   geonature-frontend:
       depends_on:
@@ -106,3 +100,14 @@ services:
         - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
         - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+
+  geonature-pre-built-db:
+    image: ${GEONATURE_PRE_BUILT_DB}
+    ports:
+      - ${POSTGRES_PORT_ON_HOST}:5432
+    environment:
+      user_pg: ${POSTGRES_USER}
+      password_pg: ${POSTGRES_PASSWORD}
+      pg_port: 5432
+    profiles:
+      - pre-built-db
