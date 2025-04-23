@@ -41,6 +41,10 @@ services:
       - "--bind=0.0.0.0:8000"
       - "--reload"
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
+      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/dashboard_config.toml}"
+      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/exports_config.toml}"
+      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
+      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/import_config.toml}"
 
   geonature-frontend:
     image: ghcr.io/pnx-si/geonature-frontend-extra:2.15.4
