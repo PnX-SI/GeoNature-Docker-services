@@ -145,7 +145,7 @@ qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en s
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
 
 
-## <a name="dev-faq"></a> FAQ de developpement
+## <a name="dev-faq"></a> FAQ de développement
 
 * Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
 
