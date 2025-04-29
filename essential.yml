@@ -20,7 +20,7 @@ x-backend-env: &backend-env
 services:
   geonature-backend:
     <<: *restart-policy
-    user: ${UID}:${GID}
+    user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
       <<: *backend-env
     ports:
@@ -67,7 +67,7 @@ services:
 
   geonature-worker:
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
-    user: ${UID}:${GID}
+    user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
       <<: *backend-env
     entrypoint: []
@@ -79,7 +79,7 @@ services:
 
   geonature-install-db:
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
-    user: ${UID}:${GID}
+    user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"

@@ -115,7 +115,6 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
-Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`.
 
 Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
 Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
