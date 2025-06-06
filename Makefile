@@ -1,5 +1,4 @@
 SHELL := /bin/bash
-
 launch:
 	docker compose up -d
 
@@ -24,4 +23,12 @@ prod:
 	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run
+	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOSTPORT}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/homepage-spec.js
+
+lint_frontend:
+	docker compose exec geonature-frontend bash -c "cd /sources/GeoNature/frontend; npm run format"
+
+lint_backend:
+	docker compose exec geonature-backend bash -c "source /sources/GeoNature/backend/venv/bin/activate && black /sources/GeoNature/backend"
+
+-include Makefile.local
