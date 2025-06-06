@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.2
 
-ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
+ARG GEONATURE_BACKEND_IMAGE="geonature-docker-service/geonature-backend-local:latest"
 
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
 WORKDIR /dist/geonature
@@ -20,8 +20,5 @@ RUN --mount=type=cache,target=/root/.cache \
     for module in $(ls -d /sources/gn_*/ | sort); do \
         [ -d "$module" ] && pip install -e "$module"; \
     done
-COPY --chmod=755 /build/dev/backend_entrypoint.sh /dev_entrypoint.sh
-ENTRYPOINT ["/dev_entrypoint.sh"]
-
 # Nettoyage final
 RUN rm -f *.whl

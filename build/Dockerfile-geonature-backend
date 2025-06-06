@@ -1,4 +1,4 @@
-ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend:latest"
+ARG GEONATURE_BACKEND_IMAGE="geonature-docker-service/geonature-backend-local:latest"
 
 FROM python:3.11-bookworm AS build
 

@@ -123,6 +123,24 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
+### Ajout d'un module
+Il est possible d'ajouter un module en trois étapes : 
+
+- Clone du module dans le repertoire source (attention son nom doit commencer par `gn_`)
+- [si présence d'un frontend] Création d'un lien symbolique dans `frontend/external_modules`. 
+Par exemple `cd frontend/external_modules && ln -s ../../sources/gn_module_dashboard dashboard`
+- Rebuild la stack avec docker compose build
+
+Attention, si vous ajouter un fichier de configuration, dans le dossier `config`, l'application ne sera pas chargée 
+automatiquement après modification du fichier de configuration, il faudra la recharger manuellement ou relancer la stack.
+
+### Mettre à jour la bdd
+Quand on change de version vers une version avec une màj de BDD. 
+
+### Ajout de règle personnelles sur le Makefile
+Si vous voulez ajouter ou modifier des règles sur votre Makefile, vous pouvez les ajouter à un fichier
+Makefile.local
+
 ## Liens utiles
 ### GeoNature
 

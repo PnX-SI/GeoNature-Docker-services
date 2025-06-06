@@ -51,6 +51,8 @@ services:
       - ./sources:/sources
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
 
   geonature-worker:
     depends_on:
@@ -60,20 +62,10 @@ services:
       - ./sources:/sources
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
-  traefik:
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.web.address=:80"
-      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
-      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
-      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
-      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
 
   geonature-frontend:
       depends_on:
