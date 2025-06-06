@@ -128,8 +128,8 @@ Il est possible d'ajouter un module en trois étapes :
 
 - Clone du module dans le repertoire source (attention son nom doit commencer par `gn_`)
 - [si présence d'un frontend] Création d'un lien symbolique dans `frontend/external_modules`. 
-Par exemple `cd frontend/external_modules && ln -s ../../sources/gn_module_dashboard dashboard`
-- Rebuild la stack avec docker compose build
+Par exemple `cd frontend/external_modules && ln -s ../../sources/gn_module_dashboard/frontend dashboard`
+- Rebuild la stack avec `docker compose build`
 
 Attention, si vous ajouter un fichier de configuration, dans le dossier `config`, l'application ne sera pas chargée 
 automatiquement après modification du fichier de configuration, il faudra la recharger manuellement ou relancer la stack.
