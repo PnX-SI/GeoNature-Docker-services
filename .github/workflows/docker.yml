@@ -48,7 +48,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:develop
+          build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:release-2.16.0
 
   frontend:
     name: Build geonature frontend docker image
@@ -88,4 +88,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:develop
+          build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:release-2.16.0
