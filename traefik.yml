@@ -35,6 +35,8 @@ services:
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD}"
+    networks:
+      - gn
 
   geonature-backend:
     labels:
@@ -43,6 +45,8 @@ services:
       - "traefik.http.routers.geonature-backend.entrypoints=websecure"
       - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
     ports: !reset null
+    networks:
+      - gn
   geonature-frontend:
     environment:
       - NGINX_LOCATION="${GEONATURE_FRONTEND_PREFIX}"
@@ -53,6 +57,8 @@ services:
       - "traefik.http.routers.geonature.entrypoints=websecure"
       - "traefik.http.routers.geonature.tls.certResolver=acme-resolver"
     ports: !reset null
+    networks:
+      - gn
 
   usershub:
     labels:
@@ -60,3 +66,5 @@ services:
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
       - "traefik.http.routers.usershub.entrypoints=websecure"
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
+    networks:
+      - gn

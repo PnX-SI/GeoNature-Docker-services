@@ -27,9 +27,9 @@ services:
       - 8000:8000
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
     volumes:
-      - ./config/geonature:/dist/config
-      - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
-      - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+      - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
+      - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+      - ${GEONATURE_DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
     entrypoint: []
     command:
       - "gunicorn"
@@ -45,6 +45,8 @@ services:
       - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/exports_config.toml}"
       - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
       - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/import_config.toml}"
+    networks:
+      - gn
 
   geonature-frontend:
     image: ghcr.io/pnx-si/geonature-frontend-extra:2.15.4
@@ -64,6 +66,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - gn
 
   geonature-worker:
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
@@ -73,9 +77,11 @@ services:
     entrypoint: []
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
     volumes:
-      - ./config/geonature:/dist/config
-      - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
-      - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+      - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
+      - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+      - ${GEONATURE_DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    networks:
+      - gn
 
   geonature-install-db:
     image: ghcr.io/pnx-si/geonature-backend-extra:2.15.4
@@ -84,7 +90,7 @@ services:
       - db
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
     volumes:
-      - ./config/geonature:/dist/config
+      - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
     environment:
       <<: *backend-env
       srid_local: ${GEONATURE_DB_LOCAL_SRID:-2154}
@@ -96,6 +102,8 @@ services:
       usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
       usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
       GEONATURE_SKIP_POPULATE_DB: ${SKIP_POPULATE_DB:-false}
+    networks:
+      - gn
 
   postgres:
     <<: *restart-policy
@@ -128,6 +136,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - gn
 
   usershub:
     <<: [*restart-policy]
@@ -146,7 +156,7 @@ services:
         "--reload-extra-file=config/config.py",
       ]
     volumes:
-      - ./config/usershub:/dist/config/
+      - ${GEONATURE_CONFIG_DIR:-./config}/usershub:/dist/config/
       - ./usershub_entrypoint.sh:/entrypoint.sh
     environment:
       <<: *db-env
@@ -157,7 +167,12 @@ services:
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+    networks:
+      - gn
 
 volumes:
   redis:
   postgres:
+networks:
+  gn:
+    name: "${NETWORK_NAME:-geonature_network}"
