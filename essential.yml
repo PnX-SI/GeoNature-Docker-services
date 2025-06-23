@@ -42,9 +42,8 @@ services:
       - "--reload"
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
       - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/dashboard_config.toml}"
-      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/exports_config.toml}"
-      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
-      - "--reload-extra-file=${GEONATURE_DASHBOARD_CONFIG_FILE:-/dist/config/import_config.toml}"
+      - "--reload-extra-file=${GEONATURE_EXPORTS_CONFIG_FILE:-/dist/config/exports_config.toml}"
+      - "--reload-extra-file=${GEONATURE_MONITORING_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
     networks:
       - gn
 

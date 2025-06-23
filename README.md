@@ -162,10 +162,12 @@ La commande `make cypress` vous permet ensuite de lancer les tests cypress.
 
 Si vous voulez que vos tests s'exécutent comme dans la CI Github, il faut, une base sans données saisie au préalable.
 Puis, vous devez passer les migrations "samples" :
-`         
-          geonature db upgrade occtax-samples-test@head
-          geonature db upgrade occhab-samples@head
-          geonature db upgrade import-samples@head`
+
+```shell
+   geonature db upgrade occtax-samples-test@head
+   geonature db upgrade occhab-samples@head
+   geonature db upgrade import-samples@head`
+```
 
 Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce
 qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liées aux forms d'occtax :
