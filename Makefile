@@ -20,8 +20,8 @@ dev: dev_init
 
 prod:
 	./init-config.sh
-	docker compose up -d
-	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
+	COMPOSE_FILE=docker-compose.yml docker compose up -d
+	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOSTPORT}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/homepage-spec.js
+	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run

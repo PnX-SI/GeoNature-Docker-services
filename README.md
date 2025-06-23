@@ -129,9 +129,9 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## FAQ
 
-### GeoNature
+Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](#dev-faq).
 
-Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
+Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
 
 ## Images Docker publiées
 
@@ -142,9 +142,9 @@ Une action permet la publication automatique d'images Docker frontend et backend
 
 Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
 
-## Lancer une instance de développement
+## <a name="dev"></a> Lancer une instance de développement
 
-Commencez par vous assurer d'avoir installé make et jq `sudo apt install make jq`.
+Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 
@@ -154,6 +154,33 @@ cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
+
+### Executer les test Cypress
+
+Vous devez avoir installé Cypress au préalable et lancé la stack.
+La commande `make cypress` vous permet ensuite de lancer les tests cypress.
+
+Si vous voulez que vos tests s'exécutent comme dans la CI Github, il faut, une base sans données saisie au préalable.
+Puis, vous devez passer les migrations "samples" :
+`         
+          geonature db upgrade occtax-samples-test@head
+          geonature db upgrade occhab-samples@head
+          geonature db upgrade import-samples@head`
+
+Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce
+qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liées aux forms d'occtax :
+
+`source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
+
+## <a name="dev-faq"></a> FAQ de développement
+
+- Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
+
+Assurez-vous de ne pas avoir activé la feature Bake de docker `COMPOSE_BAKE=true`
+
+- J'ai une question, à qui puis-je la poser ?
+
+Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
 
 ## Liens utiles
 

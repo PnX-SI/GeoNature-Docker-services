@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - develop
-  pull_request:
-    branches:
-      - develop
   release:
     types: [published]
 
@@ -44,7 +41,6 @@ jobs:
 
       - name: Build and export image
         uses: docker/build-push-action@v4
-        if: ${{ github.event_name == 'release' }}
         with:
           context: .
           file: ./build/Dockerfile-geonature-backend
@@ -52,11 +48,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:2.15.4
+          build-args: GEONATURE_BACKEND_IMAGE=ghcr.io/pnx-si/geonature-backend:release-2.16.0
 
   frontend:
     name: Build geonature frontend docker image
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -86,7 +81,6 @@ jobs:
 
       - name: Build and export image
         uses: docker/build-push-action@v4
-        if: ${{ github.event_name == 'release' }}
         with:
           context: .
           file: ./build/Dockerfile-geonature-frontend
@@ -94,4 +88,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:2.15.4
+          build-args: GEONATURE_FRONTEND_IMAGE=ghcr.io/pnx-si/geonature-frontend:release-2.16.0
