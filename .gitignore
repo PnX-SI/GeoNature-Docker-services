@@ -1,7 +1,5 @@
-.env
+.env*
 docker-compose.override.yml
-/config/
-/data/
-!data/**/.gitkeep
-!data/**/*.sample
+config*
+data*
 *.swp
