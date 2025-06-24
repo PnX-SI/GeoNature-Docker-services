@@ -114,7 +114,7 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 
 ## <a name="dev"></a> Lancer une instance de développement
 
-Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs`.
+Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs openssl`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`.
