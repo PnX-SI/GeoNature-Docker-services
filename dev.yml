@@ -35,18 +35,19 @@ services:
     entrypoint: /bin/sh -c exit
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
     depends_on:
       base-backend:
         condition: service_completed_successfully
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
-        UID: ${UID}
-        GID: ${GID}
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
 
   geonature-backend:
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
     depends_on:
       base-backend:
         condition: service_completed_successfully
@@ -55,10 +56,10 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
-        UID: ${UID}
-        GID: ${GID}
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
 
   geonature-worker:
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
     depends_on:
       base-backend:
         condition: service_completed_successfully
@@ -66,36 +67,27 @@ services:
       - ./sources:/sources
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
-  traefik:
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.web.address=:80"
-      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
-      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
-      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
-      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
 
   geonature-frontend:
-      depends_on:
-        base-frontend-source:
-          condition: service_completed_successfully
-      build:
-        context: .
-        dockerfile: build/Dockerfile-geonature-frontend
-        target: dev-extra
-        args:
-          GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
-      volumes:
-        - ./sources/GeoNature/frontend:/build
-        - ./frontend/external_modules:/build/external_modules
-        - ./sources:/sources
-        - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
+    depends_on:
+      base-frontend-source:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: build/Dockerfile-geonature-frontend
+      target: dev-extra
+      args:
+        GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
+    volumes:
+      - ./sources/GeoNature/frontend:/build
+      - ./frontend/external_modules:/build/external_modules
+      - ./sources:/sources
+      - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}

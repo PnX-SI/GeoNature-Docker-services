@@ -8,11 +8,6 @@ ARG GID=1000
 
 WORKDIR /dist/geonature
 
-RUN if echo "Creating user geonature with UID: ${UID}, GID: ${GID}" && groupadd -g ${GID} geonature && \
-    useradd -m -u ${UID} -g geonature geonature; then echo "Created user geonature"; \
-    else echo "User or group geonature already exists, continuing"; \
-    fi
-
 RUN rm -f geonature-*
 
 COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature
@@ -35,5 +30,3 @@ ENTRYPOINT ["/dev_entrypoint.sh"]
 
 # Nettoyage final
 RUN rm -f *.whl
-
-USER geonature
