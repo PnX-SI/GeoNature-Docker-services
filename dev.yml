@@ -73,21 +73,21 @@ services:
 
 
   geonature-frontend:
-    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
-    depends_on:
-      base-frontend-source:
-        condition: service_completed_successfully
-    build:
-      context: .
-      dockerfile: build/Dockerfile-geonature-frontend
-      target: dev-extra
-      args:
-        GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
-    volumes:
-      - ./sources/GeoNature/frontend:/build
-      - ./frontend/external_modules:/build/external_modules
-      - ./sources:/sources
-      - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+      image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
+      depends_on:
+        base-frontend-source:
+          condition: service_completed_successfully
+      build:
+        context: .
+        dockerfile: build/Dockerfile-geonature-frontend
+        target: dev-extra
+        args:
+          GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
+      volumes:
+        - ./sources/GeoNature/frontend:/build
+        - ./frontend/external_modules:/build/external_modules
+        - ./sources:/sources
+        - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
@@ -97,5 +97,7 @@ services:
       user_pg: ${POSTGRES_USER}
       password_pg: ${POSTGRES_PASSWORD}
       pg_port: 5432
+    networks:
+      - gn
     profiles:
       - pre-built-db
