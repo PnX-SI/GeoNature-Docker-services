@@ -51,10 +51,7 @@ services:
       base-backend:
         condition: service_completed_successfully
     volumes:
-      - ./sources/GeoNature:/sources/GeoNature
-      - ./sources/gn_module_export:/sources/gn_module_export
-      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
-      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+      - ./sources:/sources
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
@@ -66,10 +63,7 @@ services:
       base-backend:
         condition: service_completed_successfully
     volumes:
-      - ./sources/GeoNature:/sources/GeoNature
-      - ./sources/gn_module_export:/sources/gn_module_export
-      - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
-      - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+      - ./sources:/sources
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
@@ -99,12 +93,8 @@ services:
           GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
       volumes:
         - ./sources/GeoNature/frontend:/build
-        - ./sources/gn_module_dashboard/frontend:/build/external_modules/dashboard
-        - ./sources/gn_module_export/frontend:/build/external_modules/export
-        - ./sources/gn_module_monitoring/frontend:/build/external_modules/monitorings
-        - ./sources/GeoNature/contrib/gn_module_occhab/frontend:/build/external_modules/occhab
-        - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
-        - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
+        - ./frontend/external_modules:/build/external_modules
+        - ./sources:/sources
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
 
   geonature-pre-built-db:
