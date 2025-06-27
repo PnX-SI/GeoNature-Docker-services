@@ -24,7 +24,7 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
 
    - `sudo apt-get install git`
 
-4. **Clônage du dépôt de GeoNature-Docker-services** : `git clone https://github.com/PnX-SI/GeoNature-Docker-services` ou extraire une [archive](https://github.com/PnX-SI/GeoNature-Docker-services/releases)
+4. **Clonage du dépôt de GeoNature-Docker-services** : `git clone https://github.com/PnX-SI/GeoNature-Docker-services` ou extraire une [archive](https://github.com/PnX-SI/GeoNature-Docker-services/releases)
 
 5. **Déplacement dans le répertoire du dépôt** : `cd GeoNature-Docker-services`
 
@@ -36,7 +36,7 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
    - `POSTGRES_PASSWORD` : Mot de passe de la base de données [PostgreSQL](https://www.postgresql.org/)
    - `TRAEFIK_PASSWORD` : Mot de passe de l'instance [Traefik](https://doc.traefik.io/traefik/)
    - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
-   - `ACME_EMAIL`: Adresse mail utilisé pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
+   - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
 
 8. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature et UsersHub respectivement dans les fichiers suivants :
 
@@ -75,6 +75,31 @@ usershub             5001/tcp
 ```
 
 ![Schéma des services](docs/schema_services_0.1.png)
+
+
+## Différents scénarios d'installation
+
+Il est possible de déployer la stack GeoNature de plusieurs manières différentes. La configuration par défaut est pensée pour 
+être autosuffisante, toutefois, dans le cas où vous voulez connecter cette stack à des outils déjà existant dans votre 
+SI, plusieurs scénarios sont possibles.
+
+#### Reverse Proxy externe :
+Si vous voulez utiliser votre propre Reverse Proxy (Nginx, Traefik ...), il est possible de déployer GeoNature sans Traefik.
+Les configurations spécifiques ont été déportées dans le fichier compose `traefik.yml`, si on veut s'en passer il faut modifier la variable `COMPOSE_FILE` du `.env` 
+pour qu'elle n'utilise que le fichier essential.yml : `COMPOSE_FILE=essential.yml`. Prenez soin de renseigner les variables
+d'environnements spécifiques à une utilisation hors traefik (signalées par la mention "*If you don't use traefik*").
+
+#### Base de données déportée :
+
+Si vous préferez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
+d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de donnée 
+dans le `.env`.
+
+#### Service UsersHub déjà existant :
+
+Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable 
+d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre usershub 
+dans le `.env`. 
 
 ## Configuration
 
@@ -155,7 +180,7 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
-### Executer les test Cypress
+### Exécuter les test Cypress
 
 Vous devez avoir installé Cypress au préalable et lancé la stack.
 La commande `make cypress` vous permet ensuite de lancer les tests cypress.
@@ -170,7 +195,7 @@ Puis, vous devez passer les migrations "samples" :
 ```
 
 Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce
-qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liées aux forms d'occtax :
+qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liés aux forms d'occtax :
 
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
 
