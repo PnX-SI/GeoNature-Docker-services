@@ -8,9 +8,6 @@
 [submodule "gn_module_export"]
 	path = sources/gn_module_export
 	url = ../gn_module_export.git
-[submodule "gn_module_import"]
-	path = sources/gn_module_import
-	url = ../gn_module_import.git
 [submodule "gn_module_dashboard"]
 	path = sources/gn_module_dashboard
 	url = ../gn_module_dashboard.git
