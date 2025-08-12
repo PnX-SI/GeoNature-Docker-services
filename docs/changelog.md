@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2.16.2
+
+**🏷️ Versions**
+
+- GeoNature 2.16.2
+- TaxHub 2.2.2
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.1.0
+
 ## 2.16.1
 
 **🏷️ Versions**
