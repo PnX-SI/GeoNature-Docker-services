@@ -1,5 +1,7 @@
 SHELL := /bin/bash
 include Makefile.dev
+include Makefile.debug
+
 
 launch:
 	docker compose up -d

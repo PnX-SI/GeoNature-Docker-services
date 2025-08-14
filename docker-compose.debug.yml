@@ -1,0 +1,33 @@
+services:
+  geonature-backend:
+    build:
+      context: .
+      dockerfile: build/dev/Dockerfile-geonature-backend-debug  # le fichier que tu viens de créer
+      args:
+        BASE_IMAGE: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}-debug
+    ports:
+      - "5678:5678"
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: "0"
+    command:
+      - python
+      - -m
+      - debugpy
+      - --listen
+      - 0.0.0.0:5678
+      - -m
+      - gunicorn
+      - "geonature.app:create_app()"
+      - -b
+      - 0.0.0.0:5000
+      - --workers
+      - "1"
+      - --timeout
+      - "0"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-backend.rule=Host(`localhost`) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=web"
