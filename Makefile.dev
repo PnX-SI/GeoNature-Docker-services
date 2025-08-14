@@ -1,0 +1,107 @@
+# Variables à override en ligne de commande si besoin
+BRANCH ?= develop
+COMPOSE = docker compose -f docker-compose.yml -f docker-compose-dev.yml
+
+.PHONY: help switch-branch build-backend build-frontend up dev_with_build dev_clean_all migrate db_status \
+        cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
+        install-monitoring-modules install-monitoring-protocole update-monitoring refresh-monitoring \
+        format_backend_check format_backend
+
+## Liste des commandes disponibles
+help:
+	@echo "Commandes disponibles :"
+	@echo "  make switch-branch BRANCH=<nom>  # Change de branche GeoNature, met à jour les submodules"
+	@echo "  make build-backend               # Rebuild uniquement les images backend"
+	@echo "  make build-frontend              # Rebuild uniquement le frontend"
+	@echo "  make up                          # Lance les conteneurs en arrière-plan (dev)"
+	@echo "  make dev_with_build              # Lance en rebuildant"
+	@echo "  make migrate                     # Applique flask db autoupgrade"
+	@echo "  make db_status                   # Status migrations"
+	@echo "  make dev_clean_all               # ⚠️ Stop + supprime les volumes (BDD perdue)"
+	@echo "  make format_backend / _check     # Black format"
+
+## Change de branche et met à jour les submodules
+switch-branch:
+	cd sources/GeoNature && \
+	git fetch && \
+	git checkout $(BRANCH) && \
+	git submodule update --init --recursive
+
+## Up rapide (dev)
+up:
+	$(COMPOSE) up -d --force-recreate
+	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
+
+## Rebuild des images backend
+build-backend:
+	$(COMPOSE) build geonature-backend geonature-worker geonature-install-db
+
+## Rebuild des images frontend
+build-frontend:
+	$(COMPOSE) build geonature-frontend
+
+## Nettoyage destructif (BDD incluse) -> renomme pour expliciter
+dev_clean_all:
+	@echo "⚠️ ATTENTION: cette commande supprime les volumes (BDD incluse). Ctrl-C pour annuler."
+	@sleep 2
+	@docker compose down -v --remove-orphans
+	@docker builder prune -af
+	@sudo rm -rf sources/GeoNature/frontend/node_modules
+	@sudo rm -rf sources/GeoNature/frontend/dist
+	@sudo rm -rf sources/GeoNature/frontend/.angular
+	@find sources/GeoNature/frontend/external_modules -type d -name "node_modules" -exec sudo rm -rf {} +
+
+dev_with_build: dev_init
+	@echo "➡️  Lancement de l'environnement de développement..."
+	$(COMPOSE) up -d --build
+	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
+
+#################### COMMANDE DB GN ###########################
+migrate:
+	$(COMPOSE) exec geonature-backend geonature db autoupgrade
+
+db_status:
+	$(COMPOSE) exec geonature-backend geonature db status
+
+############################ COMMAND GEONATURE #####################
+cli_geonature:
+	$(COMPOSE) exec geonature-backend geonature $(ARGS)
+
+############################ MODULE MONITORING #####################
+cli_monitoring:
+	$(COMPOSE) exec geonature-backend geonature monitorings $(ARGS)
+
+MODULE_MONITORING_DIRECTORY = /sources/gn_module_monitoring
+UPGRADE_DB_EXTRA = false
+MONITORING_MEDIA = data/geonature/media/monitorings
+SUBMODULES_DIR = sources/protocoles_monitoring
+MODULES = protocole_flore
+
+prepare-monitorings-dir:
+	mkdir -p $(MONITORING_MEDIA)
+
+link-monitoring-in-container:
+	@for module in $(MODULES); do \
+		$(COMPOSE) exec geonature-backend bash -c "mkdir -p /dist/media/monitorings && ln -sf /sources/protocoles_monitoring/$$module /dist/media/monitorings/$$module"; \
+	done
+
+install-monitoring-modules:
+	@for module in $(MODULES); do \
+		$(COMPOSE) exec geonature-backend geonature monitorings install $$module; \
+	done
+
+install-monitoring-protocole: link-monitoring-in-container install-monitoring-modules
+
+update-monitoring:
+	$(COMPOSE) exec geonature-backend pip install -e "${MODULE_MONITORING_DIRECTORY}"
+
+refresh-monitoring: update-monitoring
+	$(COMPOSE) build geonature-frontend
+	$(COMPOSE) up -d geonature-frontend
+
+############################################## COMMAND DEV CONTRIBUTION  ###############################
+format_backend_check:
+	$(COMPOSE) exec geonature-backend black --check $(ARGS)
+
+format_backend:
+	$(COMPOSE) exec geonature-backend black $(ARGS)
