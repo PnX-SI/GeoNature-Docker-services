@@ -63,6 +63,11 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${UID}
+        GID: ${GID}
+    labels:
+      - "traefik.http.routers.geonature-backend.rule=Host(`localhost`) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=web"
 
   geonature-worker:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
@@ -77,6 +82,18 @@ services:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
+  # postgres:
+  #   ports:
+  #     - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
+
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+    ports:
+      - "8080:80"
 
   geonature-frontend:
       image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
@@ -94,6 +111,9 @@ services:
         - ./frontend/external_modules:/build/external_modules
         - ./sources:/sources
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+      labels:
+        - "traefik.http.routers.geonature.entrypoints=web"
+        - "traefik.http.routers.geonature.rule=Host(`localhost`) && PathPrefix(`/geonature`)"
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
@@ -107,3 +127,8 @@ services:
       - gn
     profiles:
       - pre-built-db
+    
+  usershub:
+      labels:
+        - "traefik.http.routers.usershub.entrypoints=web"
+        - "traefik.http.routers.usershub.rule=Host(`localhost`) && PathPrefix(`/usershub`)"
