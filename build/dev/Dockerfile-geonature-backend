@@ -3,15 +3,15 @@
 ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
 
-ARG UID=1000
-ARG GID=1000
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
 
 WORKDIR /dist/geonature
 
 RUN rm -f geonature-*
 
-COPY --chown=${UID}:${GUID} /sources/GeoNature /sources/GeoNature
-COPY --chown=${UID}:${GUID} /sources /sources
+COPY --chown=${DOCKER_UID}:${DOCKER_GUID} /sources/GeoNature /sources/GeoNature
+COPY --chown=${DOCKER_UID}:${DOCKER_GUID} /sources /sources
 
 RUN --mount=type=cache,target=/root/.cache \
     pip install *.whl sentry_sdk[flask]
