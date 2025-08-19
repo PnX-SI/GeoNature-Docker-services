@@ -33,6 +33,15 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     entrypoint: /bin/sh -c exit
+
+  atlas-build:
+    image: ${ATLAS_IMAGE}
+    build:
+      target: prod
+      context: sources/GeoNature-atlas
+    volumes:
+      - ./config/atlas:/dist/atlas/
+    entrypoint: /bin/sh -c exit
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
