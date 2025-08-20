@@ -35,12 +35,12 @@ services:
     entrypoint: /bin/sh -c exit
 
   atlas-build:
-    image: ${ATLAS_IMAGE}
+    image: ${ATLAS_IMAGE}-app
     build:
-      target: prod
       context: sources/GeoNature-atlas
+      target: app
     volumes:
-      - ./config/atlas:/dist/atlas/
+      - ./config/atlas:/dist/config/
     entrypoint: /bin/sh -c exit
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
@@ -110,3 +110,15 @@ services:
       - gn
     profiles:
       - pre-built-db
+
+  geonature-atlas:
+    image: ${ATLAS_IMAGE}
+    depends_on:
+      atlas-build:
+        condition: service_completed_successfully
+    volumes:
+      - ./sources/GeoNature-atlas:/sources/GeoNature-atlas
+    build:
+      dockerfile: build/atlas/Dockerfile
+      args:
+        ATLAS_IMAGE: ${ATLAS_IMAGE}

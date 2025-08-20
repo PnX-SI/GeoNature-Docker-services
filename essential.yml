@@ -198,7 +198,8 @@ services:
       ATLAS_TYPE_MAILLE: ${ATLAS_TYPE_MAILLE:-"M1"}
       ATLAS_INSTALL_SCHEMA: ${ATLAS_INSTALL_SCHEMA:-false}
       ATLAS_RESET_SCHEMA: ${ATLAS_RESET_SCHEMA:-false}
-      ATLAS_URL_APPLICATION: ${ATLAS_URL_APPLICATION:-${ATLAS_HOST}${ATLAS_PREFIX}}
+      # WARNING: don't set default value for ATLAS_URL_APPLICATION, it must be set in .env file
+      ATLAS_URL_APPLICATION: ${ATLAS_URL_APPLICATION}
       ATLAS_APPLICATION_ROOT: ${ATLAS_PREFIX}
       ATLAS_REMOTE_MEDIAS_URL: ${ATLAS_REMOTE_MEDIAS_URL:-taxhub.${HOST}/}
       ATLAS_TAXHUB_URL: ${ATLAS_REMOTE_MEDIAS_URL}
@@ -208,12 +209,12 @@ services:
       ATLAS_TEMPLATES_AUTO_RELOAD: "true"
     ports:
       - 8082:8080
-    healthcheck:
-      test: ["CMD-SHELL", "/assets/healthcheck.sh"]
-      interval: ${ATLAS_HEALTHCHECK_INTERVAL}
-      timeout: 10s
-      retries: 20
-      start_period: 0s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "/assets/healthcheck.sh"]
+    #   interval: ${ATLAS_HEALTHCHECK_INTERVAL}
+    #   timeout: 10s
+    #   retries: 20
+    #   start_period: 0s
     #[WIP]From JP:
     # logging:
     #   options:
