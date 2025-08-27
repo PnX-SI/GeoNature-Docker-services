@@ -5,7 +5,8 @@ COMPOSE = docker compose -f docker-compose.yml -f docker-compose-dev.yml
 .PHONY: help switch-branch build-backend build-frontend up dev_with_build dev_clean_all migrate db_status \
         cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
         install-monitoring-modules install-monitoring-protocole update-monitoring refresh-monitoring \
-        format_backend_check format_backend
+        format_backend_check format_backend \
+		submodules-apply submodules-apply-full submodules-apply-debug submodules-apply-local submodules-check
 
 ## Liste des commandes disponibles
 help:
@@ -72,7 +73,6 @@ cli_monitoring:
 	$(COMPOSE) exec geonature-backend geonature monitorings $(ARGS)
 
 MODULE_MONITORING_DIRECTORY = /sources/gn_module_monitoring
-UPGRADE_DB_EXTRA = false
 MONITORING_MEDIA = data/geonature/media/monitorings
 SUBMODULES_DIR = sources/protocoles_monitoring
 MODULES = protocole_flore
@@ -105,3 +105,46 @@ format_backend_check:
 
 format_backend:
 	$(COMPOSE) exec geonature-backend black $(ARGS)
+
+############################################## COMMAND SUBMODULES #####################################
+SUBMODULES_CONF ?= .submodules.env
+# --- Config par défaut (surchageable à l'appel: make … JOBS=4, etc.) ---
+SUBMODULES_CONF ?= .submodules.env
+JOBS            ?= 8
+DEPTH           ?= 1           # 1 = shallow, vide pour full history
+FILTER          ?= blob:none   # blob:none = partial clone, vide pour désactiver
+GIT_LFS_SKIP_SMUDGE ?= 1       # 1 = ne télécharge pas LFS tout de suite
+GIT_PROGRESS    ?= 1           # affiche la progression
+
+# Exporter pour que le script les reçoive
+export JOBS DEPTH FILTER GIT_LFS_SKIP_SMUDGE GIT_PROGRESS
+
+# Par défaut : rapide (shallow + partial si supporté)
+submodules-apply:
+	@echo "▶ Running submodules-apply with CONF=$(SUBMODULES_CONF) JOBS=$(JOBS) DEPTH=$(DEPTH) FILTER=$(FILTER)"
+	bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+
+# Clone complet (pas de shallow/partial, LFS activé)
+submodules-apply-full:
+	@echo "▶ Running FULL clone…"
+	DEPTH= FILTER= GIT_LFS_SKIP_SMUDGE=0 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+
+# Verbose + traces Git (utile en debug)
+submodules-apply-debug:
+	@echo "▶ Running DEBUG…"
+	DEBUG=1 GIT_TRACE=1 GIT_TRACE_PACKET=1 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+
+# Variante locale : applique sans commit (si tu as ajouté SKIP_COMMIT=1 dans le script)
+submodules-apply-local:
+	@echo "▶ Running LOCAL (no commit)…"
+	SKIP_COMMIT=1 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+
+# Vérifs rapides côté fichiers (GeoNature en exemple, adapte les paths si besoin)
+submodules-check:
+	@echo "— .gitmodules —"; git config -f .gitmodules --get-regexp '^submodule\..*(path|url|branch)' || true
+	@echo "— GeoNature —"
+	@git -C sources/GeoNature rev-parse --abbrev-ref HEAD || true
+	@git -C sources/GeoNature remote -v || true
+	@echo -n "shallow? "; git -C sources/GeoNature rev-parse --is-shallow-repository || true
+	@echo -n "partial filter: "; git -C sources/GeoNature config --get remote.origin.partialclonefilter || true
+	@echo -n "promisor: "; git -C sources/GeoNature config --get remote.origin.promisor || true
