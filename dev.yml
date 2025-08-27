@@ -66,8 +66,10 @@ services:
         UID: ${UID}
         GID: ${GID}
     labels:
-      - "traefik.http.routers.geonature-backend.rule=Host(`localhost`) && PathPrefix(`/geonature/api`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=web"
+      - "traefik.enable=true"
+      - "traefik.owner=${STACK}"
+      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.${STACK}-geonature-backend.entrypoints=web"
 
   geonature-worker:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
@@ -92,8 +94,11 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443" 
+      - "--providers.docker.constraints=Label(`traefik.owner`, `${STACK}`)"
     ports:
-      - "8080:80"
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"  
 
   geonature-frontend:
       image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
@@ -112,8 +117,10 @@ services:
         - ./sources:/sources
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
       labels:
-        - "traefik.http.routers.geonature.entrypoints=web"
-        - "traefik.http.routers.geonature.rule=Host(`localhost`) && PathPrefix(`/geonature`)"
+        - "traefik.enable=true"
+        - "traefik.owner=${STACK}"
+        - "traefik.http.routers.${STACK}-geonature.entrypoints=web"
+        - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature`)"
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
@@ -130,5 +137,7 @@ services:
     
   usershub:
       labels:
-        - "traefik.http.routers.usershub.entrypoints=web"
-        - "traefik.http.routers.usershub.rule=Host(`localhost`) && PathPrefix(`/usershub`)"
+         - "traefik.owner=${STACK}"
+         - "traefik.http.routers.${STACK}-usershub.entrypoints=web"
+         - "traefik.http.routers.${STACK}-usershub.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/usershub`)"
+  
