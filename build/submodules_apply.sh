@@ -218,7 +218,8 @@ done < "$CONF"
 if [ $changed -eq 1 ]; then
   log "Staging .gitmodules and submodule paths…"
   git add .gitmodules $(awk -F'|' '!/^#/ && NF>=2 {gsub(/\r$/,""); print $2}' "$CONF")
-  git commit -m "Force rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
+  #TODO: check if necessary to commit . For now I comment this line 
+  # git commit -m "Force rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
 fi
 
 log "Finalizing: git submodule update --init --recursive --jobs $JOBS"
