@@ -55,9 +55,13 @@ services:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    environment:
+      TZ:  Europe/Paris
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
@@ -76,8 +80,12 @@ services:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    environment:
+      TZ:  Europe/Paris
     volumes:
       - ./sources:/sources
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
