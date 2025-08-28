@@ -29,5 +29,7 @@ services:
       - "0"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=Host(`localhost`) && PathPrefix(`/geonature/api`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=web"
+      - "traefik.owner=${STACK}"
+      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.${STACK}-geonature-backend.entrypoints=web"
+
