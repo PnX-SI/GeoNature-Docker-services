@@ -2,6 +2,7 @@ SHELL := /bin/bash
 include Makefile.dev
 include Makefile.debug
 
+.PHONY: build
 
 launch:
 	docker compose up -d
