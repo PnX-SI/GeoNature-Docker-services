@@ -44,7 +44,7 @@ services:
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=websecure"
       - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
-      - "traefik.http.services.geonature.loadbalancer.server.port=8000"
+      - "traefik.http.services.geonature-backend.loadbalancer.server.port=8000"
     ports: !reset null
     networks:
       - gn
@@ -68,6 +68,6 @@ services:
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
       - "traefik.http.routers.usershub.entrypoints=websecure"
       - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
-      - "traefik.http.services.geonature.loadbalancer.server.port=5001"
+      - "traefik.http.services.usershub.loadbalancer.server.port=5001"
     networks:
       - gn
