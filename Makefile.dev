@@ -1,6 +1,8 @@
 # Variables à override en ligne de commande si besoin
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+ROOT := $(dir $(MKFILE_PATH))
+COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose-dev.yml
 BRANCH ?= develop
-COMPOSE = docker compose -f docker-compose.yml -f docker-compose-dev.yml
 
 .PHONY: help switch-branch build-backend build-frontend up dev_with_build dev_clean_all migrate db_status \
         cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
@@ -9,17 +11,70 @@ COMPOSE = docker compose -f docker-compose.yml -f docker-compose-dev.yml
 		submodules-apply submodules-apply-full submodules-apply-debug submodules-apply-local submodules-check
 
 ## Liste des commandes disponibles
-help:
+help-dev:
 	@echo "Commandes disponibles :"
-	@echo "  make switch-branch BRANCH=<nom>  # Change de branche GeoNature, met à jour les submodules"
-	@echo "  make build-backend               # Rebuild uniquement les images backend"
-	@echo "  make build-frontend              # Rebuild uniquement le frontend"
-	@echo "  make up                          # Lance les conteneurs en arrière-plan (dev)"
-	@echo "  make dev_with_build              # Lance en rebuildant"
-	@echo "  make migrate                     # Applique flask db autoupgrade"
-	@echo "  make db_status                   # Status migrations"
-	@echo "  make dev_clean_all               # ⚠️ Stop + supprime les volumes (BDD perdue)"
-	@echo "  make format_backend / _check     # Black format"
+	@echo ""
+	@echo "— Docker / Compose —"
+	@echo "  make check-compose               # Affiche la version de docker compose utilisée"
+	@echo "  make up                          # Lance tous les conteneurs (dev) en arrière-plan"
+	@echo "  make up-backend                  # Lance uniquement le backend"
+	@echo "  make up-frontend                 # Lance uniquement le frontend"
+	@echo "  make dev_with_build              # Build + up (environnement de dev)"
+	@echo "  make dev_clean_all               # ⚠️ Stop + supprime les volumes (BDD perdue) + caches FE"
+	@echo ""
+	@echo "— Git / Branches & Submodules —"
+	@echo "  make switch-branch BRANCH=<nom>      # Change la branche GeoNature + met à jour les submodules"
+	@echo "  make submodules-apply                # Applique les submodules (rapide : shallow/partial)"
+	@echo "  make submodules-apply-full           # Applique les submodules (complet : historique + LFS)"
+	@echo "  make submodules-apply-debug          # Applique les submodules avec traces Git"
+	@echo "  make submodules-apply-with-commit    # Applique avec commit dans le staging area"
+	@echo "  make submodules-check                # Vérifications rapides des submodules (ex: GeoNature)"
+	@echo ""
+	@echo "— Build —"
+	@echo "  make build-backend               # Rebuild images backend (api/worker/install-db)"
+	@echo "  make build-frontend              # Rebuild image frontend"
+	@echo ""
+	@echo "— Base de données —"
+	@echo "  make migrate                     # Flask-Migrate : autoupgrade"
+	@echo "  make db_status                   # État des migrations"
+	@echo ""
+	@echo "— CLI & Outils —"
+	@echo "  make cli-backend ARGS=\"bash\"     # Ouvre un shell dans le conteneur backend"
+	@echo "  make cli-frontend ARGS=\"bash\"    # Ouvre un shell dans le conteneur frontend"
+	@echo "  make cli_geonature ARGS=\"...\"    # Exécute 'geonature <ARGS>' dans le backend"
+	@echo "  make cli_monitoring ARGS=\"...\"   # Exécute 'geonature monitorings <ARGS>'"
+	@echo "  make print-VAR                   # Affiche la valeur d'une variable Make (ex: print-COMPOSE)"
+	@echo ""
+	@echo "— Monitoring (protocoles) —"
+	@echo "  make debug-paths-monitoring      # Affiche chemins utiles (host/container) + listings"
+	@echo "  make prepare-monitorings-dir     # Crée le dossier media/monitorings dans le conteneur"
+	@echo "  make link-monitoring-in-container# Symlink media -> sources/protocoles_monitoring"
+	@echo "  make install-monitoring-modules  # Installe les protocoles listés dans \$$MODULES"
+	@echo "  make install-monitoring-protocole# Chaîne: link + install des protocoles"
+	@echo "  make update-monitoring           # pip install -e du package gn_module_monitoring"
+	@echo "  make refresh-monitoring          # Rebuild + up du frontend après update"
+	@echo ""
+	@echo "— Qualité / Formatage —"
+	@echo "  make format_backend_check ARGS=\"path\"  # Black --check (par défaut tout le backend)"
+	@echo "  make format_backend ARGS=\"path\"        # Black format (cible un dossier/fichier si fourni)"
+	@echo ""
+	@echo "Variables utiles (surchageables : make VAR=valeur) :"
+	@echo "  BRANCH=$(BRANCH)"
+	@echo "  COMPOSE=$(COMPOSE)"
+	@echo "  GEONATURE_MEDIA_FOLDER=$(GEONATURE_MEDIA_FOLDER)"
+	@echo "  MONITORING_MEDIA=$(MONITORING_MEDIA)"
+	@echo "  SUBMODULES_CONF=$(SUBMODULES_CONF)  JOBS=$(JOBS)  DEPTH=$(DEPTH)  FILTER=$(FILTER)  LFS_SKIP=$(GIT_LFS_SKIP_SMUDGE)"
+	@echo ""
+	@echo "Exemples :"
+	@echo "  make switch-branch BRANCH=develop"
+	@echo "  make submodules-apply SUBMODULES_CONF=submodules.env JOBS=8"
+	@echo "  make cli-backend ARGS=\"bash\""
+	@echo "  make print-MONITORING_MEDIA"
+
+print-%: @printf '%s=%s\n' "$*" "$($*)"
+
+check-compose:
+	@$(COMPOSE) version
 
 ## Change de branche et met à jour les submodules
 switch-branch:
@@ -32,6 +87,12 @@ switch-branch:
 up:
 	$(COMPOSE) up -d --force-recreate
 	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
+
+up-backend:
+	$(COMPOSE) up -d geonature-backend
+
+up-frontend:
+	$(COMPOSE) up -d geonature-frontend
 
 ## Rebuild des images backend
 build-backend:
@@ -57,6 +118,12 @@ dev_with_build: dev_init
 	$(COMPOSE) up -d --build
 	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
+#################### COMMANDE GN BACKEND ###########################
+cli-backend:
+	$(COMPOSE) exec geonature-backend $(ARGS)
+
+cli-frontend:
+	$(COMPOSE) exec geonature-frontend $(ARGS)
 #################### COMMANDE DB GN ###########################
 migrate:
 	$(COMPOSE) exec geonature-backend geonature db autoupgrade
@@ -72,22 +139,45 @@ cli_geonature:
 cli_monitoring:
 	$(COMPOSE) exec geonature-backend geonature monitorings $(ARGS)
 
+# Dossier des protocoles dans le conteneur
+SUBMODULES_DIR := /sources/protocoles_monitoring
+
+# Racine media (prend GEONATURE_MEDIA_FOLDER si présent, sinon /dist/media)
+GEONATURE_MEDIA_FOLDER ?= /dist/media
+MONITORING_MEDIA := $(GEONATURE_MEDIA_FOLDER)/monitorings
 MODULE_MONITORING_DIRECTORY = /sources/gn_module_monitoring
-MONITORING_MEDIA = data/geonature/media/monitorings
-SUBMODULES_DIR = sources/protocoles_monitoring
-MODULES = protocole_flore
+MODULES = protocole_exemple
+# supprime l’espace de fin de lignes de la liste des modules définie ci dessus. 
+MODULES := $(strip $(MODULES))
+
+debug-paths-monitoring:
+	@echo "SUBMODULES_DIR=$(SUBMODULES_DIR)"
+	@echo "GEONATURE_MEDIA_FOLDER=$(GEONATURE_MEDIA_FOLDER)"
+	@echo "MONITORING_MEDIA=$(MONITORING_MEDIA)"
+	@echo "MODULES=$(MODULES)"
+	@$(COMPOSE) exec -T geonature-backend sh -lc 'echo "[IN CONT] ls $(SUBMODULES_DIR):"; ls -la "$(SUBMODULES_DIR)" || true'
+	@$(COMPOSE) exec -T geonature-backend sh -lc 'echo "[IN CONT] ls $(MONITORING_MEDIA):"; ls -la "$(MONITORING_MEDIA)" || true'
 
 prepare-monitorings-dir:
-	mkdir -p $(MONITORING_MEDIA)
+	$(COMPOSE) exec -T geonature-backend mkdir -p $(MONITORING_MEDIA)
 
-link-monitoring-in-container:
+# /dist/media/monitorings/<module> -> /sources/protocoles_monitoring/<module>
+link-monitoring-in-container: prepare-monitorings-dir
 	@for module in $(MODULES); do \
-		$(COMPOSE) exec geonature-backend bash -c "mkdir -p /dist/media/monitorings && ln -sf /sources/protocoles_monitoring/$$module /dist/media/monitorings/$$module"; \
+	  [ -n "$$module" ] || continue; \
+	  src='$(SUBMODULES_DIR)/'$$module; \
+	  dst='$(MONITORING_MEDIA)/'$$module; \
+	  echo "→ Link $$module : $$dst -> $$src"; \
+	  $(COMPOSE) exec -T geonature-backend sh -lc "\
+	    [ -d \"$$src\" ] || { echo '[ERR] '\"$$src\"' introuvable (submodule non init ?)'; exit 1; }; \
+	    [ -e \"$$dst\" ] && [ ! -L \"$$dst\" ] && rm -rf \"$$dst\"; \
+	    ln -sfn \"$$src\" \"$$dst\"; \
+	    ls -ld \"$$dst\"; readlink -f \"$$dst\""; \
 	done
 
 install-monitoring-modules:
 	@for module in $(MODULES); do \
-		$(COMPOSE) exec geonature-backend geonature monitorings install $$module; \
+	  $(COMPOSE) exec -T geonature-backend geonature monitorings install "$$module"; \
 	done
 
 install-monitoring-protocole: link-monitoring-in-container install-monitoring-modules

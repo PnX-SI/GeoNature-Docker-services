@@ -50,14 +50,18 @@ services:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    user: "${UID}:${GID}"
     environment:
       TZ:  Europe/Paris
+      UID: ${UID}
+      GID: ${GID}
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
       - ./sources/gn_module_export:/sources/gn_module_export
       - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
       - ./sources/protocoles_monitoring:/sources/protocoles_monitoring
+      - ./sources/protocoles_monitoring:${GEONATURE_MEDIA_FOLDER:-/dist/media}/monitorings
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
