@@ -7,9 +7,9 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
 - Occtax
 - Occhab
 - Validation
-- [Monitorings (v.1.0.3)](https://github.com/PnX-SI/gn_module_monitoring)
-- [Dashboard (v.1.5.0)](https://github.com/PnX-SI/gn_module_dashboard)
-- [Export (v.1.7.2) ](https://github.com/PnX-SI/gn_module_export)
+- [Monitorings](https://github.com/PnX-SI/gn_module_monitoring)
+- [Dashboard](https://github.com/PnX-SI/gn_module_dashboard)
+- [Export](https://github.com/PnX-SI/gn_module_export)
 
 ## Démarrage rapide
 
@@ -154,9 +154,9 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## FAQ
 
-Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/dev-faq.md).
+Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature-Docker-services](/docs/faq.md).
 
-Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
+Pour des informations spécifiques sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](docs/dev-faq.md).
 
 ## Images Docker publiées
 
