@@ -36,23 +36,29 @@ services:
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    depends_on:
-      base-backend:
-        condition: service_completed_successfully
-    build:
-      dockerfile: build/dev/Dockerfile-geonature-backend
-      args:
-        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-    volumes:
-      - ./sources/GeoNature:/sources/GeoNature
-
-  geonature-backend:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    user: root:root
     depends_on:
       base-backend:
         condition: service_completed_successfully
     volumes:
       - ./sources:/sources
+      - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+    build:
+      dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+
+
+  geonature-backend:
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    user: root:root
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
+    volumes:
+      - ./sources:/sources
+      - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+    entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:

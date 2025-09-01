@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker.io/docker/dockerfile:1.6
 
 ARG GEONATURE_FRONTEND_IMAGE="geonature-docker-service/geonature-frontend-local:latest"
 FROM ${GEONATURE_FRONTEND_IMAGE}-source AS source-extra

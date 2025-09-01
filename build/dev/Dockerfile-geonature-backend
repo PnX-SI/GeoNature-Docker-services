@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker.io/docker/dockerfile:1.6
 
 ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
 FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
