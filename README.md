@@ -154,7 +154,7 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## FAQ
 
-Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](#dev-faq).
+Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/dev-faq.md).
 
 Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
 
@@ -198,17 +198,6 @@ Il est aussi possible de lancer Cypress en version headed ou avec des paramètre
 qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liés aux forms d'occtax :
 
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
-
-## <a name="dev-faq"></a> FAQ de développement
-
-- Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
-
-Assurez-vous de ne pas avoir activé la feature Bake de docker `COMPOSE_BAKE=true`
-
-- J'ai une question, à qui puis-je la poser ?
-
-Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
-
 ## Liens utiles
 
 ### GeoNature
