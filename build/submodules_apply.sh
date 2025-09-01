@@ -231,16 +231,28 @@ done < "$CONF"
 # ===================== Finalisation / commit =====================
 SKIP_COMMIT="${SKIP_COMMIT:-1}"  # 1 = ne pas stage/commit les changements
 
-if [ $changed -eq 1 ]; then
-  if [ "$SKIP_COMMIT" = "1" ]; then
-    log "Skip stage/commit (SKIP_COMMIT=1). Rien n'est ajouté ni commité."
+git submodule sync --recursive
+if [ "$SKIP_COMMIT" = "1" ]; then
+  if [ $changed -eq 1 ]; then
+    # On a bien mis à jour les worktrees (branches/tags/sha) localement
+    # mais on NE stage/commit PAS et on NE relance PAS 'git submodule update'
+    # (sinon on reviendrait aux SHA enregistrés dans le super-projet).
+    log "Local-only (SKIP_COMMIT=1) : worktrees mis à jour, pas de stage/commit, pas de 'git submodule update'."
   else
+    log "Local-only (SKIP_COMMIT=1) : aucun changement détecté."
+  fi
+else
+  if [ $changed -eq 1 ]; then
     log "Staging .gitmodules and submodule paths…"
     git add .gitmodules $(awk -F'|' '!/^#/ && NF>=2 {gsub(/\r$/,""); print $2}' "$CONF")
     git commit -m "Rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
+
+    # Optionnel : ne lancer l'update final que s'il y a eu des changements
+    log "Finalizing: git submodule update --init --recursive --jobs $JOBS"
+    git submodule update --init --recursive --jobs "$JOBS"
+  else
+    log "Aucun changement de sous-modules ; skip stage/commit et 'git submodule update'."
   fi
 fi
 
-log "Finalizing: git submodule update --init --recursive --jobs $JOBS"
-git submodule update --init --recursive --jobs "$JOBS"
 log "Done."
