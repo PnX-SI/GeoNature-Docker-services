@@ -1,15 +1,11 @@
-.PHONY: debug
-debug:
-	echo "Mode debug activé"
-
 # Variables
 DC=docker compose -f docker-compose.yml -f docker-compose-dev.yml -f docker-compose.debug.yml
 SERVICE=geonature-backend
 
-.PHONY: help debug-build debug-backend debug-up debug-down debug-logs
+.PHONY: help-debug debug-build debug-backend debug-up debug-down debug-logs
 
 ## Affiche les commandes disponibles
-help:
+help-debug: help-dev
 	@echo ""
 	@echo "Commandes disponibles pour le debug :"
 	@echo "  make debug-build      => Rebuild l'image backend avec debugpy"

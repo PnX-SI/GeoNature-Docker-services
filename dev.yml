@@ -55,8 +55,11 @@ services:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    user: "${UID}:${GID}"
     environment:
       TZ:  Europe/Paris
+      UID: ${UID}
+      GID: ${GID}
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
