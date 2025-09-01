@@ -8,7 +8,13 @@ dev_init:
 	source .env; echo "{\"API_ENDPOINT\":\"//$${HOSTPORT}$${GEONATURE_BACKEND_PREFIX}\"}" > sources/GeoNature/frontend/src/assets/config.json
 
 submodule_init:
-	git submodule update --init --recursive
+	# So the config is right even for a fork
+	git config submodule.GeoNature.url https://github.com/PnX-SI/GeoNature/
+	git config submodule.UsersHub.url https://github.com/PnX-SI/UsersHub/
+	git config submodule.gn_module_export.url https://github.com/PnX-SI/gn_module_export/
+	git config submodule.gn_module_dashboard.url https://github.com/PnX-SI/gn_module_dashboard/
+	git config submodule.gn_module_monitoring.url https://github.com/PnX-SI/gn_module_monitoring/
+	git submodule update --init --recursive --depth 1
 
 build:
 	build/build.sh
