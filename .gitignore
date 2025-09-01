@@ -5,3 +5,4 @@ docker-compose.override.yml
 !data/**/.gitkeep
 !data/**/*.sample
 *.swp
+submodules.env

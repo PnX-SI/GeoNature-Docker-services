@@ -107,9 +107,9 @@ format_backend:
 	$(COMPOSE) exec geonature-backend black $(ARGS)
 
 ############################################## COMMAND SUBMODULES #####################################
-SUBMODULES_CONF ?= .submodules.env
+SUBMODULES_CONF ?= submodules.env
 # --- Config par défaut (surchageable à l'appel: make … JOBS=4, etc.) ---
-SUBMODULES_CONF ?= .submodules.env
+SUBMODULES_CONF ?= submodules.env
 JOBS            ?= 8
 DEPTH           ?= 1           # 1 = shallow, vide pour full history
 FILTER          ?= blob:none   # blob:none = partial clone, vide pour désactiver
@@ -134,10 +134,10 @@ submodules-apply-debug:
 	@echo "▶ Running DEBUG…"
 	DEBUG=1 GIT_TRACE=1 GIT_TRACE_PACKET=1 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
 
-# Variante locale : applique sans commit (si tu as ajouté SKIP_COMMIT=1 dans le script)
-submodules-apply-local:
+# Variante locale : applique avec commit (SKIP_COMMIT=1 par défaut dans le script)
+submodules-apply-with-commit:
 	@echo "▶ Running LOCAL (no commit)…"
-	SKIP_COMMIT=1 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+	SKIP_COMMIT=0 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
 
 # Vérifs rapides côté fichiers (GeoNature en exemple, adapte les paths si besoin)
 submodules-check:
