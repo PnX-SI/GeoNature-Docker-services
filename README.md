@@ -178,7 +178,68 @@ Il est déconseillé de lancer avec la commande `docker compose up -d` car si vo
 cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes.
 
-Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
+Il est possible de configurer le fichier `submodules.env` en s'appuyant sur le fichier `submodules.env.sample`. L'idée étant de préciser l'url du dépot sur lequel vous voulez tirer le code et de préciser soit la branche , soit le tag soit un commit . Pour cela il suffit de prefixer le nom de la branche par `branch:` , le numéro du tag par `tag:` ou le numéro du commit `sha` par `sha:`. 
+
+Une fois ce fichier rempli, il faut alors lancer une des règles commençant par `submodules-apply`. Faire un `make help-dev` pour choisir parmi les règles proposées, suivant si vous voulez appliquer un init submodules full, ou partiel en terme d'historique de commit et même en appliquant un commit avec les nouvelles versions des submodules.
+
+Une fois que vous avez lancé la règle qui lance le script `subdomules_apply.sh` vous avez alors en environnement GeoNature, Modules Externes et Usershub aux versions configurés dans le `submodules.env.sample`.
+
+Vous pouvez alors réaliser les règle make dans l'ordre suivant : 
+- `make build` pour construire les images en local 
+- `make up` pour lancer les services docker 
+
+
+Vous pouvez visiter votre GeoNature à l'adresse basée sur vos variables de votre fichier `.env` , selon ce pattern : `$${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"`. Ce qui donnerait par exemple https://localhost/geonature et le proxy traefik http://localhost:8080/.
+
+### Règles utiles dans le Makefile.dev
+
+Il existe tout un tas de règle Make utiles lorsqu'on est environnement de dev pour pouvoir contribuer . 
+Pour cela lancer la règle `make help-dev` ou `make help-debug` pour voir plus d'informations concernant les règles liées au mode debug. 
+
+
+### Lancer le backend en mode debug
+
+Il est possible de lancer le backend  de GeoNature en mode debug après avoir "build" les images et lancés les services.  Pour cela il faut lancer les commandes suivantes :
+
+- `make debug-build`
+- `make debug-backend`
+
+Avec vscode par exemple on peut donc avoir ce fichier dans le `launch.json`
+
+<details><summary> Configuration pour debug avec Docker pour Vscode</summary>
+
+```json
+    {
+      "name": "Attach Flask in Docker",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "justMyCode": true,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/GeoNature",
+          "remoteRoot": "/sources/GeoNature"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_export",
+          "remoteRoot": "/sources/gn_module_export"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_dashboard",
+          "remoteRoot": "/sources/gn_module_dashboard"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_monitoring",
+          "remoteRoot": "/sources/gn_module_monitoring"
+        },
+      {
+        "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/usershub",
+        "remoteRoot": "/sources/usershub"
+      }
+      ]
+}
+```
+</details>
 
 ### Exécuter les test Cypress
 
@@ -198,6 +259,29 @@ Il est aussi possible de lancer Cypress en version headed ou avec des paramètre
 qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liés aux forms d'occtax :
 
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
+
+### Monitoring et ses protocoles 
+
+En mode développement il est possible d'ajouter un dossier `protocoles_monitoring` dans le dossier `sources`. Dans ce dossier, on peut alors ajouter autant de protocoles que l'on veut . 
+Ainsi il sera alors possible après lancement des services docker de réaliser les commandes suivantes : 
+- `make cli_monitoring ARGS="install"` ==> cette commande permet de voir la liste des protocoles détectés par notre application lancé en mode docker .
+
+Si la liste montre des protocoles sous `Modules disponibles :` alors il est possible de réaliser les étapes suivantes :
+
+- Modifier la variable `MODULES` du fichier `Makefile.dev` pour lister les protocoles monitoring que l'on souhaite installer séparés par des espaces .
+- Lancer la règle: `make install-monitoring-modules` qui va alors installer les protocoles que vous venez de lister .
+
+
+## <a name="dev-faq"></a> FAQ de développement
+
+* Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
+
+Assurez-vous de ne pas avoir activé la feature Bake de docker `COMPOSE_BAKE=true`
+
+* J'ai une question, à qui puis-je la poser ? 
+
+Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
+
 ## Liens utiles
 
 ### GeoNature
