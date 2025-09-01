@@ -152,10 +152,23 @@ add_submodule_if_missing() {
 # Au lieu de "add_submodule_if_missing", utilise :
 ensure_submodule_present() {
   local path="$1" url="$2"
-  # Si le dossier existe mais n’est pas git, tu as déjà le backup ailleurs dans le script
-  # Ici on se contente d'initialiser depuis .gitmodules :
-  git submodule sync -- "$path"
-  git submodule update --init "$path"
+
+  # Si le chemin n'est pas déjà un submodule (pas de gitlink "160000" dans l'index)
+  if ! git ls-files -s -- "$path" 2>/dev/null | awk '{print $1}' | grep -q '^160000$'; then
+    # Si un dossier existe, on le dégage proprement (backup si non vide)
+    if [ -e "$path" ]; then
+      if [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
+        mv "$path" "${path}.bak.$(date +%s)"
+      else
+        rmdir "$path" 2>/dev/null || true
+      fi
+    fi
+    git submodule add -f "$url" "$path"
+  fi
+
+  # Maintenant on peut synchroniser et initialiser sans erreur
+  git submodule sync -- "$path" || true
+  git submodule update --init --recursive "$path"
 }
 
 # ===================== PASS 2: add / update / checkout =====================
@@ -215,11 +228,17 @@ while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
 done < "$CONF"
 
 # ===================== Finalisation / commit =====================
+# ===================== Finalisation / commit =====================
+SKIP_COMMIT="${SKIP_COMMIT:-1}"  # 1 = ne pas stage/commit les changements
+
 if [ $changed -eq 1 ]; then
-  log "Staging .gitmodules and submodule paths…"
-  git add .gitmodules $(awk -F'|' '!/^#/ && NF>=2 {gsub(/\r$/,""); print $2}' "$CONF")
-  #TODO: check if necessary to commit . For now I comment this line 
-  # git commit -m "Force rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
+  if [ "$SKIP_COMMIT" = "1" ]; then
+    log "Skip stage/commit (SKIP_COMMIT=1). Rien n'est ajouté ni commité."
+  else
+    log "Staging .gitmodules and submodule paths…"
+    git add .gitmodules $(awk -F'|' '!/^#/ && NF>=2 {gsub(/\r$/,""); print $2}' "$CONF")
+    git commit -m "Rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
+  fi
 fi
 
 log "Finalizing: git submodule update --init --recursive --jobs $JOBS"
