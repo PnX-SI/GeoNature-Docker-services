@@ -1,5 +1,65 @@
 # CHANGELOG
 
+## GDS 2.0 
+**🚀 Nouveautés**
+
+- Ajout de l'utilisation des profiles et des composes pour rendre plus modulaire le déploiement
+  - Il est maintenant possible de déployer la stack sans utiliser Traefik
+  - On peut aussi décider (grâce aux profils) de ne pas déployer UsersHub et la base de données. 
+- Ajout de tests automatisés dans les github action pour valider le fonctionnement de la stack GDS
+- Ajout et suppression de multiples variables d'environnement dans le .env 
+- Modification du Makefile pour permettre de fork le projet plus facilement ([57](https://github.com/PnX-SI/GeoNature-Docker-services/issues/57))
+et de réduire la taille prise par le repo ([GN 3419](https://github.com/PnX-SI/GeoNature/issues/3419))
+- [Développement] Il est maintenant possible en développement d'installer et tester des modules sans rebuild des images (voir faq de dev)
+- [Développement] Ajout de la possibilité de déployer une base de données pré-générée pour accélérer les développements
+https://github.com/PnX-SI/geonature_db
+
+**⚠️ Notes de version**
+
+- Au vu des multiples modifications intégrées, il est fortement recommandé de repartir du nouveau .env.sample pour construire votre .env
+
+**🏷️ Versions**
+
+- GeoNature 2.16.2
+- TaxHub 2.2.2
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.1.0
+
+## 2.16.2
+
+**🏷️ Versions**
+
+- GeoNature 2.16.2
+- TaxHub 2.2.2
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.1.0
+
+## 2.16.1
+
+**🏷️ Versions**
+
+- GeoNature 2.16.1
+- TaxHub 2.2.2
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.0.3
+
+## 2.16.0
+
+**🏷️ Versions**
+
+- GeoNature 2.16.0
+- TaxHub 2.2.2
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.0.3
+
 ## 2.15.4
 
 **🏷️ Versions**
