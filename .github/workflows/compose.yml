@@ -1,0 +1,125 @@
+name: CI - Docker Compose
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  test-docker-compose:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          - name: "Traefik"
+            env_setup: "cp .env.sample .env"
+            url_frontend: "https://localhost/geonature/"
+            url_backend: "https://localhost/geonature/api/gn_commons/config"
+            expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
+
+          - name: "Essential"
+            env_setup: "cp env_examples/.env.sample.without_traefik .env"
+            url_frontend: "http://localhost/#/"
+            url_backend: "localhost:8000/geonature/api/gn_commons/config"
+            expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
+
+          - name: "Minimal"
+            env_setup: "cp env_examples/.env.sample.without_db_and_usershub .env"
+            url_frontend: "http://localhost/#/"
+            url_backend: "localhost:8000/geonature/api/gn_commons/config"
+            expected_services: "geonature-backend geonature-frontend geonature-worker redis"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install -y make jq git-lfs curl
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and start stack (${{ matrix.config.name }})
+        run: |
+          ${{ matrix.config.env_setup }}
+          make prod > /dev/null
+          docker ps -a
+
+      - name: Wait for services to be running
+        run: |
+          MAX_RETRIES=5
+          RETRY_INTERVAL=10
+          EXPECTED_SERVICES="${{ matrix.config.expected_services }}"
+
+          echo "Expected services: $EXPECTED_SERVICES"
+
+          check_service() {
+            local service=$1
+            for i in $(seq 1 $MAX_RETRIES); do
+              if docker compose ps $service | grep -q "Up"; then
+                echo "$service is running"
+                return 0
+              fi
+              echo "Waiting for $service to be running (attempt $i/$MAX_RETRIES)..."
+              sleep $RETRY_INTERVAL
+            done
+            echo "Error: $service failed to start after $MAX_RETRIES attempts"
+            docker compose logs $service
+            return 1
+          }
+
+          # Vérifier que tous les services attendus sont actifs
+          for service in $EXPECTED_SERVICES; do
+            if ! check_service $service; then
+              exit 1
+            fi
+          done
+
+          # Vérifier qu'aucun service inattendu n'est actif
+          echo "Checking for unexpected running services..."
+          RUNNING_SERVICES=$(docker compose ps --services --filter "status=running")
+
+          for running_service in $RUNNING_SERVICES; do
+            if [ "$running_service" = "geonature-install-db" ]; then
+              echo "ℹ️  Ignoring optional service: $running_service"
+              continue
+            fi
+
+            if ! echo "$EXPECTED_SERVICES" | grep -q "\b$running_service\b"; then
+              echo "❌ Error: Unexpected service '$running_service' is running!"
+              echo "Expected services: $EXPECTED_SERVICES"
+              echo "Running services: $RUNNING_SERVICES"
+              exit 1
+            fi
+          done
+
+          echo "✅ All expected services are running and no unexpected services detected!"
+          echo "Running services: $RUNNING_SERVICES"
+
+
+      - name: Run integration tests
+        run: |
+          MAX_ATTEMPTS=5
+          SLEEP_TIME=10
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Attempt $i/$MAX_ATTEMPTS - Testing GeoNature availability..."
+            if curl --insecure --fail --silent ${{ matrix.config.url_frontend }} && \
+               curl --insecure --fail --silent ${{ matrix.config.url_backend }}; then
+              echo "✅ GeoNature is ready!"
+              exit 0
+            fi
+            echo "❌ Services not ready yet, waiting ${SLEEP_TIME}s..."
+            sleep $SLEEP_TIME
+          done
+          echo "🚨 GeoNature failed to become available after $MAX_ATTEMPTS attempts"
+          docker compose logs
+          exit 1
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
