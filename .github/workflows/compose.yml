@@ -3,13 +3,12 @@ name: CI - Docker Compose
 on:
   push:
     branches:
-      - dev
       - main
+      - develop
   pull_request:
     branches:
-      - dev
       - main
-
+      - develop
 jobs:
   test-docker-compose:
     runs-on: ubuntu-latest
