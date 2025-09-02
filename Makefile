@@ -25,7 +25,7 @@ dev: dev_init
 
 prod:
 	./init-config.sh
-	COMPOSE_FILE=docker-compose.yml docker compose up -d
+	docker compose up -d
 	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
 cypress:
