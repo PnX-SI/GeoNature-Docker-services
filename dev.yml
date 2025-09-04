@@ -47,7 +47,8 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-
+        UID: ${UID}
+        GID: ${GID}
 
   geonature-backend:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
@@ -93,6 +94,8 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${UID}
+        GID: ${GID}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   # postgres:
@@ -147,6 +150,9 @@ services:
       - pre-built-db
     
   usershub:
+      depends_on:
+        userhub-build:
+          condition: service_completed_successfully
       labels:
          - "traefik.owner=${STACK}"
          - "traefik.http.routers.${STACK}-usershub.entrypoints=web"
