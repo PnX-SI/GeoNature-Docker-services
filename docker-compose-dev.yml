@@ -41,6 +41,7 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
         UID: ${UID}
         GID: ${GID}
     volumes:
@@ -67,6 +68,7 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
         UID: ${UID}
         GID: ${GID}
     labels:
@@ -90,6 +92,10 @@ services:
       - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${UID}
+        GID: ${GID}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   postgres:
@@ -134,6 +140,9 @@ services:
         - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature`)"
 
   usershub:
+      depends_on:
+        userhub-build:
+          condition: service_completed_successfully
       labels:
         - "traefik.enable=true"
         - "traefik.owner=${STACK}"
