@@ -3,6 +3,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 ROOT := $(dir $(MKFILE_PATH))
 COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose-dev.yml
 BRANCH ?= develop
+SERVICE ?=
 
 .PHONY: help switch-branch build-backend build-frontend up dev_with_build dev_clean_all migrate db_status \
         cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
@@ -16,7 +17,9 @@ help-dev:
 	@echo ""
 	@echo "— Docker / Compose —"
 	@echo "  make check-compose               # Affiche la version de docker compose utilisée"
+	@echo "  make dev-logs                    # Affiche les logs de tous les services lancés. Possibilité de préciser un ou plusieurs SERVICES=geonature-backend"
 	@echo "  make up                          # Lance tous les conteneurs (dev) en arrière-plan"
+	@echo "  make build-base                  # Build toutes les images de bases. Peut être utile si docker ne trouve pas les images en local et essaye de tirer des images distantes"
 	@echo "  make up-backend                  # Lance uniquement le backend"
 	@echo "  make up-frontend                 # Lance uniquement le frontend"
 	@echo "  make dev_with_build              # Build + up (environnement de dev)"
@@ -76,6 +79,10 @@ print-%: @printf '%s=%s\n' "$*" "$($*)"
 check-compose:
 	@$(COMPOSE) version
 
+## Affiche les logs (tous ou d'un service si précisé)
+dev-logs:
+	$(COMPOSE) logs -f $(if $(SERVICE),$(SERVICE))
+
 ## Change de branche et met à jour les submodules
 switch-branch:
 	cd sources/GeoNature && \
@@ -93,6 +100,10 @@ up-backend:
 
 up-frontend:
 	$(COMPOSE) up -d geonature-frontend
+
+## Build images base
+build-base:
+	$(COMPOSE) build base-backend base-frontend-source base-frontend-nginx userhub-build
 
 ## Rebuild des images backend
 build-backend:
