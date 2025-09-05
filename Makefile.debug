@@ -21,11 +21,11 @@ debug-build:
 
 ## Lance uniquement le backend en mode debug
 debug-backend:
-	$(DC) up $(SERVICE)
+	$(DC) up -d $(SERVICE)
 
 ## Lance tous les services avec debug
 debug-up:
-	$(DC) up
+	$(DC) up -d
 
 ## Affiche les logs du backend
 debug-logs:
