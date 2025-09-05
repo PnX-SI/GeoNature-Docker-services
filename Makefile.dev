@@ -1,6 +1,6 @@
 # Variables à override en ligne de commande si besoin
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-ROOT := $(dir $(MKFILE_PATH))
+ROOT := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose-dev.yml
 BRANCH ?= develop
 SERVICE ?=
@@ -90,6 +90,9 @@ switch-branch:
 	git checkout $(BRANCH) && \
 	git submodule update --init --recursive
 
+compose:
+	$(COMPOSE) $(ARGS)
+
 ## Up rapide (dev)
 up:
 	$(COMPOSE) up -d --force-recreate
@@ -100,6 +103,13 @@ up-backend:
 
 up-frontend:
 	$(COMPOSE) up -d geonature-frontend
+
+## Stop rapide (dev)
+stop:
+	$(COMPOSE) stop
+
+down:
+	$(COMPOSE) down
 
 ## Build images base
 build-base:
