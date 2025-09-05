@@ -17,10 +17,12 @@ git clone https://github.com/PnX-SI/mtd_sync.git gn_module_mtd_sync
 ```
 
 Une fois que c'est fait, si votre module dispose d'un frontend, il faut créer un lien symbolique
-entre le dossier `frontend` de ce module et le dossier `frontend/external_modules`. 
+entre le dossier `frontend` de ce module et le dossier `frontend/external_modules`. Attention à bien utiliser 
+le même nom de dossier que le `module_path` de votre module.  
 
 ```bash
-ln -s ../../sources/gn_module_mtd_sync/frontend frontend/external_modules/mtd_sync
+cd sources/gn_module_calcutrice_monitoring/ # /!\ vous devez faire le lien symbolique depuis le dossier du module
+ln -s ../../sources/gn_module_calcutrice_monitoring/frontend/ ../../frontend/external_modules/calculatrice
 ```
 
 Une fois que c'est fait, vous pouvez simplement relancer vos dockers : 
