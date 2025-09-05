@@ -1,258 +1,340 @@
 #!/usr/bin/env bash
+# submodules_apply_preflight_v4.sh
+# Fix: do NOT overwrite PATH env var (use SM_PATH instead).
 set -euo pipefail
+shopt -s extglob
 
-# ===================== Debug / helpers =====================
-DEBUG="${DEBUG:-0}"
-if [[ "$DEBUG" == "1" || "$DEBUG" == "true" ]]; then
-  export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}(): '
-  set -x
-fi
+CONF="${CONF:-submodules.env}"
+DRY_RUN="${DRY_RUN:-0}"
+FORCE="${FORCE:-0}"
+COMMIT="${COMMIT:-0}"
+COMMIT_MSG="${COMMIT_MSG:-chore(submodules): update pointers}"
+DRY_FETCH="${DRY_FETCH:-1}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
 
-log(){ printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
-mask_url(){ printf '%s' "$1" | sed -E 's#(https?://)[^@/]+@#\1***@#'; }
-require_cmd(){ command -v "$1" >/dev/null 2>&1 || { echo "ERROR: '$1' not found. PATH=$PATH"; exit 127; }; }
-supports_filter(){ git submodule update -h 2>&1 | grep -q -- '--filter'; }
+info()  { printf 'info: %s\n' "$*"; }
+warn()  { printf 'WARN: %s\n' "$*" >&2; }
+error() { printf 'ERROR: %s\n' "$*" >&2; }
+debug() { [ "$LOG_LEVEL" = "debug" ] && printf 'debug: %s\n' "$*"; return 0; }
 
-# ===================== Env / options =====================
-require_cmd git
-log "pwd=$(pwd)"
-log "PATH=$PATH"
-log "git version: $(git --version 2>&1 || echo 'unknown')"
-
-CONF="${1:-submodules.env}"
-[ -f "$CONF" ] || { echo "Config file not found: $CONF"; exit 1; }
-log "Using config: $CONF"
-
-# Perf toggles (surchargeables)
-JOBS="${JOBS:-8}"
-DEPTH="${DEPTH:-1}"               # vide pour désactiver le shallow
-FILTER="${FILTER:-blob:none}"     # vide pour désactiver le partial clone
-export GIT_LFS_SKIP_SMUDGE="${GIT_LFS_SKIP_SMUDGE:-1}"
-export GIT_PROGRESS="${GIT_PROGRESS:-1}"
-
-if ! supports_filter; then
-  log "submodule update ne supporte pas --filter → désactivation du partial clone"
-  FILTER=""
-fi
-log "OPTS: JOBS=${JOBS:-?} DEPTH=${DEPTH:-full} FILTER=${FILTER:-none} LFS_SKIP=${GIT_LFS_SKIP_SMUDGE:-unset}"
-
-changed=0
-lineno=0
-
-# ===================== PASS 0: Purger .gitmodules =====================
-if [ -f .gitmodules ]; then
-  declare -A __seen
-  while read -r key; do
-    name="${key#submodule.}"; name="${name%%.*}"
-    if [[ -z "${__seen[$name]:-}" ]]; then
-      git config -f .gitmodules --remove-section "submodule.$name" || true
-      __seen[$name]=1
-    fi
-  done < <(git config -f .gitmodules --name-only --get-regexp '^submodule\..*\..*' 2>/dev/null || true)
-fi
-
-# ===================== PASS 1: Réécrire .gitmodules =====================
-declare -A seen_paths
-while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
-  lineno=$((lineno+1))
-  line="${raw%$'\r'}"
-  [[ -z "${line// }" || "$line" =~ ^# ]] && { log "skip line $lineno"; continue; }
-
-  NAME=""; PATH_SM=""; URL=""; REF=""
-  IFS='|' read -r NAME PATH_SM URL REF <<< "$line"
-  if [[ -z "${NAME:-}" || -z "${PATH_SM:-}" || -z "${URL:-}" || -z "${REF:-}" ]]; then
-    echo "Line $lineno malformed: '$line'"; exit 1
+run() {
+  if [ "$DRY_RUN" = "1" ]; then
+    printf '[dry] %s\n' "$*"
+  else
+    printf '+ %s\n' "$*"
+    eval "$@"
   fi
-  if [[ -n "${seen_paths[$PATH_SM]:-}" ]]; then
-    echo "Duplicate path in config: $PATH_SM (line $lineno)"; exit 1
-  fi
-  seen_paths[$PATH_SM]=1
+}
 
-  log "L$lineno[write]: NAME='$NAME' PATH='${PATH_SM}' URL='$(mask_url "$URL")' REF='$REF'"
-  git config -f .gitmodules "submodule.$NAME.path" "$PATH_SM"
-  git config -f .gitmodules "submodule.$NAME.url"  "$URL"
-  case "$REF" in
-    branch:*)
-      BRANCH="${REF#branch:}"
-      git config -f .gitmodules "submodule.$NAME.branch" "$BRANCH"
-      git config "submodule.$NAME.branch" "$BRANCH" || true
-      ;;
-    tag:*|sha:*|commit:*)
-      git config -f .gitmodules --unset-all "submodule.$NAME.branch" 2>/dev/null || true
-      git config --unset-all "submodule.$NAME.branch" 2>/dev/null || true
-      ;;
-    *) echo "Unknown REF format for $NAME at line $lineno: $REF"; exit 1;;
+trim() {
+  local s="${1-}"
+  s="${s//$'\r'/}"            # strip CR
+  s="${s##+([[:space:]])}"    # ltrim
+  s="${s%%+([[:space:]])}"    # rtrim
+  printf '%s' "$s"
+}
+
+parse_ref() {
+  case "$1" in
+    branch:*)          echo "branch ${1#branch:}";;
+    tag:*)             echo "tag ${1#tag:}";;
+    sha:*|commit:*)    echo "commit ${1#*:}";;
+    *)                 echo "commit $1";;
   esac
-  changed=1
-done < "$CONF"
+}
 
-git add .gitmodules
-git submodule sync --recursive
+submodule_name_by_path() {
+  local target="$1" k v name
+  while IFS= read -r line; do
+    k="${line%% *}" ; v="${line#* }"
+    case "$k" in
+      submodule.*.path)
+        name="${k#submodule.}"; name="${name%.path}"
+        if [ "$v" = "$target" ]; then printf '%s' "$name"; return 0; fi
+        ;;
+    esac
+  done < <(git config -f .gitmodules --get-regexp '^submodule\..*\.path' 2>/dev/null || true)
+  return 1
+}
 
-# ===================== Helpers d'apply =====================
-branch_update() {
-  local path="$1" url="$2" branch="$3"
+gitmodules_value() { git config -f .gitmodules "$1" 2>/dev/null || true; }
+registered_by_name() { git config -f .gitmodules --name-only --get-regexp "^submodule\\.$1\\." >/dev/null 2>&1; }
+is_repo() { git -C "$1" rev-parse --is-inside-work-tree >/dev/null 2>&1; }
+is_gitlink() {
+  git ls-files --stage -- "$1" | awk '$1==160000{found=1} END{exit (found?0:1)}'
+}
 
-  log "Tracking branch: $branch → update to tip (depth=${DEPTH:-full}, filter=${FILTER:-none})"
 
-  # Active partial clone si demandé
-  if [ -n "${FILTER:-}" ]; then
-    git -C "$path" config remote.origin.promisor true || true
-    git -C "$path" config core.partialClone origin || true
-    git -C "$path" config remote.origin.partialclonefilter "$FILTER" || true
-  fi
+is_dirty() {
+  git -C "$1" update-index -q --refresh || true
+  ! git -C "$1" diff --quiet --ignore-submodules=all && return 0
+  ! git -C "$1" diff --cached --quiet --ignore-submodules=all && return 0
+  [ -n "$(git -C "$1" ls-files --other --exclude-standard)" ] && return 0
+  return 1
+}
 
-  # 0) S'assurer que la branche existe côté remote
-  if ! git -C "$path" ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-    log "ERREUR: branche '$branch' introuvable sur origin pour $path"
-    return 1
-  fi
+short_sha() { git -C "$1" rev-parse --short HEAD 2>/dev/null || true; }
 
-  # 1) tentative standard
-  log "CMD(update): git submodule update --init --remote --jobs $JOBS ${DEPTH:+--depth $DEPTH} ${FILTER:+--filter=$FILTER} $path"
-  if ! git submodule update --init --remote --jobs "$JOBS" \
-        ${DEPTH:+--depth "$DEPTH"} ${FILTER:+--filter="$FILTER"} "$path"; then
-    log "update --remote a échoué → fallback fetch/checkout ciblé"
-    git -C "$path" init >/dev/null 2>&1 || true
-    if ! git -C "$path" remote get-url origin >/dev/null 2>&1; then
-      git -C "$path" remote add origin "$url"
+current_desc() {
+  local p="$1"
+  if ! is_repo "$p"; then echo "-"; return; fi
+  local b; b="$(git -C "$p" symbolic-ref --short -q HEAD || true)"
+  local sha; sha="$(short_sha "$p")"
+  if [ -n "$b" ]; then
+    echo "branch:$b @ $sha"
+  else
+    local t; t="$(git -C "$p" describe --tags --exact-match 2>/dev/null || true)"
+    if [ -n "$t" ]; then
+      echo "tag:$t @ $sha"
     else
-      git -C "$path" remote set-url origin "$url"
+      echo "detached @ $sha"
     fi
-    git -C "$path" config remote.origin.fetch "+refs/heads/$branch:refs/remotes/origin/$branch" || true
-    git -C "$path" fetch origin "$branch" ${DEPTH:+--depth "$DEPTH"} || git -C "$path" fetch origin "$branch"
-  fi
-
-  # 2) *** FORCER le worktree à être sur la branche demandée ***
-  # Si la ref distante n'est pas encore là (cas rare), refetch
-  git -C "$path" show-ref --verify --quiet "refs/remotes/origin/$branch" || git -C "$path" fetch origin "$branch" || true
-  # Attacher la branche locale au tip d'origin/<branch>
-  git -C "$path" checkout -B "$branch" --track "origin/$branch" 2>/dev/null \
-  || { git -C "$path" branch -f "$branch" "origin/$branch"; git -C "$path" checkout "$branch"; }
-
-  # 3) Log final lisible
-  log "After update: $(git -C "$path" rev-parse --abbrev-ref HEAD || echo '?') @ $(git -C "$path" rev-parse --short HEAD || echo '?')"
-}
-
-
-add_submodule_if_missing() {
-  local path="$1" url="$2"
-  if [ ! -e "$path/.git" ] && [ ! -f "$path/.git" ]; then
-    log "git submodule add -f $url $path"
-    if ! git submodule add -f "$url" "$path"; then
-      local bkp="${path}.bak.$(date +%s)"
-      log "Add a échoué (dossier pré-existant non-git) → backup puis retry: $bkp"
-      mv "$path" "$bkp"
-      git submodule add -f "$url" "$path"
-    fi
-    changed=1
   fi
 }
 
-# Au lieu de "add_submodule_if_missing", utilise :
-ensure_submodule_present() {
-  local path="$1" url="$2"
-
-  # Si le chemin n'est pas déjà un submodule (pas de gitlink "160000" dans l'index)
-  if ! git ls-files -s -- "$path" 2>/dev/null | awk '{print $1}' | grep -q '^160000$'; then
-    # Si un dossier existe, on le dégage proprement (backup si non vide)
-    if [ -e "$path" ]; then
-      if [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
-        mv "$path" "${path}.bak.$(date +%s)"
+check_remote_ref_exists() {
+  local type="$1" val="$2" sm_path="$3" url="$4"
+  if [ "$DRY_FETCH" != "1" ]; then
+    printf 'unknown (DRY_FETCH=0)\n'; return 0
+  fi
+  case "$type" in
+    branch)
+      if is_repo "$sm_path"; then
+        git -C "$sm_path" ls-remote --heads origin "$val" >/dev/null 2>&1
       else
-        rmdir "$path" 2>/dev/null || true
+        git ls-remote --heads "$url" "$val" >/dev/null 2>&1
       fi
-    fi
-    git submodule add -f "$url" "$path"
-  fi
-
-  # Maintenant on peut synchroniser et initialiser sans erreur
-  git submodule sync -- "$path" || true
-  git submodule update --init --recursive "$path"
-}
-
-# ===================== PASS 2: add / update / checkout =====================
-lineno=0
-while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
-  lineno=$((lineno+1))
-  line="${raw%$'\r'}"
-  [[ -z "${line// }" || "$line" =~ ^# ]] && continue
-
-  NAME=""; PATH_SM=""; URL=""; REF=""
-  IFS='|' read -r NAME PATH_SM URL REF <<< "$line"
-  log "L$lineno[apply]: NAME='$NAME' PATH='${PATH_SM}' URL='$(mask_url "$URL")' REF='$REF'"
-
-  # Dossier présent mais non-git → backup/remove
-  if [ -e "$PATH_SM" ] && ! git -C "$PATH_SM" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    if [ -z "$(ls -A "$PATH_SM" 2>/dev/null || true)" ]; then
-      log "Path exists but empty (non-git) → remove"
-      rmdir "$PATH_SM"
-    else
-      bkp="${PATH_SM}.bak.$(date +%s)"
-      log "Backup non-git directory: $PATH_SM -> $bkp"
-      mv "$PATH_SM" "$bkp"
-    fi
-  fi
-
-  # (Ré)ajouter si manquant
-  # add_submodule_if_missing "$PATH_SM" "$URL"
-  # S’assurer que le worktree du sous-module est présent (sans add)
-  ensure_submodule_present "$PATH_SM" "$URL"
-
-
-  # Sync de l'URL effective
-  git submodule sync -- "$PATH_SM"
-
-  case "$REF" in
-    branch:*)
-      BRANCH="${REF#branch:}"
-      branch_update "$PATH_SM" "$URL" "$BRANCH"
-      log "After update: $(git -C "$PATH_SM" rev-parse --abbrev-ref HEAD || echo '?') @ $(git -C "$PATH_SM" rev-parse --short HEAD || echo '?')"
-      changed=1
+      case $? in 0) echo "yes";; 2) echo "no";; *) echo "unreachable";; esac
       ;;
-    tag:*|sha:*|commit:*)
-      VAL="${REF#*:}"
-      log "Checkout ref: $VAL (depth=${DEPTH:-full})"
-      git submodule update --init "$PATH_SM"
-      if [[ "$REF" == tag:* ]]; then
-        git -C "$PATH_SM" fetch --tags ${DEPTH:+--depth "$DEPTH"} origin "tag $VAL" || git -C "$PATH_SM" fetch --tags
+    tag)
+      if is_repo "$sm_path"; then
+        git -C "$sm_path" ls-remote --tags origin "refs/tags/$val" >/dev/null 2>&1
       else
-        git -C "$PATH_SM" fetch --tags --quiet || true
-        git -C "$PATH_SM" fetch --quiet || true
+        git ls-remote --tags "$url" "refs/tags/$val" >/dev/null 2>&1
       fi
-      git -C "$PATH_SM" checkout "$VAL"
-      log "Now at: $(git -C "$PATH_SM" rev-parse --short HEAD || echo '?')"
-      changed=1
+      case $? in 0) echo "yes";; 2) echo "no";; *) echo "unreachable";; esac
+      ;;
+    commit)
+      if is_repo "$sm_path" && git -C "$sm_path" cat-file -e "$val^{commit}" 2>/dev/null; then
+        echo "yes (local)"
+      else
+        echo "unknown (needs fetch to verify)"
+      fi
       ;;
   esac
+  return 0
+}
+
+list_dirty_files() {
+  local p="$1"
+  echo "  • STAGED:";   git -C "$p" diff --name-status --cached || true
+  echo "  • UNSTAGED:"; git -C "$p" diff --name-status || true
+  echo "  • UNTRACKED:";git -C "$p" ls-files --other --exclude-standard || true
+}
+
+ensure_registered() {
+  local name="$1" sm_path="$2" url="$3" type="$4" val="$5"
+  if ! registered_by_name "$name"; then
+    local existing; existing="$(submodule_name_by_path "$sm_path" || true)"
+    if [ -n "${existing:-}" ] && [ "$existing" != "$name" ]; then
+      warn "PATH '$sm_path' déjà référencé dans .gitmodules sous '$existing' (≠ '$name')."
+    fi
+    if [ "$DRY_RUN" = "1" ]; then
+      if [ "$type" = "branch" ]; then
+        echo "[dry] git submodule add -b $val --name $name $url $sm_path"
+      else
+        echo "[dry] git submodule add --name $name $url $sm_path"
+      fi
+    else
+      if [ "$type" = "branch" ]; then
+        run git submodule add -b "$val" --name "$name" "$url" "$sm_path"
+      else
+        run git submodule add --name "$name" "$url" "$sm_path"
+      fi
+    fi
+  else
+    local cur_url; cur_url="$(gitmodules_value "submodule.$name.url")"
+    local cur_path; cur_path="$(gitmodules_value "submodule.$name.path")"
+    if [ "$cur_url" != "$url" ]; then
+      if [ "$DRY_RUN" = "1" ]; then
+        echo "[dry] update .gitmodules url for $name → $url ; submodule sync"
+      else
+        run git config -f .gitmodules "submodule.$name.url" "$url"
+        run git submodule sync -- "$sm_path"
+      fi
+    fi
+    if [ "$cur_path" != "$sm_path" ] && [ -n "$cur_path" ]; then
+      warn ".gitmodules path for $name = '$cur_path' ≠ '$sm_path' (env)."
+    fi
+    if ! is_repo "$sm_path"; then
+      if [ "$DRY_RUN" = "1" ]; then
+        echo "[dry] would initialize/clone $sm_path"
+      else
+        run git submodule update --init -- "$sm_path"
+      fi
+    fi
+  fi
+}
+
+checkout_ref() {
+  local sm_path="$1" type="$2" val="$3"
+  run git -C "$sm_path" fetch --tags --prune
+  case "$type" in
+    branch) run git -C "$sm_path" checkout -B "$val" "origin/$val" ;;
+    tag)    run git -C "$sm_path" checkout --detach "refs/tags/$val" \
+                     || run git -C "$sm_path" checkout --detach "$val" ;;
+    commit) run git -C "$sm_path" checkout --detach "$val" ;;
+  esac
+}
+
+already_on_ref() {
+  local sm_path="$1" type="$2" val="$3"
+  case "$type" in
+    branch)
+      local cur; cur="$(git -C "$sm_path" symbolic-ref --short -q HEAD || true)"
+      [ "$cur" = "$val" ]
+      ;;
+    tag)
+      local want head
+      want="$(git -C "$sm_path" rev-parse -q --verify "refs/tags/$val" || true)"
+      head="$(git -C "$sm_path" rev-parse HEAD)"
+      [ -n "$want" ] && [ "$head" = "$want" ]
+      ;;
+    commit)
+      [ "$(git -C "$sm_path" rev-parse HEAD)" = "$val" ]
+      ;;
+  esac
+}
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "$(pwd)")"
+info "root     : $root"
+info "pwd      : $(pwd)"
+info "conf     : $CONF  (DRY_RUN=$DRY_RUN FORCE=$FORCE COMMIT=$COMMIT LOG_LEVEL=$LOG_LEVEL DRY_FETCH=$DRY_FETCH)"
+printf '\n'
+
+line_no=0
+summary_lines=()
+
+while IFS= read -r raw || [ -n "$raw" ]; do
+  line_no=$((line_no+1))
+  [ -z "${raw//[[:space:]]/}" ] && continue
+  [[ "$raw" =~ ^[[:space:]]*# ]] && continue
+
+  IFS='|' read -r NAME SM_PATH URL REF <<<"$raw"
+  NAME="$(trim "${NAME:-}")"
+  SM_PATH="$(trim "${SM_PATH:-}")"
+  URL="$(trim "${URL:-}")"
+  REF="$(trim "${REF:-}")"
+
+  if [ -z "$NAME" ] || [ -z "$SM_PATH" ] || [ -z "$URL" ] || [ -z "$REF" ]; then
+    error "$CONF:$line_no → format NAME|PATH|URL|REF"
+    exit 1
+  fi
+
+  read -r TYPE VAL < <(parse_ref "$REF")
+
+  printf '=== %s\n' "$NAME"
+  printf '  path    : %s\n' "$SM_PATH"
+  printf '  url     : %s\n' "$URL"
+  printf '  target  : %s:%s\n' "$TYPE" "$VAL"
+
+  local_reg='no'; registered_by_name "$NAME" && local_reg='yes'
+  printf '  reg'\''d   : %s\n' "$local_reg"
+  found_by_path="$(submodule_name_by_path "$SM_PATH" || true)"
+  if [ -n "$found_by_path" ] && [ "$found_by_path" != "$NAME" ]; then
+    warn "PATH '$SM_PATH' déjà enregistré sous le nom '$found_by_path' (différent de '$NAME')."
+  fi
+
+  local_init='no'
+  is_repo "$SM_PATH" && local_init='yes'
+  printf '  init    : %s\n' "$local_init"
+  if [ "$local_init" = "yes" ]; then
+    printf '  gitlink : %s\n' "$(is_gitlink "$SM_PATH" && echo yes || echo no)"
+    printf '  current : %s\n' "$(current_desc "$SM_PATH")"
+    if is_dirty "$SM_PATH"; then
+      echo "  dirty   : yes"
+      list_dirty_files "$SM_PATH"
+      local_dirty='yes'
+    else
+      echo "  dirty   : no"
+      local_dirty='no'
+    fi
+  else
+    local_dirty='-'
+  fi
+
+  printf '  remote  : '
+  remote_state="$(check_remote_ref_exists "$TYPE" "$VAL" "$SM_PATH" "$URL" || true)"
+  printf '%s\n' "$remote_state"
+
+  action_msg=""
+  if [ "$DRY_RUN" = "1" ]; then
+    if [ "$local_init" = "no" ]; then
+      action_msg="would add/init and checkout $TYPE:$VAL"
+    else
+      if [ "$local_dirty" = "yes" ] && [ "$FORCE" != "1" ]; then
+        action_msg="SKIP (dirty; run with FORCE=1 to override)"
+      else
+        if already_on_ref "$SM_PATH" "$TYPE" "$VAL"; then
+          if [ "$TYPE" = "branch" ]; then
+            action_msg="already on $TYPE:$VAL (would fetch/reset to origin/$VAL)"
+          else
+            action_msg="already on $TYPE:$VAL"
+          fi
+        else
+          action_msg="would checkout $TYPE:$VAL"
+        fi
+      fi
+    fi
+    printf '  action  : %s\n\n' "$action_msg"
+    summary_lines+=("$NAME|$action_msg|init:$local_init|dirty:$local_dirty|remote:$remote_state")
+    continue
+  fi
+
+  ensure_registered "$NAME" "$SM_PATH" "$URL" "$TYPE" "$VAL"
+  if ! is_repo "$SM_PATH"; then
+    error "$SM_PATH non initialisé."
+    exit 1
+  fi
+
+  if [ "$local_dirty" = "yes" ] && [ "$FORCE" != "1" ]; then
+    warn "SKIP $NAME: modifications locales détectées (utilisez FORCE=1 pour forcer)."
+    summary_lines+=("$NAME|SKIP (dirty)|init:yes|dirty:yes|remote:$remote_state")
+    printf '\n'
+    continue
+  fi
+
+  if already_on_ref "$SM_PATH" "$TYPE" "$VAL"; then
+    info "$NAME: déjà sur $TYPE:$VAL"
+    if [ "$TYPE" = "branch" ]; then
+      run git -C "$SM_PATH" fetch --prune
+      run git -C "$SM_PATH" reset --hard "origin/$VAL" || true
+    fi
+    summary_lines+=("$NAME|ok (already)|init:yes|dirty:$local_dirty|remote:$remote_state")
+  else
+    info "$NAME: checkout $TYPE:$VAL"
+    checkout_ref "$SM_PATH" "$TYPE" "$VAL"
+    summary_lines+=("$NAME|ok (checked out)|init:yes|dirty:$local_dirty|remote:$remote_state")
+  fi
+
+  printf '\n'
 done < "$CONF"
 
-# ===================== Finalisation / commit =====================
-# ===================== Finalisation / commit =====================
-SKIP_COMMIT="${SKIP_COMMIT:-1}"  # 1 = ne pas stage/commit les changements
-
-git submodule sync --recursive
-if [ "$SKIP_COMMIT" = "1" ]; then
-  if [ $changed -eq 1 ]; then
-    # On a bien mis à jour les worktrees (branches/tags/sha) localement
-    # mais on NE stage/commit PAS et on NE relance PAS 'git submodule update'
-    # (sinon on reviendrait aux SHA enregistrés dans le super-projet).
-    log "Local-only (SKIP_COMMIT=1) : worktrees mis à jour, pas de stage/commit, pas de 'git submodule update'."
-  else
-    log "Local-only (SKIP_COMMIT=1) : aucun changement détecté."
-  fi
-else
-  if [ $changed -eq 1 ]; then
-    log "Staging .gitmodules and submodule paths…"
-    git add .gitmodules $(awk -F'|' '!/^#/ && NF>=2 {gsub(/\r$/,""); print $2}' "$CONF")
-    git commit -m "Rewrite .gitmodules from $CONF and sync submodules" || log "Nothing to commit (no changes)"
-
-    # Optionnel : ne lancer l'update final que s'il y a eu des changements
-    log "Finalizing: git submodule update --init --recursive --jobs $JOBS"
-    git submodule update --init --recursive --jobs "$JOBS"
-  else
-    log "Aucun changement de sous-modules ; skip stage/commit et 'git submodule update'."
-  fi
+if [ "$DRY_RUN" = "0" ] && [ "$COMMIT" = "1" ] && [ "${#summary_lines[@]}" -gt 0 ]; then
+  info "Commit des pointeurs de sous-modules…"
+  while IFS='|' read -r _path; do
+    run git add "$_path"
+  done < <(awk -F'|' '{print $1}' <<< "$(printf '%s\n' "${summary_lines[@]}")") || true
+  if git diff --cached --name-only | grep -q '^.gitmodules$'; then run git add .gitmodules; fi
+  run git commit -m "$COMMIT_MSG" || info "Rien à committer."
 fi
 
-log "Done."
+printf '\nSummary:\n'
+printf '  %-28s | %-34s | %-10s | %-10s | %-12s\n' "NAME" "ACTION" "INIT" "DIRTY" "REMOTE"
+printf '  %s\n' "----------------------------------------------------------------------------------------------------------"
+for s in "${summary_lines[@]}"; do
+  IFS='|' read -r n a i d r <<<"$s"
+  printf '  %-28s | %-34s | %-10s | %-10s | %-12s\n' "$n" "$a" "${i#init:}" "${d#dirty:}" "${r#remote:}"
+done
+
+exit 0

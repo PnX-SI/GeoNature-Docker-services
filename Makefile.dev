@@ -9,7 +9,9 @@ SERVICE ?=
         cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
         install-monitoring-modules install-monitoring-protocole update-monitoring refresh-monitoring \
         format_backend_check format_backend \
-		submodules-apply submodules-apply-full submodules-apply-debug submodules-apply-local submodules-check
+		submodules-preflight submodules-preflight-no-net \
+        submodules-apply submodules-apply-force submodules-apply-commit \
+        submodules-apply-full submodules-apply-debug submodules-check
 
 ## Liste des commandes disponibles
 help-dev:
@@ -26,12 +28,20 @@ help-dev:
 	@echo "  make dev_clean_all               # ⚠️ Stop + supprime les volumes (BDD perdue) + caches FE"
 	@echo ""
 	@echo "— Git / Branches & Submodules —"
-	@echo "  make switch-branch BRANCH=<nom>      # Change la branche GeoNature + met à jour les submodules"
-	@echo "  make submodules-apply                # Applique les submodules (rapide : shallow/partial)"
-	@echo "  make submodules-apply-full           # Applique les submodules (complet : historique + LFS)"
-	@echo "  make submodules-apply-debug          # Applique les submodules avec traces Git"
-	@echo "  make submodules-apply-with-commit    # Applique avec commit dans le staging area"
-	@echo "  make submodules-check                # Vérifications rapides des submodules (ex: GeoNature)"
+	@echo "  make switch-branch BRANCH=<nom>        # Change la branche GeoNature (local) puis met à jour les submodules"
+	@echo "  make submodules-preflight              # Préflight verbeux (DRY_RUN=1) avec logs et résumé"
+	@echo "  make submodules-preflight-no-net       # Préflight sans accès réseau (DRY_FETCH=0)"
+	@echo "  make submodules-apply                  # Applique submodules.env (bloque si dirty)"
+	@echo "  make submodules-apply-force            # Applique en forçant malgré dirty (FORCE=1)"
+	@echo "  make submodules-apply-commit           # Applique + commit des pointeurs (COMMIT=1)"
+	@echo "  make submodules-apply-full             # Clone complet (DEPTH=, FILTER=, LFS activé)"
+	@echo "  make submodules-apply-debug            # Applique avec traces Git + logs debug"
+	@echo "  make submodules-check                  # Vérifs rapides côté fichiers / .gitmodules"
+	@echo ""
+	@echo "  Variables utiles (override: make VAR=valeur):"
+	@echo "    SUBMODULES_CONF=$(SUBMODULES_CONF)  LOG_LEVEL=$(LOG_LEVEL)  DRY_FETCH=$(DRY_FETCH)"
+	@echo "    JOBS=$(JOBS)  DEPTH=$(DEPTH)  FILTER=$(FILTER)  GIT_LFS_SKIP_SMUDGE=$(GIT_LFS_SKIP_SMUDGE)  GIT_PROGRESS=$(GIT_PROGRESS)"
+	@echo ""
 	@echo ""
 	@echo "— Build —"
 	@echo "  make build-backend               # Rebuild images backend (api/worker/install-db)"
@@ -70,9 +80,14 @@ help-dev:
 	@echo ""
 	@echo "Exemples :"
 	@echo "  make switch-branch BRANCH=develop"
-	@echo "  make submodules-apply SUBMODULES_CONF=submodules.env JOBS=8"
 	@echo "  make cli-backend ARGS=\"bash\""
 	@echo "  make print-MONITORING_MEDIA"
+	@echo "  make submodules-preflight SUBMODULES_CONF=submodules.env"
+	@echo "  make submodules-apply SUBMODULES_CONF=submodules.env JOBS=8"
+	@echo "  make submodules-apply FORCE=1                  # force malgré dirty"
+	@echo "  make submodules-apply-commit COMMIT=1          # applique + commit des pointeurs"
+	@echo "  make submodules-apply-debug LOG_LEVEL=debug    # logs détaillés du script"
+
 
 print-%: @printf '%s=%s\n' "$*" "$($*)"
 
@@ -217,45 +232,64 @@ format_backend_check:
 format_backend:
 	$(COMPOSE) exec geonature-backend black $(ARGS)
 
-############################################## COMMAND SUBMODULES #####################################
-SUBMODULES_CONF ?= submodules.env
-# --- Config par défaut (surchageable à l'appel: make … JOBS=4, etc.) ---
-SUBMODULES_CONF ?= submodules.env
-JOBS            ?= 8
-DEPTH           ?= 1           # 1 = shallow, vide pour full history
-FILTER          ?= blob:none   # blob:none = partial clone, vide pour désactiver
-GIT_LFS_SKIP_SMUDGE ?= 1       # 1 = ne télécharge pas LFS tout de suite
-GIT_PROGRESS    ?= 1           # affiche la progression
+# ===================== Submodules config (nouveau) =====================
+SUBMODULES_CONF      ?= submodules.env
+SUBMODULES_SCRIPT     := build/submodules_apply.sh
+JOBS                 ?= 8
+DEPTH                ?= 1           # 1 = shallow ; vide = full history
+FILTER               ?= blob:none   # blob:none = partial clone ; vide = désactivé
+GIT_LFS_SKIP_SMUDGE  ?= 1           # 1 = ne récupère pas LFS tout de suite
+GIT_PROGRESS         ?= 1           # affiche la progression
+LOG_LEVEL            ?= info        # info|debug
+DRY_FETCH            ?= 1           # 1 = vérifie refs distantes en préflight
 
 # Exporter pour que le script les reçoive
-export JOBS DEPTH FILTER GIT_LFS_SKIP_SMUDGE GIT_PROGRESS
+export JOBS DEPTH FILTER GIT_LFS_SKIP_SMUDGE GIT_PROGRESS LOG_LEVEL DRY_FETCH
 
-# Par défaut : rapide (shallow + partial si supporté)
+# ===================== Règles Submodules =====================
+
+# Préflight (DRY_RUN=1) avec réseau
+submodules-preflight:
+	@echo "▶ Running PRELIGHT with DRY_RUN=1 CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DRY_RUN=1 LOG_LEVEL="$(LOG_LEVEL)" DRY_FETCH="$(DRY_FETCH)" bash "$(SUBMODULES_SCRIPT)"
+
+# Préflight (DRY_RUN=1) sans réseau (utile sur CI bloquée)
+submodules-preflight-no-net:
+	@echo "▶ Running PRELIGHT (no network) with DRY_RUN=1 CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DRY_RUN=1 DRY_FETCH=0 LOG_LEVEL="$(LOG_LEVEL)" bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer (bloque si dirty)
 submodules-apply:
-	@echo "▶ Running submodules-apply with CONF=$(SUBMODULES_CONF) JOBS=$(JOBS) DEPTH=$(DEPTH) FILTER=$(FILTER)"
-	bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+	@echo "▶ Applying submodules CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer en forçant malgré dirty
+submodules-apply-force:
+	@echo "▶ Applying submodules (FORCE=1) CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" FORCE=1 bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer et committer les pointeurs (gitlinks) du super-repo
+submodules-apply-commit:
+	@echo "▶ Applying submodules + COMMIT pointers CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" COMMIT=1 bash "$(SUBMODULES_SCRIPT)"
 
 # Clone complet (pas de shallow/partial, LFS activé)
 submodules-apply-full:
-	@echo "▶ Running FULL clone…"
-	DEPTH= FILTER= GIT_LFS_SKIP_SMUDGE=0 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+	@echo "▶ FULL clone (no shallow/partial, LFS on) CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DEPTH= FILTER= GIT_LFS_SKIP_SMUDGE=0 bash "$(SUBMODULES_SCRIPT)"
 
-# Verbose + traces Git (utile en debug)
+# Debug maximal (traces Git + logs)
 submodules-apply-debug:
-	@echo "▶ Running DEBUG…"
-	DEBUG=1 GIT_TRACE=1 GIT_TRACE_PACKET=1 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
+	@echo "▶ DEBUG apply…"
+	@CONF="$(SUBMODULES_CONF)" LOG_LEVEL=debug GIT_TRACE=1 GIT_TRACE_PACKET=1 GIT_CURL_VERBOSE=1 bash "$(SUBMODULES_SCRIPT)"
 
-# Variante locale : applique avec commit (SKIP_COMMIT=1 par défaut dans le script)
-submodules-apply-with-commit:
-	@echo "▶ Running LOCAL (no commit)…"
-	SKIP_COMMIT=0 bash build/submodules_apply.sh "$(SUBMODULES_CONF)"
-
-# Vérifs rapides côté fichiers (GeoNature en exemple, adapte les paths si besoin)
+# Vérifs rapides (exemples ; adapte les chemins au besoin)
 submodules-check:
 	@echo "— .gitmodules —"; git config -f .gitmodules --get-regexp '^submodule\..*(path|url|branch)' || true
 	@echo "— GeoNature —"
 	@git -C sources/GeoNature rev-parse --abbrev-ref HEAD || true
 	@git -C sources/GeoNature remote -v || true
+	@echo -n "gitlink? "; git ls-files --stage -- sources/GeoNature | awk '$$1==160000{print "yes";found=1} END{if(!found)print "no"}'
 	@echo -n "shallow? "; git -C sources/GeoNature rev-parse --is-shallow-repository || true
 	@echo -n "partial filter: "; git -C sources/GeoNature config --get remote.origin.partialclonefilter || true
 	@echo -n "promisor: "; git -C sources/GeoNature config --get remote.origin.promisor || true
