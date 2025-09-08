@@ -61,6 +61,7 @@ services:
       TZ:  Europe/Paris
       UID: ${UID}
       GID: ${GID}
+      PYTHONUNBUFFERED: "1"   # (logs visibles en temps réel)
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
@@ -73,6 +74,16 @@ services:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
         UID: ${UID}
         GID: ${GID}
+    command:
+      - gunicorn
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=1"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
     labels:
       - "traefik.enable=true"
       - "traefik.owner=${STACK}"
