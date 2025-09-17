@@ -18,19 +18,19 @@ jobs:
           - name: "Traefik"
             env_setup: "cp .env.sample .env"
             url_frontend: "https://localhost/geonature/"
-            url_backend: "https://localhost/geonature/api/gn_commons/config"
+            url_backend: "https://localhost/geonature/api/healthz"
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
 
           - name: "Essential"
             env_setup: "cp env_examples/.env.sample.without_traefik .env"
             url_frontend: "http://localhost/#/"
-            url_backend: "localhost:8000/geonature/api/gn_commons/config"
+            url_backend: "localhost:8000/geonature/api/healthz"
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
 
           - name: "Minimal"
             env_setup: "cp env_examples/.env.sample.without_db_and_usershub .env"
             url_frontend: "http://localhost/#/"
-            url_backend: "localhost:8000/geonature/api/gn_commons/config"
+            url_backend: "localhost:8000/geonature/api/healthz"
             expected_services: "geonature-backend geonature-frontend geonature-worker redis"
 
     steps:
