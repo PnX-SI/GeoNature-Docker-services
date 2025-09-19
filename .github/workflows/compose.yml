@@ -30,7 +30,7 @@ jobs:
           - name: "Minimal"
             env_setup: "cp env_examples/.env.sample.without_db_and_usershub .env"
             url_frontend: "http://localhost/#/"
-            url_backend: "localhost:8000/geonature/api/healthz"
+            url_backend: "localhost:8000/geonature/api/gn_commons/config"
             expected_services: "geonature-backend geonature-frontend geonature-worker redis"
 
     steps:

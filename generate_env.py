@@ -2,12 +2,16 @@
 
 # Attention ce script est encore en WIP
 
-import click
 from pathlib import Path
 import re
 import secrets
 import string
-from passlib.hash import apr_md5_crypt
+
+try:
+    import click
+    from passlib.hash import apr_md5_crypt
+except ImportError:
+    raise Exception("Please install click and passlib with the following command: pip install passlib click")
 
 ENV_SAMPLE = Path(".env.sample")
 ENV_OUTPUT = Path(".env")

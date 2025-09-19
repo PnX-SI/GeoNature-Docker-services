@@ -16,7 +16,7 @@ submodule_init:
 	git config submodule.gn_module_monitoring.url https://github.com/PnX-SI/gn_module_monitoring/
 	git submodule update --init --recursive --depth 1
 
-build:
+build_images:
 	build/build.sh
 
 dev: dev_init
