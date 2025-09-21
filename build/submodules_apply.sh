@@ -17,6 +17,14 @@ warn()  { printf 'WARN: %s\n' "$*" >&2; }
 error() { printf 'ERROR: %s\n' "$*" >&2; }
 debug() { [ "$LOG_LEVEL" = "debug" ] && printf 'debug: %s\n' "$*"; return 0; }
 
+
+
+truthy() {
+  case "${1:-}" in
+    1|true|TRUE|True|yes|YES|Yes|y|Y|on|ON) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 run() {
   if [ "$DRY_RUN" = "1" ]; then
     printf '[dry] %s\n' "$*"
@@ -169,8 +177,14 @@ ensure_registered() {
     if ! is_repo "$sm_path"; then
       if [ "$DRY_RUN" = "1" ]; then
         echo "[dry] would initialize/clone $sm_path"
+        if [ "${RECURSIVE:-0}" = "1" ]; then
+          echo "[dry] would init/update nested submodules in $sm_path (recursive)"
+        fi
       else
         run git submodule update --init -- "$sm_path"
+        if [ "${RECURSIVE:-0}" = "1" ]; then
+          run git -C "$sm_path" submodule update --init --recursive
+        fi
       fi
     fi
   fi
@@ -220,16 +234,24 @@ while IFS= read -r raw || [ -n "$raw" ]; do
   [ -z "${raw//[[:space:]]/}" ] && continue
   [[ "$raw" =~ ^[[:space:]]*# ]] && continue
 
-  IFS='|' read -r NAME SM_PATH URL REF <<<"$raw"
+  IFS='|'  read -r NAME SM_PATH URL REF RECURSIVE <<<"$raw"
   NAME="$(trim "${NAME:-}")"
   SM_PATH="$(trim "${SM_PATH:-}")"
   URL="$(trim "${URL:-}")"
   REF="$(trim "${REF:-}")"
+  RECURSIVE="$(trim "${RECURSIVE:-}")"
 
   if [ -z "$NAME" ] || [ -z "$SM_PATH" ] || [ -z "$URL" ] || [ -z "$REF" ]; then
-    error "$CONF:$line_no → format NAME|PATH|URL|REF"
+    error "$CONF:$line_no → format NAME|PATH|URL|REF[|RECURSIVE]"
     exit 1
   fi
+
+  # Normalisation RECURSIVE → 1/0 (défaut 0)
+  case "$RECURSIVE" in
+    1|true|TRUE|True|yes|YES|Yes|y|Y|on|ON) RECURSIVE=1;;
+    *) RECURSIVE=0;;
+  esac
+
 
   read -r TYPE VAL < <(parse_ref "$REF")
 
@@ -237,9 +259,11 @@ while IFS= read -r raw || [ -n "$raw" ]; do
   printf '  path    : %s\n' "$SM_PATH"
   printf '  url     : %s\n' "$URL"
   printf '  target  : %s:%s\n' "$TYPE" "$VAL"
+  printf '  recursive: %s\n' "$([ "$RECURSIVE" = "1" ] && echo yes || echo no)"
 
-  local_reg='no'; registered_by_name "$NAME" && local_reg='yes'
-  printf '  reg'\''d   : %s\n' "$local_reg"
+  local_reg='no'
+  registered_by_name "$NAME" && local_reg='yes'
+  printf '  reg'\''d   : %s\n' "${local_reg:-no}"
   found_by_path="$(submodule_name_by_path "$SM_PATH" || true)"
   if [ -n "$found_by_path" ] && [ "$found_by_path" != "$NAME" ]; then
     warn "PATH '$SM_PATH' déjà enregistré sous le nom '$found_by_path' (différent de '$NAME')."
@@ -287,7 +311,7 @@ while IFS= read -r raw || [ -n "$raw" ]; do
       fi
     fi
     printf '  action  : %s\n\n' "$action_msg"
-    summary_lines+=("$NAME|$action_msg|init:$local_init|dirty:$local_dirty|remote:$remote_state")
+    summary_lines+=("$NAME|$action_msg|init:$local_init|dirty:$local_dirty|remote:$remote_state|rec:$RECURSIVE")
     continue
   fi
 
@@ -299,7 +323,7 @@ while IFS= read -r raw || [ -n "$raw" ]; do
 
   if [ "$local_dirty" = "yes" ] && [ "$FORCE" != "1" ]; then
     warn "SKIP $NAME: modifications locales détectées (utilisez FORCE=1 pour forcer)."
-    summary_lines+=("$NAME|SKIP (dirty)|init:yes|dirty:yes|remote:$remote_state")
+    summary_lines+=("$NAME|SKIP (dirty)|init:yes|dirty:yes|remote:$remote_state|rec:$RECURSIVE")
     printf '\n'
     continue
   fi
@@ -310,11 +334,17 @@ while IFS= read -r raw || [ -n "$raw" ]; do
       run git -C "$SM_PATH" fetch --prune
       run git -C "$SM_PATH" reset --hard "origin/$VAL" || true
     fi
-    summary_lines+=("$NAME|ok (already)|init:yes|dirty:$local_dirty|remote:$remote_state")
+    if [ "$RECURSIVE" = "1" ]; then
+      run git -C "$SM_PATH" submodule update --init --recursive
+    fi
+    summary_lines+=("$NAME|ok (already)|init:yes|dirty:$local_dirty|remote:$remote_state|rec:$RECURSIVE")
   else
     info "$NAME: checkout $TYPE:$VAL"
     checkout_ref "$SM_PATH" "$TYPE" "$VAL"
-    summary_lines+=("$NAME|ok (checked out)|init:yes|dirty:$local_dirty|remote:$remote_state")
+    if [ "$RECURSIVE" = "1" ]; then
+      run git -C "$SM_PATH" submodule update --init --recursive
+    fi
+    summary_lines+=("$NAME|ok (checked out)|init:yes|dirty:$local_dirty|remote:$remote_state|rec:$RECURSIVE")
   fi
 
   printf '\n'
@@ -330,11 +360,12 @@ if [ "$DRY_RUN" = "0" ] && [ "$COMMIT" = "1" ] && [ "${#summary_lines[@]}" -gt 0
 fi
 
 printf '\nSummary:\n'
-printf '  %-28s | %-34s | %-10s | %-10s | %-12s\n' "NAME" "ACTION" "INIT" "DIRTY" "REMOTE"
-printf '  %s\n' "----------------------------------------------------------------------------------------------------------"
+printf '  %-28s | %-34s | %-10s | %-10s | %-12s | %-3s\n' "NAME" "ACTION" "INIT" "DIRTY" "REMOTE" "REC"
+printf '  %s
+' "----------------------------------------------------------------------------------------------------------------------"
 for s in "${summary_lines[@]}"; do
-  IFS='|' read -r n a i d r <<<"$s"
-  printf '  %-28s | %-34s | %-10s | %-10s | %-12s\n' "$n" "$a" "${i#init:}" "${d#dirty:}" "${r#remote:}"
+  IFS='|' read -r n a i d r rec <<<"$s"
+  printf '  %-28s | %-34s | %-10s | %-10s | %-12s | %-3s\n' "$n" "$a" "${i#init:}" "${d#dirty:}" "${r#remote:}" "${rec#rec:}"
 done
 
 exit 0
