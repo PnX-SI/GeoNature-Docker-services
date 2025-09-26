@@ -137,6 +137,9 @@ Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules
 
 Vous pouvez personnaliser la [politique de redémarrage automatique des services](https://github.com/compose-spec/compose-spec/blob/master/spec.md#restart) en paramétrant la variable `RESTART_POLICY` du fichier `.env` (valeur par défaut: `unless-stopped`)
 
+Il est aussi possible de personnaliser son installation en créant un fichier d'override de docker compose. Pour le détail
+de fonctionnement, voir [la section Surcharger son installation](#override).
+
 ### Dossiers de configuration et de customisation
 
 - Les fichiers de configuration de GeoNature, de ses modules et de UsersHub sont donc dans le dossier `GeoNature-Docker-services/config/`
@@ -167,6 +170,19 @@ Ces variables d’environnement doivent être renseignées directement dans le f
   Pour connaître la version de UsersHub, consultez la note de version.
 
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
+
+## <a name="override"></a> Surcharger son installation
+
+   En fonction de l'environnement dans lequel vous déployez, il est possible que vous soyez amené à vouloir modifier le
+fichier `docker-compose.yml` afin de personnaliser le comportement de GDS. Afin de pouvoir mettre à jour votre repo, il
+est fortement conseillé de passer par un fichier d'override (voir [documentation docker compose sur les overrides](https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/)). Pour cela, vous pouvez créer un docker compose qui
+contient les modifications que vous souhaitez apporter à la stack et l'ajouter à votre variable d'environnement
+`COMPOSE_FILE` (voir [documentation docker](https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_file))
+
+Plusieurs exemples de surcharge sont disponibles dans le dossier `override_galery`. Ce dossier contient des `compose.yml` testés
+pour une version précise de GDS et permettant de modifier la configuration de GDS ou de déployer des services supplémentaires.
+
+
 
 ## FAQ
 
