@@ -41,6 +41,7 @@ services:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
         UID: ${UID}
         GID: ${GID}
     volumes:
@@ -50,28 +51,62 @@ services:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    user: "${UID}:${GID}"
+    environment:
+      TZ:  Europe/Paris
+      UID: ${UID}
+      GID: ${GID}
+      PYTHONUNBUFFERED: "1"   # (logs visibles en temps réel)
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
       - ./sources/gn_module_export:/sources/gn_module_export
       - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+      - ./sources/protocoles_monitoring:/sources/protocoles_monitoring
+      - ./sources/protocoles_monitoring:${GEONATURE_MEDIA_FOLDER:-/dist/media}/monitorings
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
         UID: ${UID}
         GID: ${GID}
+    command:
+      - gunicorn
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=1"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.owner=${STACK}"
+      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.${STACK}-geonature-backend.entrypoints=web"
 
   geonature-worker:
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    environment:
+      TZ:  Europe/Paris
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
       - ./sources/gn_module_export:/sources/gn_module_export
       - ./sources/gn_module_dashboard:/sources/gn_module_dashboard
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
+      args:
+        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${UID}
+        GID: ${GID}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   postgres:
@@ -84,14 +119,11 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entryPoints.web.address=:80"
-      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
-      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL}"
-      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
-      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
+      - "--entryPoints.websecure.address=:443" 
+      - "--providers.docker.constraints=Label(`traefik.owner`, `${STACK}`)"
     ports:
-      - "8080:8080"
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"  
 
   geonature-frontend:
       depends_on:
@@ -112,3 +144,18 @@ services:
         - ./sources/GeoNature/contrib/occtax/frontend:/build/external_modules/occtax
         - ./sources/GeoNature/contrib/gn_module_validation/frontend:/build/external_modules/validation
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+      labels:
+        - "traefik.enable=true"
+        - "traefik.owner=${STACK}"
+        - "traefik.http.routers.${STACK}-geonature.entrypoints=web"
+        - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature`)"
+
+  usershub:
+      depends_on:
+        userhub-build:
+          condition: service_completed_successfully
+      labels:
+        - "traefik.enable=true"
+        - "traefik.owner=${STACK}"
+        - "traefik.http.routers.${STACK}-usershub.entrypoints=web"
+        - "traefik.http.routers.${STACK}-usershub.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/usershub`)"
