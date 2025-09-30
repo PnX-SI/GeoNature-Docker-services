@@ -1,26 +1,56 @@
 # GeoNature Docker Services
 
-Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS. De plus, celui-ci fournit une image Docker de GeoNature contenant, outre les modules du cœur (Occtax, Occhab, Validation, Import), les modules suivants :
+Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS.
 
-- [Export](https://github.com/PnX-SI/gn_module_exports)
+De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules suivants :
+
+- Occtax
+- Occhab
+- Validation
+- [Monitorings](https://github.com/PnX-SI/gn_module_monitoring)
 - [Dashboard](https://github.com/PnX-SI/gn_module_dashboard)
-- [Monitorings](https://github.com/PnX-SI/gn_module_monitorings)
+- [Export](https://github.com/PnX-SI/gn_module_export)
 
 ## Démarrage rapide
 
-- Installer Docker : [voir la documentation](https://docs.docker.com/engine/install/)
-- Ajouter votre utilisateur courant au groupe `docker` : `sudo usermod -aG docker $USER` puis réouvrir sa session Linux ([voir la documentation](https://docs.docker.com/engine/install/linux-postinstall))
-- Installer `git` (`sudo apt-get install git`)
-- Clôner le dépôt : `git clone https://github.com/PnX-SI/GeoNature-Docker-services` ou extraire une [archive](https://github.com/PnX-SI/GeoNature-Docker-services/releases)
-- Se placer dans le répertoire du dépôt : `cd GeoNature-Docker-services`
-- Créer le fichier `.env` à partir du fichier d’exemple : `cp .env.sample .env`. Compléter les paramètres importants (`HOST`, `ACME_EMAIL`, `GEONATURE_LOCAL_SRID`, `POSTGRES_PASSWORD`, `GID`, `UID`).
-- Lancer la commande `./init-config.sh` afin de créer les fichiers de configuration suivants, avec des clés secrètes générées aléatoirement :
-  - `config/geonature/geonature_config.toml`
-  - `config/usershub/config.py`
-- Lancer les conteneurs : `docker compose up -d`
+1. **Installation de Docker** ([Voir la documentation](https://docs.docker.com/engine/install/))
+2. **Ajout de votre utilisateur courant au groupe `docker`**
+
+   - Ajouter votre utilisateur courant dans le groupe docker : `sudo usermod -aG docker $USER`
+   - Réouvrir sa session Linux pour appliquer les changements
+   - Plus d'infos sur la [documentation officielle](https://docs.docker.com/engine/install/linux-postinstall)
+
+3. **Installation de `git`**
+
+   - `sudo apt-get install git`
+
+4. **Clonage du dépôt de GeoNature-Docker-services** : `git clone https://github.com/PnX-SI/GeoNature-Docker-services` ou extraire une [archive](https://github.com/PnX-SI/GeoNature-Docker-services/releases)
+
+5. **Déplacement dans le répertoire du dépôt** : `cd GeoNature-Docker-services`
+
+6. **Création du fichier `.env` à partir du fichier d’exemple** : `cp .env.sample .env`.
+
+7. **Changement des variables de configurations obligatoires dans le fichier `.env`**. Les variables obligatoires sont les suivantes :
+
+   - `GEONATURE_DB_LOCAL_SRID` : Code des projections des géométries stockées dans GeoNature (par défaut 2154)
+   - `POSTGRES_PASSWORD` : Mot de passe de la base de données [PostgreSQL](https://www.postgresql.org/)
+   - `TRAEFIK_PASSWORD` : Mot de passe de l'instance [Traefik](https://doc.traefik.io/traefik/)
+   - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
+   - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
+
+8. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature et UsersHub respectivement dans les fichiers suivants :
+
+   - `config/geonature/geonature_config.toml`
+   - `config/usershub/config.py`
+
+9. **Lancer la création des conteneurs Docker** : `docker compose up -d`
+
+## Accéder aux logs
 
 Les logs de tous les services sont accessibles avec la commande `docker compose logs -f`.
+
 Pour n'afficher que les 100 dernières lignes, on utilise l'option `--tail 100` et donc la commande `docker compose logs -f --tail 100`.
+
 Pour n'afficher les logs que d'un service en particulier, on utilise la commande `docker compose logs -f <nom du service>`.
 
 ## Les services
@@ -45,6 +75,31 @@ usershub             5001/tcp
 ```
 
 ![Schéma des services](docs/schema_services_0.1.png)
+
+
+## Différents scénarios d'installation
+
+Il est possible de déployer la stack GeoNature de plusieurs manières différentes. La configuration par défaut est pensée pour 
+être autosuffisante, toutefois, dans le cas où vous voulez connecter cette stack à des outils déjà existant dans votre 
+SI, plusieurs scénarios sont possibles.
+
+#### Reverse Proxy externe :
+Si vous voulez utiliser votre propre Reverse Proxy (Nginx, Traefik ...), il est possible de déployer GeoNature sans Traefik.
+Les configurations spécifiques ont été déportées dans le fichier compose `traefik.yml`, si on veut s'en passer il faut modifier la variable `COMPOSE_FILE` du `.env` 
+pour qu'elle n'utilise que le fichier essential.yml : `COMPOSE_FILE=essential.yml`. Prenez soin de renseigner les variables
+d'environnements spécifiques à une utilisation hors traefik (signalées par la mention "*If you don't use traefik*").
+
+#### Base de données déportée :
+
+Si vous préferez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
+d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de donnée 
+dans le `.env`.
+
+#### Service UsersHub déjà existant :
+
+Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable 
+d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre usershub 
+dans le `.env`. 
 
 ## Configuration
 
@@ -99,9 +154,9 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## FAQ
 
-Pour des informations spécifique sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](#dev-faq). 
+Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature-Docker-services](/docs/faq.md).
 
-Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature](https://github.com/PnX-SI/GeoNature-Docker-services/blob/main/docs/faq.md).
+Pour des informations spécifiques sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](docs/dev-faq.md).
 
 ## Images Docker publiées
 
@@ -117,7 +172,6 @@ Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](htt
 Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs openssl`.
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
-Une fois le fichier .env rempli correctement, il faut créer les fichiers de configuration avec `./init-config.sh`.
 
 Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
 Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
@@ -126,36 +180,26 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 
-### Executer les test Cypress
+### Exécuter les test Cypress
 
 Vous devez avoir installé Cypress au préalable et lancé la stack.
 La commande `make cypress` vous permet ensuite de lancer les tests cypress.
 
-Si vous voulez que vos tests s'exécutent comme dans la CI Github, il faut, une base sans données saisie au préalable. 
-Puis, vous devez passer les migrations "samples" : 
-`          
-          geonature db upgrade occtax-samples-test@head
-          geonature db upgrade occhab-samples@head
-          geonature db upgrade import-samples@head
-`
+Si vous voulez que vos tests s'exécutent comme dans la CI Github, il faut, une base sans données saisie au préalable.
+Puis, vous devez passer les migrations "samples" :
 
-Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce 
-qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liées aux forms d'occtax : 
+```shell
+   geonature db upgrade occtax-samples-test@head
+   geonature db upgrade occhab-samples@head
+   geonature db upgrade import-samples@head`
+```
+
+Il est aussi possible de lancer Cypress en version headed ou avec des paramètres plus complexe en se calquant sur ce
+qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en spécifiant les tests liés aux forms d'occtax :
 
 `source .env; cd sources/GeoNature/frontend; API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https:$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/occtax-form-spec.js`
-
-
-## <a name="dev-faq"></a> FAQ de développement
-
-* Mon docker compose de dev ne lance pas le build des images et essaye de les chercher sur un repo à la place.
-
-Assurez-vous de ne pas avoir activé la feature Bake de docker `COMPOSE_BAKE=true`
-
-* J'ai une question, à qui puis-je la poser ? 
-
-Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
-
 ## Liens utiles
+
 ### GeoNature
 
 - [Dépôt](https://github.com/PnX-SI/GeoNature)
