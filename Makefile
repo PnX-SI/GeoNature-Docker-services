@@ -28,9 +28,6 @@ prod:
 	docker compose up -d
 	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
-cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOSTPORT}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}/" cypress run --headed --spec cypress/e2e/homepage-spec.js
-
 lint_frontend:
 	docker compose exec geonature-frontend bash -c "cd /sources/GeoNature/frontend; npm run format"
 
@@ -38,6 +35,6 @@ lint_backend:
 	docker compose exec geonature-backend bash -c "source /sources/GeoNature/backend/venv/bin/activate && black /sources/GeoNature/backend"
 
 cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run
+	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="$${GEONATURE_URL_APPLICATION}" API_ENDPOINT="$${GEONATURE_API_ENDPOINT}" URL_APPLICATION="$${GEONATURE_URL_APPLICATION}" npm run cypress:open
 
 -include Makefile.local
