@@ -17,8 +17,6 @@ warn()  { printf 'WARN: %s\n' "$*" >&2; }
 error() { printf 'ERROR: %s\n' "$*" >&2; }
 debug() { [ "$LOG_LEVEL" = "debug" ] && printf 'debug: %s\n' "$*"; return 0; }
 
-
-
 truthy() {
   case "${1:-}" in
     1|true|TRUE|True|yes|YES|Yes|y|Y|on|ON) return 0 ;;
@@ -71,7 +69,6 @@ is_repo() { git -C "$1" rev-parse --is-inside-work-tree >/dev/null 2>&1; }
 is_gitlink() {
   git ls-files --stage -- "$1" | awk '$1==160000{found=1} END{exit (found?0:1)}'
 }
-
 
 is_dirty() {
   git -C "$1" update-index -q --refresh || true
@@ -140,6 +137,34 @@ list_dirty_files() {
   echo "  • UNTRACKED:";git -C "$p" ls-files --other --exclude-standard || true
 }
 
+# --- helpers idempotence ---
+
+ensure_gitdir_layout() {
+  run git submodule absorbgitdirs -- "$1" || true
+}
+
+ensure_initialized() {
+  local sm_path="$1"
+  if ! is_repo "$sm_path"; then
+    run git submodule update --init -- "$sm_path"
+  fi
+}
+
+ensure_remote_url() {
+  local sm_path="$1" url="$2"
+  run git -C "$sm_path" remote set-url origin "$url" || true
+}
+
+verify_ref_exists() {
+  local sm_path="$1" type="$2" val="$3"
+  case "$type" in
+    branch) git -C "$sm_path" ls-remote --heads origin "$val" >/dev/null 2>&1 ;;
+    tag)    git -C "$sm_path" ls-remote --tags  origin "refs/tags/$val" >/dev/null 2>&1 ;;
+    commit) git -C "$sm_path" cat-file -e "$val^{commit}" 2>/dev/null || \
+            git -C "$sm_path" ls-remote origin "$val" >/dev/null 2>&1 ;;
+  esac
+}
+
 ensure_registered() {
   local name="$1" sm_path="$2" url="$3" type="$4" val="$5"
   if ! registered_by_name "$name"; then
@@ -194,10 +219,27 @@ checkout_ref() {
   local sm_path="$1" type="$2" val="$3"
   run git -C "$sm_path" fetch --tags --prune
   case "$type" in
-    branch) run git -C "$sm_path" checkout -B "$val" "origin/$val" ;;
-    tag)    run git -C "$sm_path" checkout --detach "refs/tags/$val" \
-                     || run git -C "$sm_path" checkout --detach "$val" ;;
-    commit) run git -C "$sm_path" checkout --detach "$val" ;;
+    branch)
+      ### fetch ciblé + fallback si origin/$val absent
+      run git -C "$sm_path" fetch origin "+refs/heads/$val:refs/remotes/origin/$val" || true
+      if git -C "$sm_path" rev-parse -q --verify "refs/remotes/origin/$val" >/dev/null; then
+        run git -C "$sm_path" checkout -B "$val" "refs/remotes/origin/$val"
+      else
+        local default_base
+        default_base="$(git -C "$sm_path" symbolic-ref -q --short refs/remotes/origin/HEAD || true)"
+        default_base="${default_base#origin/}"; [ -z "$default_base" ] && default_base="master"
+        warn "origin/$val introuvable → repli sur origin/$default_base"
+        run git -C "$sm_path" fetch origin "+refs/heads/$default_base:refs/remotes/origin/$default_base" || true
+        run git -C "$sm_path" checkout -B "$val" "refs/remotes/origin/$default_base"
+      fi
+      ;;
+    tag)
+      run git -C "$sm_path" checkout --detach "refs/tags/$val" \
+        || run git -C "$sm_path" checkout --detach "$val"
+      ;;
+    commit)
+      run git -C "$sm_path" checkout --detach "$val"
+      ;;
   esac
 }
 
@@ -246,12 +288,10 @@ while IFS= read -r raw || [ -n "$raw" ]; do
     exit 1
   fi
 
-  # Normalisation RECURSIVE → 1/0 (défaut 0)
   case "$RECURSIVE" in
     1|true|TRUE|True|yes|YES|Yes|y|Y|on|ON) RECURSIVE=1;;
     *) RECURSIVE=0;;
   esac
-
 
   read -r TYPE VAL < <(parse_ref "$REF")
 
@@ -315,38 +355,86 @@ while IFS= read -r raw || [ -n "$raw" ]; do
     continue
   fi
 
+  # --- séquence idempotente ---
   ensure_registered "$NAME" "$SM_PATH" "$URL" "$TYPE" "$VAL"
+
+  # 1) S'assurer que le repo est présent (clone/init si manquant)
+  ensure_initialized "$SM_PATH"
   if ! is_repo "$SM_PATH"; then
-    error "$SM_PATH non initialisé."
+    error "$SM_PATH non initialisé (échec clone)."
     exit 1
   fi
 
-  if [ "$local_dirty" = "yes" ] && [ "$FORCE" != "1" ]; then
+  # 1bis) ### refspec large: suivre toutes les branches
+  run git -C "$SM_PATH" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" || true
+
+  # 2) Harmoniser la mise en page .git
+  ensure_gitdir_layout "$SM_PATH"
+
+  # 3) Sync chemins/URLs depuis .gitmodules
+  run git submodule sync -- "$SM_PATH"
+
+  # 4) Forcer l’URL 'origin' à celle du fichier env
+  ensure_remote_url "$SM_PATH" "$URL"
+
+  # 5) Si dirty et pas FORCE=1 -> skip
+  if is_dirty "$SM_PATH" && [ "$FORCE" != "1" ]; then
     warn "SKIP $NAME: modifications locales détectées (utilisez FORCE=1 pour forcer)."
     summary_lines+=("$NAME|SKIP (dirty)|init:yes|dirty:yes|remote:$remote_state|rec:$RECURSIVE")
     printf '\n'
     continue
   fi
 
+  # 6) Always fetch
+  run git -C "$SM_PATH" fetch --prune --tags
+
+  # 7) ### Vérifier la ref et repli si branche introuvable
+  if ! verify_ref_exists "$SM_PATH" "$TYPE" "$VAL"; then
+    if [ "$TYPE" = "branch" ]; then
+      warn "$NAME: origin/$VAL introuvable. Repli sur la branche par défaut du remote."
+      default_base="$(git -C "$SM_PATH" symbolic-ref -q --short refs/remotes/origin/HEAD || true)"
+      default_base="${default_base#origin/}"; [ -z "$default_base" ] && default_base="master"
+      TYPE="branch"; VAL="$default_base"
+    else
+      error "$NAME: ref $TYPE:$VAL inexistante sur origin ($URL)."
+      error "→ Corrige REF (branch/tag/commit) ou l'URL du sous-module."
+      exit 1
+    fi
+  fi
+
+  # 8) Déjà sur la bonne ref ?
   if already_on_ref "$SM_PATH" "$TYPE" "$VAL"; then
     info "$NAME: déjà sur $TYPE:$VAL"
     if [ "$TYPE" = "branch" ]; then
-      run git -C "$SM_PATH" fetch --prune
       run git -C "$SM_PATH" reset --hard "origin/$VAL" || true
     fi
     if [ "$RECURSIVE" = "1" ]; then
       run git -C "$SM_PATH" submodule update --init --recursive
+      run git -C "$SM_PATH" submodule absorbgitdirs --recursive || true
     fi
-    summary_lines+=("$NAME|ok (already)|init:yes|dirty:$local_dirty|remote:$remote_state|rec:$RECURSIVE")
-  else
-    info "$NAME: checkout $TYPE:$VAL"
-    checkout_ref "$SM_PATH" "$TYPE" "$VAL"
-    if [ "$RECURSIVE" = "1" ]; then
-      run git -C "$SM_PATH" submodule update --init --recursive
-    fi
-    summary_lines+=("$NAME|ok (checked out)|init:yes|dirty:$local_dirty|remote:$remote_state|rec:$RECURSIVE")
+    summary_lines+=("$NAME|ok (already)|init:yes|dirty:no|remote:$remote_state|rec:$RECURSIVE")
+    printf '\n'
+    continue
   fi
 
+  # 9) Checkout exact
+  info "$NAME: checkout $TYPE:$VAL"
+  checkout_ref "$SM_PATH" "$TYPE" "$VAL"
+
+  # 10) Mémoriser la branche voulue dans .gitmodules (optionnel)
+  if [ "$TYPE" = "branch" ]; then
+    run git config -f .gitmodules "submodule.$NAME.branch" "$VAL" || true
+    run git submodule sync -- "$SM_PATH"
+  fi
+
+  # 11) Submodules imbriqués si demandé
+  if [ "$RECURSIVE" = "1" ]; then
+    run git -C "$SM_PATH" submodule sync --recursive
+    run git -C "$SM_PATH" submodule update --init --recursive
+    run git -C "$SM_PATH" submodule absorbgitdirs --recursive || true
+  fi
+
+  summary_lines+=("$NAME|ok (checked out)|init:yes|dirty:no|remote:$remote_state|rec:$RECURSIVE")
   printf '\n'
 done < "$CONF"
 
@@ -361,8 +449,7 @@ fi
 
 printf '\nSummary:\n'
 printf '  %-28s | %-34s | %-10s | %-10s | %-12s | %-3s\n' "NAME" "ACTION" "INIT" "DIRTY" "REMOTE" "REC"
-printf '  %s
-' "----------------------------------------------------------------------------------------------------------------------"
+printf '  %s\n' "----------------------------------------------------------------------------------------------------------------------"
 for s in "${summary_lines[@]}"; do
   IFS='|' read -r n a i d r rec <<<"$s"
   printf '  %-28s | %-34s | %-10s | %-10s | %-12s | %-3s\n' "$n" "$a" "${i#init:}" "${d#dirty:}" "${r#remote:}" "${rec#rec:}"
