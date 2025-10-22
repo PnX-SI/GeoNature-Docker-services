@@ -1,5 +1,5 @@
 # Variables
-DC=docker compose -f docker-compose.yml -f docker-compose-dev.yml -f docker-compose.debug.yml
+DC=docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml
 SERVICE=geonature-backend
 
 .PHONY: help-debug debug-build debug-backend debug-up debug-down debug-logs

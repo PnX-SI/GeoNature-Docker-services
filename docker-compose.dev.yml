@@ -47,20 +47,20 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-        UID: ${UID}
-        GID: ${GID}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
 
   geonature-backend:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    user: root:root
+    # user: root:root
     depends_on:
       base-backend:
         condition: service_completed_successfully
-    user: "${UID}:${GID}"
+    user: "${DOCKER_UID}:${DOCKER_GID}"
     environment:
       TZ:  Europe/Paris
-      UID: ${UID}
-      GID: ${GID}
+      UID: ${DOCKER_UID}
+      GID: ${DOCKER_GID}
       PYTHONUNBUFFERED: "1"   # (logs visibles en temps réel)
     volumes:
       - ./sources:/sources
@@ -72,8 +72,8 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-        UID: ${UID}
-        GID: ${GID}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
     command:
       - gunicorn
       - "geonature:create_app()"
@@ -105,8 +105,8 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-        UID: ${UID}
-        GID: ${GID}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
   # postgres:

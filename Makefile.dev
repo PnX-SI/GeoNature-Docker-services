@@ -1,7 +1,7 @@
 # Variables à override en ligne de commande si besoin
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 ROOT := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
-COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose-dev.yml
+COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose.dev.yml
 BRANCH ?= develop
 SERVICE ?=
 
