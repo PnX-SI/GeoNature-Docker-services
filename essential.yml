@@ -49,6 +49,7 @@ services:
       - gn
 
   geonature-frontend:
+    <<: *restart-policy
     image: ghcr.io/pnx-si/geonature-frontend-extra:2.16.2
     ports:
       - 80:80
