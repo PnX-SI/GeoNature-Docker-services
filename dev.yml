@@ -123,8 +123,12 @@ services:
       atlas-build:
         condition: service_completed_successfully
     volumes:
-      - ./sources/GeoNature-atlas:/sources/GeoNature-atlas
+      - ./sources/GeoNature-atlas:/dist/GeoNature-atlas
+      - ./sources/GeoNature-atlas/data:/dist/data
     build:
+      context: .
       dockerfile: build/atlas/Dockerfile
       args:
+        DOCKER_UID: ${DOCKER_UID}
+        DOCKER_GID: ${DOCKER_GID}
         ATLAS_IMAGE: ${ATLAS_IMAGE}

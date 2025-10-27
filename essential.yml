@@ -174,8 +174,8 @@ services:
     <<: [*restart-policy]
     image: ${ATLAS_IMAGE:-ghcr.io/pnx-si/geonature-atlas:1.7.0}
     #[WIP]// `feat/docker-evolution`:
-    # profiles:
-    #   - atlas
+    profiles:
+      - atlas
     #[WIP]// `feat/docker-evolution`:
     # entrypoint: ["/entrypoint.sh"]
     # command:
@@ -196,6 +196,7 @@ services:
       ATLAS_ALTITUDES: ${ATLAS_ALTITUDES:-"(0 500 1000 1500 2000 2500 3000 3500 4000)"}
       ATLAS_TYPE_TERRITOIRE: ${ATLAS_TYPE_TERRITOIRE:-"PEC"}
       ATLAS_TYPE_MAILLE: ${ATLAS_TYPE_MAILLE:-"M1"}
+      ATLAS_TAXHUB_DISPLAYED_ATTRIBUTES: ${ATLAS_TAXHUB_DISPLAYED_ATTRIBUTES}
       ATLAS_INSTALL_SCHEMA: ${ATLAS_INSTALL_SCHEMA:-false}
       ATLAS_RESET_SCHEMA: ${ATLAS_RESET_SCHEMA:-false}
       # WARNING: don't set default value for ATLAS_URL_APPLICATION, it must be set in .env file
