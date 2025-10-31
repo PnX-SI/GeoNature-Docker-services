@@ -87,7 +87,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.owner=${STACK}"
-      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature/api`)"
+      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
       - "traefik.http.routers.${STACK}-geonature-backend.entrypoints=web"
 
   geonature-worker:
@@ -145,7 +145,7 @@ services:
         - "traefik.enable=true"
         - "traefik.owner=${STACK}"
         - "traefik.http.routers.${STACK}-geonature.entrypoints=web"
-        - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/geonature`)"
+        - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
@@ -167,5 +167,5 @@ services:
       labels:
          - "traefik.owner=${STACK}"
          - "traefik.http.routers.${STACK}-usershub.entrypoints=web"
-         - "traefik.http.routers.${STACK}-usershub.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`/usershub`)"
+         - "traefik.http.routers.${STACK}-usershub.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${USERSHUB_PREFIX}`)"
   
