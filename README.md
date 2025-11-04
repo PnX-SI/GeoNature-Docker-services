@@ -180,6 +180,67 @@ Le premier lancement peut mettre quelques dizaines de minutes.
 
 Il est possible de configurer le fichier `submodules.env` en s'appuyant sur le fichier `submodules.env.sample`. L'idée étant de préciser l'url du dépot sur lequel vous voulez tirer le code et de préciser soit la branche , soit le tag soit un commit . Pour cela il suffit de prefixer le nom de la branche par `branch:` , le numéro du tag par `tag:` ou le numéro du commit `sha` par `sha:`. 
 
+Une fois ce fichier rempli, il faut alors lancer une des règles commençant par `submodules-apply`. Faire un `make help-dev` pour choisir parmi les règles proposées, suivant si vous voulez appliquer un init submodules full, ou partiel en terme d'historique de commit et même en appliquant un commit avec les nouvelles versions des submodules. ATTENTION: si vous lancez `make submodules-apply` vous n'aurez qu'un historique partiel , ce qui a l'avantage d'être plus rapide pour faire des tests en local mais vous pouvez rencontrer des problèmes pour pousser vos développement sur le remote (github ou gitlab). On conseille donc d'utiliser plutot : `make submodules-apply-full`. 
+
+Une fois que vous avez lancé la règle qui lance le script `subdomules_apply.sh` vous avez alors en environnement GeoNature, Modules Externes et Usershub aux versions configurés dans le `submodules.env.sample`.
+
+Vous pouvez alors réaliser les règle make dans l'ordre suivant : 
+- `make build` pour construire les images en local 
+- `make up` pour lancer les services docker 
+
+
+Vous pouvez visiter votre GeoNature à l'adresse basée sur vos variables de votre fichier `.env` , selon ce pattern : `$${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"`. Ce qui donnerait par exemple https://localhost/geonature et le proxy traefik http://localhost:8080/.
+
+### Règles utiles dans le Makefile.dev
+
+Il existe tout un tas de règle Make utiles lorsqu'on est environnement de dev pour pouvoir contribuer . 
+Pour cela lancer la règle `make help-dev` ou `make help-debug` pour voir plus d'informations concernant les règles liées au mode debug. 
+
+
+### Lancer le backend en mode debug
+
+Il est possible de lancer le backend  de GeoNature en mode debug après avoir "build" les images et lancés les services.  Pour cela il faut lancer les commandes suivantes :
+
+- `make debug-build`
+- `make debug-backend`
+
+Avec vscode par exemple on peut donc avoir ce fichier dans le `launch.json`
+
+<details><summary> Configuration pour debug avec Docker pour Vscode</summary>
+
+```json
+    {
+      "name": "Attach Flask in Docker",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "justMyCode": true,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/GeoNature",
+          "remoteRoot": "/sources/GeoNature"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_export",
+          "remoteRoot": "/sources/gn_module_export"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_dashboard",
+          "remoteRoot": "/sources/gn_module_dashboard"
+        },
+        {
+          "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/gn_module_monitoring",
+          "remoteRoot": "/sources/gn_module_monitoring"
+        },
+      {
+        "localRoot": "${workspaceFolder}/GeoNature-Docker-services/sources/usershub",
+        "remoteRoot": "/sources/usershub"
+      }
+      ]
+}
+```
+</details>
+
 Une fois ce fichier rempli, il faut alors lancer une des règles commençant par `submodules-apply`. Faire un `make help-dev` pour choisir parmi les règles proposées, suivant si vous voulez appliquer un init submodules full, ou partiel en terme d'historique de commit et même en appliquant un commit avec les nouvelles versions des submodules.
 
 Une fois que vous avez lancé la règle qui lance le script `subdomules_apply.sh` vous avez alors en environnement GeoNature, Modules Externes et Usershub aux versions configurés dans le `submodules.env.sample`.

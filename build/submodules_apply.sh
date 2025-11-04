@@ -143,10 +143,38 @@ ensure_gitdir_layout() {
   run git submodule absorbgitdirs -- "$1" || true
 }
 
+# ---- AJOUT: helpers tolérants init/sync ----
+path_in_gitmodules() {
+  local p="$1"
+  git config -f .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null \
+    | awk '{print $2}' | grep -Fxq "$p"
+}
+
+safe_init() {
+  local p="$1"
+  if path_in_gitmodules "$p"; then
+    run git submodule init -- "$p" || run git submodule init
+  else
+    run git submodule init
+  fi
+}
+
+safe_sync() {
+  local p="$1"
+  if is_gitlink "$p" || path_in_gitmodules "$p"; then
+    run git submodule sync -- "$p" || run git submodule sync
+  else
+    run git submodule sync
+  fi
+}
+# --------------------------------------------
+
 ensure_initialized() {
   local sm_path="$1"
   if ! is_repo "$sm_path"; then
-    run git submodule update --init -- "$sm_path"
+    # init tolérant puis update ciblé (repli global si besoin)
+    safe_init "$sm_path"
+    run git submodule update --init -- "$sm_path" || run git submodule update --init
   fi
 }
 
@@ -193,7 +221,7 @@ ensure_registered() {
         echo "[dry] update .gitmodules url for $name → $url ; submodule sync"
       else
         run git config -f .gitmodules "submodule.$name.url" "$url"
-        run git submodule sync -- "$sm_path"
+        safe_sync "$sm_path"
       fi
     fi
     if [ "$cur_path" != "$sm_path" ] && [ -n "$cur_path" ]; then
@@ -206,7 +234,8 @@ ensure_registered() {
           echo "[dry] would init/update nested submodules in $sm_path (recursive)"
         fi
       else
-        run git submodule update --init -- "$sm_path"
+        safe_init "$sm_path"
+        run git submodule update --init -- "$sm_path" || run git submodule update --init
         if [ "${RECURSIVE:-0}" = "1" ]; then
           run git -C "$sm_path" submodule update --init --recursive
         fi
@@ -220,7 +249,7 @@ checkout_ref() {
   run git -C "$sm_path" fetch --tags --prune
   case "$type" in
     branch)
-      ### fetch ciblé + fallback si origin/$val absent
+      # fetch ciblé + fallback si origin/$val absent
       run git -C "$sm_path" fetch origin "+refs/heads/$val:refs/remotes/origin/$val" || true
       if git -C "$sm_path" rev-parse -q --verify "refs/remotes/origin/$val" >/dev/null; then
         run git -C "$sm_path" checkout -B "$val" "refs/remotes/origin/$val"
@@ -267,6 +296,10 @@ info "root     : $root"
 info "pwd      : $(pwd)"
 info "conf     : $CONF  (DRY_RUN=$DRY_RUN FORCE=$FORCE COMMIT=$COMMIT LOG_LEVEL=$LOG_LEVEL DRY_FETCH=$DRY_FETCH)"
 printf '\n'
+
+# (facultatif, sûr et idempotent) amorçage global
+git submodule init || true
+git submodule sync || true
 
 line_no=0
 summary_lines=()
@@ -371,8 +404,8 @@ while IFS= read -r raw || [ -n "$raw" ]; do
   # 2) Harmoniser la mise en page .git
   ensure_gitdir_layout "$SM_PATH"
 
-  # 3) Sync chemins/URLs depuis .gitmodules
-  run git submodule sync -- "$SM_PATH"
+  # 3) Sync chemins/URLs depuis .gitmodules (tolérant)
+  safe_sync "$SM_PATH"
 
   # 4) Forcer l’URL 'origin' à celle du fichier env
   ensure_remote_url "$SM_PATH" "$URL"
@@ -388,7 +421,7 @@ while IFS= read -r raw || [ -n "$raw" ]; do
   # 6) Always fetch
   run git -C "$SM_PATH" fetch --prune --tags
 
-  # 7) ### Vérifier la ref et repli si branche introuvable
+  # 7) Vérifier la ref et repli si branche introuvable
   if ! verify_ref_exists "$SM_PATH" "$TYPE" "$VAL"; then
     if [ "$TYPE" = "branch" ]; then
       warn "$NAME: origin/$VAL introuvable. Repli sur la branche par défaut du remote."
@@ -424,7 +457,7 @@ while IFS= read -r raw || [ -n "$raw" ]; do
   # 10) Mémoriser la branche voulue dans .gitmodules (optionnel)
   if [ "$TYPE" = "branch" ]; then
     run git config -f .gitmodules "submodule.$NAME.branch" "$VAL" || true
-    run git submodule sync -- "$SM_PATH"
+    safe_sync "$SM_PATH"
   fi
 
   # 11) Submodules imbriqués si demandé
