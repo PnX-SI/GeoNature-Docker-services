@@ -111,6 +111,7 @@ compose:
 ## Up rapide (dev)
 up:
 	$(COMPOSE) up -d --force-recreate
+	source .env; echo "{\"API_ENDPOINT\":\"//$${GEONATURE_BACKEND_HOSTPORT}$${GEONATURE_BACKEND_PREFIX}\"}" > sources/GeoNature/frontend/src/assets/config.json
 	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 up-backend:
@@ -137,6 +138,15 @@ build-backend:
 ## Rebuild des images frontend
 build-frontend:
 	$(COMPOSE) build geonature-frontend
+
+## Recompile requirements-dev.txt avec pip-compile dans un conteneur Python 3.9
+compile-dev-reqs:
+	docker run --rm \
+		-v "$$(pwd)/sources/GeoNature/backend:/work" \
+		-w /work \
+		python:3.9 \
+		bash -lc "pip install --no-input --no-cache-dir pip-tools && \
+		          pip-compile requirements-dev.in --output-file requirements-dev.txt"
 
 ## Nettoyage destructif (BDD incluse) -> renomme pour expliciter
 dev_clean_all:
