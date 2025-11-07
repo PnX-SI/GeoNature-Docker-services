@@ -112,7 +112,7 @@ compose:
 up:
 	$(COMPOSE) up -d --force-recreate
 	source .env; echo "{\"API_ENDPOINT\":\"//$${GEONATURE_BACKEND_HOSTPORT}$${GEONATURE_BACKEND_PREFIX}\"}" > sources/GeoNature/frontend/src/assets/config.json
-	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
+	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
 up-backend:
 	$(COMPOSE) up -d geonature-backend
