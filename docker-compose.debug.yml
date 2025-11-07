@@ -8,7 +8,7 @@ services:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}-debug
     ports:
       - "5678:5678"
-      - "5000:5000"
+      - "8000:8000"
     environment:
       FLASK_ENV: development
       FLASK_DEBUG: "0"
@@ -22,7 +22,7 @@ services:
       - gunicorn
       - "geonature.app:create_app()"
       - -b
-      - 0.0.0.0:5000
+      - 0.0.0.0:8000
       - --workers
       - "1"
       - --timeout
