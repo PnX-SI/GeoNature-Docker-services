@@ -25,7 +25,7 @@ services:
       <<: *backend-env
     ports:
       - 8000:8000
-    image: ghcr.io/pnx-si/geonature-backend-extra:2.16.2
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.16.2}
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
@@ -49,7 +49,7 @@ services:
       - gn
 
   geonature-frontend:
-    image: ghcr.io/pnx-si/geonature-frontend-extra:2.16.2
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:2.16.2}
     ports:
       - 80:80
     environment:
@@ -70,7 +70,7 @@ services:
       - gn
 
   geonature-worker:
-    image: ghcr.io/pnx-si/geonature-backend-extra:2.16.2
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.16.2}
     user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
       <<: *backend-env
@@ -84,7 +84,7 @@ services:
       - gn
 
   geonature-install-db:
-    image: ghcr.io/pnx-si/geonature-backend-extra:2.16.2
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.16.2}
     user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
@@ -141,7 +141,7 @@ services:
 
   usershub:
     <<: [*restart-policy]
-    image: ghcr.io/pnx-si/usershub:2.4.7
+    image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:2.4.7}
     profiles:
       - usershub
     entrypoint: ["/entrypoint.sh"]
