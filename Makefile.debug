@@ -1,0 +1,36 @@
+# Variables
+DC=docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml
+SERVICE=geonature-backend
+
+.PHONY: help-debug debug-build debug-backend debug-up debug-down debug-logs
+
+## Affiche les commandes disponibles
+help-debug: help-dev
+	@echo ""
+	@echo "Commandes disponibles pour le debug :"
+	@echo "  make debug-build      => Rebuild l'image backend avec debugpy"
+	@echo "  make debug-backend    => Démarre uniquement le backend en mode debug"
+	@echo "  make debug-up         => Démarre tous les services (frontend, traefik...) en debug"
+	@echo "  make debug-logs       => Affiche les logs du backend"
+	@echo "  make debug-down       => Stoppe tous les conteneurs"
+	@echo ""
+
+## Rebuild du backend avec debugpy
+debug-build:
+	$(DC) build --no-cache $(SERVICE)
+
+## Lance uniquement le backend en mode debug
+debug-backend:
+	$(DC) up -d $(SERVICE)
+
+## Lance tous les services avec debug
+debug-up:
+	$(DC) up -d
+
+## Affiche les logs du backend
+debug-logs:
+	$(DC) logs -f $(SERVICE)
+
+## Stoppe tous les conteneurs
+debug-down:
+	$(DC) down

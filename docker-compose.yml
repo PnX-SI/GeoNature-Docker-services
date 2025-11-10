@@ -2,3 +2,4 @@ include:
   - path :
       - essential.yml
       - traefik.yml
+      - ops.alti.yml

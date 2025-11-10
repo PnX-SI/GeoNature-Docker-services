@@ -1,0 +1,35 @@
+services:
+  alti-loader:
+    build:
+      context: ./assets/alti-loader
+      dockerfile: Dockerfile
+    image: custom/alti-loader:latest
+    profiles: ["db"]             # ou ["ops"] si tu préfères un profil dédié
+    user: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      IMPORT_ALTI: ${IMPORT_ALTI:-false}
+      ALTI_URL: ${ALTI_URL:-https://geonature.fr/data/ign/BDALTIV2_2-0_250M_ASC_LAMB93-IGN69_FRANCE_2017-06-21.zip}
+      ALTI_SCHEMA: ${ALTI_SCHEMA:-ref_geo}
+      ALTI_TABLE: ${ALTI_TABLE:-dem}
+      ALTI_SRID: ${ALTI_SRID:-2154}
+      ALTI_REINDEX: ${ALTI_REINDEX:-false}
+      ALTI_REINDEX_CONCURRENTLY: ${ALTI_REINDEX_CONCURRENTLY:-false}
+    volumes:
+      - alti_cache:/work         # <-- on monte le cache ici
+    networks:
+      - gn                       # <-- on attache au réseau applicatif
+
+volumes:
+  alti_cache: {}
+
+networks:
+  gn:
+    name: "${NETWORK_NAME:-geonature_network}"   # doit matcher le nom créé par essential.yml

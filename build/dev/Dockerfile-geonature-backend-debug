@@ -1,0 +1,8 @@
+ARG BASE_IMAGE=ghcr.io/pnx-si/geonature-backend-extra-local:latest
+FROM ${BASE_IMAGE}
+
+USER root
+RUN echo "✅ Installing debugpy..." && \
+    pip install --no-cache-dir debugpy && \
+    python -m debugpy --version
+USER geonature

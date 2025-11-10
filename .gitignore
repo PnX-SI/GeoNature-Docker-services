@@ -4,3 +4,5 @@ config*
 data*
 *.swp
 Makefile.local
+submodules.env
+.vscode

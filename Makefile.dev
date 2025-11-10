@@ -1,0 +1,305 @@
+# Variables à override en ligne de commande si besoin
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+ROOT := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+COMPOSE := docker compose -f $(ROOT)/docker-compose.yml -f $(ROOT)/docker-compose.dev.yml
+BRANCH ?= develop
+SERVICE ?=
+
+.PHONY: help switch-branch build-backend build-frontend up dev_with_build dev_clean_all migrate db_status \
+        cli_geonature cli_monitoring prepare-monitorings-dir link-monitoring-in-container \
+        install-monitoring-modules install-monitoring-protocole update-monitoring refresh-monitoring \
+        format_backend_check format_backend \
+		submodules-preflight submodules-preflight-no-net \
+        submodules-apply submodules-apply-force submodules-apply-commit \
+        submodules-apply-full submodules-apply-debug submodules-check
+
+## Liste des commandes disponibles
+help-dev:
+	@echo "Commandes disponibles :"
+	@echo ""
+	@echo "— Docker / Compose —"
+	@echo "  make check-compose               # Affiche la version de docker compose utilisée"
+	@echo "  make dev-logs                    # Affiche les logs de tous les services lancés. Possibilité de préciser un ou plusieurs SERVICES=geonature-backend"
+	@echo "  make up                          # Lance tous les conteneurs (dev) en arrière-plan"
+	@echo "  make build-base                  # Build toutes les images de bases. Peut être utile si docker ne trouve pas les images en local et essaye de tirer des images distantes"
+	@echo "  make up-backend                  # Lance uniquement le backend"
+	@echo "  make up-frontend                 # Lance uniquement le frontend"
+	@echo "  make dev_with_build              # Build + up (environnement de dev)"
+	@echo "  make dev_clean_all               # ⚠️ Stop + supprime les volumes (BDD perdue) + caches FE"
+	@echo ""
+	@echo "— Git / Branches & Submodules —"
+	@echo "  make switch-branch BRANCH=<nom>        # Change la branche GeoNature (local) puis met à jour les submodules"
+	@echo "  make submodules-preflight              # Préflight verbeux (DRY_RUN=1) avec logs et résumé"
+	@echo "  make submodules-preflight-no-net       # Préflight sans accès réseau (DRY_FETCH=0)"
+	@echo "  make submodules-apply                  # Applique submodules.env (bloque si dirty)"
+	@echo "  make submodules-apply-force            # Applique en forçant malgré dirty (FORCE=1)"
+	@echo "  make submodules-apply-commit           # Applique + commit des pointeurs (COMMIT=1)"
+	@echo "  make submodules-apply-full             # Clone complet (DEPTH=, FILTER=, LFS activé)"
+	@echo "  make submodules-apply-debug            # Applique avec traces Git + logs debug"
+	@echo "  make submodules-check                  # Vérifs rapides côté fichiers / .gitmodules"
+	@echo ""
+	@echo "  Variables utiles (override: make VAR=valeur):"
+	@echo "    SUBMODULES_CONF=$(SUBMODULES_CONF)  LOG_LEVEL=$(LOG_LEVEL)  DRY_FETCH=$(DRY_FETCH)"
+	@echo "    JOBS=$(JOBS)  DEPTH=$(DEPTH)  FILTER=$(FILTER)  GIT_LFS_SKIP_SMUDGE=$(GIT_LFS_SKIP_SMUDGE)  GIT_PROGRESS=$(GIT_PROGRESS)"
+	@echo ""
+	@echo ""
+	@echo "— Build —"
+	@echo "  make build-backend               # Rebuild images backend (api/worker/install-db)"
+	@echo "  make build-frontend              # Rebuild image frontend"
+	@echo ""
+	@echo "— Base de données —"
+	@echo "  make migrate                     # Flask-Migrate : autoupgrade"
+	@echo "  make db_status                   # État des migrations"
+	@echo ""
+	@echo "— CLI & Outils —"
+	@echo "  make cli-backend ARGS=\"bash\"     # Ouvre un shell dans le conteneur backend"
+	@echo "  make cli-frontend ARGS=\"bash\"    # Ouvre un shell dans le conteneur frontend"
+	@echo "  make cli_geonature ARGS=\"...\"    # Exécute 'geonature <ARGS>' dans le backend"
+	@echo "  make cli_monitoring ARGS=\"...\"   # Exécute 'geonature monitorings <ARGS>'"
+	@echo "  make print-VAR                   # Affiche la valeur d'une variable Make (ex: print-COMPOSE)"
+	@echo ""
+	@echo "— Monitoring (protocoles) —"
+	@echo "  make debug-paths-monitoring      # Affiche chemins utiles (host/container) + listings"
+	@echo "  make prepare-monitorings-dir     # Crée le dossier media/monitorings dans le conteneur"
+	@echo "  make link-monitoring-in-container# Symlink media -> sources/protocoles_monitoring"
+	@echo "  make install-monitoring-modules  # Installe les protocoles listés dans \$$MODULES"
+	@echo "  make install-monitoring-protocole# Chaîne: link + install des protocoles"
+	@echo "  make update-monitoring           # pip install -e du package gn_module_monitoring"
+	@echo "  make refresh-monitoring          # Rebuild + up du frontend après update"
+	@echo ""
+	@echo "— Qualité / Formatage —"
+	@echo "  make format_backend_check ARGS=\"path\"  # Black --check (par défaut tout le backend)"
+	@echo "  make format_backend ARGS=\"path\"        # Black format (cible un dossier/fichier si fourni)"
+	@echo ""
+	@echo "Variables utiles (surchageables : make VAR=valeur) :"
+	@echo "  BRANCH=$(BRANCH)"
+	@echo "  COMPOSE=$(COMPOSE)"
+	@echo "  GEONATURE_MEDIA_FOLDER=$(GEONATURE_MEDIA_FOLDER)"
+	@echo "  MONITORING_MEDIA=$(MONITORING_MEDIA)"
+	@echo "  SUBMODULES_CONF=$(SUBMODULES_CONF)  JOBS=$(JOBS)  DEPTH=$(DEPTH)  FILTER=$(FILTER)  LFS_SKIP=$(GIT_LFS_SKIP_SMUDGE)"
+	@echo ""
+	@echo "Exemples :"
+	@echo "  make switch-branch BRANCH=develop"
+	@echo "  make cli-backend ARGS=\"bash\""
+	@echo "  make print-MONITORING_MEDIA"
+	@echo "  make submodules-preflight SUBMODULES_CONF=submodules.env"
+	@echo "  make submodules-apply SUBMODULES_CONF=submodules.env JOBS=8"
+	@echo "  make submodules-apply FORCE=1                  # force malgré dirty"
+	@echo "  make submodules-apply-commit COMMIT=1          # applique + commit des pointeurs"
+	@echo "  make submodules-apply-debug LOG_LEVEL=debug    # logs détaillés du script"
+
+
+print-%: @printf '%s=%s\n' "$*" "$($*)"
+
+check-compose:
+	@$(COMPOSE) version
+
+## Affiche les logs (tous ou d'un service si précisé)
+dev-logs:
+	$(COMPOSE) logs -f $(if $(SERVICE),$(SERVICE))
+
+## Change de branche et met à jour les submodules
+switch-branch:
+	cd sources/GeoNature && \
+	git fetch && \
+	git checkout $(BRANCH) && \
+	git submodule update --init --recursive
+
+compose:
+	$(COMPOSE) $(ARGS)
+
+## Up rapide (dev)
+up:
+	$(COMPOSE) up -d --force-recreate
+	source .env; echo "{\"API_ENDPOINT\":\"//$${GEONATURE_BACKEND_HOSTPORT}$${GEONATURE_BACKEND_PREFIX}\"}" > sources/GeoNature/frontend/src/assets/config.json
+	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
+
+up-backend:
+	$(COMPOSE) up -d geonature-backend
+
+up-frontend:
+	$(COMPOSE) up -d geonature-frontend
+
+## Stop rapide (dev)
+stop:
+	$(COMPOSE) stop
+
+down:
+	$(COMPOSE) down
+
+## Build images base
+build-base:
+	$(COMPOSE) build base-backend base-frontend-source base-frontend-nginx userhub-build
+
+## Rebuild des images backend
+build-backend:
+	$(COMPOSE) build geonature-backend geonature-worker geonature-install-db
+
+## Rebuild des images frontend
+build-frontend:
+	$(COMPOSE) build geonature-frontend
+
+## Recompile requirements-dev.txt avec pip-compile dans un conteneur Python 3.9
+compile-dev-reqs:
+	docker run --rm \
+		-v "$$(pwd)/sources/GeoNature/backend:/work" \
+		-w /work \
+		python:3.9 \
+		bash -lc "pip install --no-input --no-cache-dir pip-tools && \
+		          pip-compile requirements-dev.in --output-file requirements-dev.txt"
+
+## Nettoyage destructif (BDD incluse) -> renomme pour expliciter
+dev_clean_all:
+	@echo "⚠️ ATTENTION: cette commande supprime les volumes (BDD incluse). Ctrl-C pour annuler."
+	@sleep 2
+	@docker compose down -v --remove-orphans
+	@docker builder prune -af
+	@sudo rm -rf sources/GeoNature/frontend/node_modules
+	@sudo rm -rf sources/GeoNature/frontend/dist
+	@sudo rm -rf sources/GeoNature/frontend/.angular
+	@find sources/GeoNature/frontend/external_modules -type d -name "node_modules" -exec sudo rm -rf {} +
+
+dev_with_build: dev_init
+	@echo "➡️  Lancement de l'environnement de développement..."
+	$(COMPOSE) up -d --build
+	@source .env; echo "Services dev sur: $${BASE_PROTOCOL}://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
+
+#################### COMMANDE GN BACKEND ###########################
+cli-backend:
+	$(COMPOSE) exec geonature-backend $(ARGS)
+
+cli-frontend:
+	$(COMPOSE) exec geonature-frontend $(ARGS)
+#################### COMMANDE DB GN ###########################
+migrate:
+	$(COMPOSE) exec geonature-backend geonature db autoupgrade
+
+db_status:
+	$(COMPOSE) exec geonature-backend geonature db status
+
+############################ COMMAND GEONATURE #####################
+cli_geonature:
+	$(COMPOSE) exec geonature-backend geonature $(ARGS)
+
+############################ MODULE MONITORING #####################
+cli_monitoring:
+	$(COMPOSE) exec geonature-backend geonature monitorings $(ARGS)
+
+# Dossier des protocoles dans le conteneur
+SUBMODULES_DIR := /sources/protocoles_monitoring
+
+# Racine media (prend GEONATURE_MEDIA_FOLDER si présent, sinon /dist/media)
+GEONATURE_MEDIA_FOLDER ?= /dist/media
+MONITORING_MEDIA := $(GEONATURE_MEDIA_FOLDER)/monitorings
+MODULE_MONITORING_DIRECTORY = /sources/gn_module_monitoring
+MODULES = protocole_exemple
+# supprime l’espace de fin de lignes de la liste des modules définie ci dessus. 
+MODULES := $(strip $(MODULES))
+
+debug-paths-monitoring:
+	@echo "SUBMODULES_DIR=$(SUBMODULES_DIR)"
+	@echo "GEONATURE_MEDIA_FOLDER=$(GEONATURE_MEDIA_FOLDER)"
+	@echo "MONITORING_MEDIA=$(MONITORING_MEDIA)"
+	@echo "MODULES=$(MODULES)"
+	@$(COMPOSE) exec -T geonature-backend sh -lc 'echo "[IN CONT] ls $(SUBMODULES_DIR):"; ls -la "$(SUBMODULES_DIR)" || true'
+	@$(COMPOSE) exec -T geonature-backend sh -lc 'echo "[IN CONT] ls $(MONITORING_MEDIA):"; ls -la "$(MONITORING_MEDIA)" || true'
+
+prepare-monitorings-dir:
+	$(COMPOSE) exec -T geonature-backend mkdir -p $(MONITORING_MEDIA)
+
+# /dist/media/monitorings/<module> -> /sources/protocoles_monitoring/<module>
+link-monitoring-in-container: prepare-monitorings-dir
+	@for module in $(MODULES); do \
+	  [ -n "$$module" ] || continue; \
+	  src='$(SUBMODULES_DIR)/'$$module; \
+	  dst='$(MONITORING_MEDIA)/'$$module; \
+	  echo "→ Link $$module : $$dst -> $$src"; \
+	  $(COMPOSE) exec -T geonature-backend sh -lc "\
+	    [ -d \"$$src\" ] || { echo '[ERR] '\"$$src\"' introuvable (submodule non init ?)'; exit 1; }; \
+	    [ -e \"$$dst\" ] && [ ! -L \"$$dst\" ] && rm -rf \"$$dst\"; \
+	    ln -sfn \"$$src\" \"$$dst\"; \
+	    ls -ld \"$$dst\"; readlink -f \"$$dst\""; \
+	done
+
+install-monitoring-modules:
+	@for module in $(MODULES); do \
+	  $(COMPOSE) exec -T geonature-backend geonature monitorings install "$$module"; \
+	done
+
+install-monitoring-protocole: link-monitoring-in-container install-monitoring-modules
+
+update-monitoring:
+	$(COMPOSE) exec geonature-backend pip install -e "${MODULE_MONITORING_DIRECTORY}"
+
+refresh-monitoring: update-monitoring
+	$(COMPOSE) build geonature-frontend
+	$(COMPOSE) up -d geonature-frontend
+
+############################################## COMMAND DEV CONTRIBUTION  ###############################
+format_backend_check:
+	$(COMPOSE) exec geonature-backend black --check $(ARGS)
+
+format_backend:
+	$(COMPOSE) exec geonature-backend black $(ARGS)
+
+# ===================== Submodules config (nouveau) =====================
+SUBMODULES_CONF      ?= submodules.env
+SUBMODULES_SCRIPT     := build/submodules_apply.sh
+JOBS                 ?= 8
+DEPTH                ?= 1           # 1 = shallow ; vide = full history
+FILTER               ?= blob:none   # blob:none = partial clone ; vide = désactivé
+GIT_LFS_SKIP_SMUDGE  ?= 1           # 1 = ne récupère pas LFS tout de suite
+GIT_PROGRESS         ?= 1           # affiche la progression
+LOG_LEVEL            ?= info        # info|debug
+DRY_FETCH            ?= 1           # 1 = vérifie refs distantes en préflight
+
+# Exporter pour que le script les reçoive
+export JOBS DEPTH FILTER GIT_LFS_SKIP_SMUDGE GIT_PROGRESS LOG_LEVEL DRY_FETCH
+
+# ===================== Règles Submodules =====================
+
+# Préflight (DRY_RUN=1) avec réseau
+submodules-preflight:
+	@echo "▶ Running PRELIGHT with DRY_RUN=1 CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DRY_RUN=1 LOG_LEVEL="$(LOG_LEVEL)" DRY_FETCH="$(DRY_FETCH)" bash "$(SUBMODULES_SCRIPT)"
+
+# Préflight (DRY_RUN=1) sans réseau (utile sur CI bloquée)
+submodules-preflight-no-net:
+	@echo "▶ Running PRELIGHT (no network) with DRY_RUN=1 CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DRY_RUN=1 DRY_FETCH=0 LOG_LEVEL="$(LOG_LEVEL)" bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer (bloque si dirty)
+submodules-apply:
+	@echo "▶ Applying submodules CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer en forçant malgré dirty
+submodules-apply-force:
+	@echo "▶ Applying submodules (FORCE=1) CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" FORCE=1 bash "$(SUBMODULES_SCRIPT)"
+
+# Appliquer et committer les pointeurs (gitlinks) du super-repo
+submodules-apply-commit:
+	@echo "▶ Applying submodules + COMMIT pointers CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" COMMIT=1 bash "$(SUBMODULES_SCRIPT)"
+
+# Clone complet (pas de shallow/partial, LFS activé)
+submodules-apply-full:
+	@echo "▶ FULL clone (no shallow/partial, LFS on) CONF=$(SUBMODULES_CONF)"
+	@CONF="$(SUBMODULES_CONF)" DEPTH= FILTER= GIT_LFS_SKIP_SMUDGE=0 bash "$(SUBMODULES_SCRIPT)"
+
+# Debug maximal (traces Git + logs)
+submodules-apply-debug:
+	@echo "▶ DEBUG apply…"
+	@CONF="$(SUBMODULES_CONF)" LOG_LEVEL=debug GIT_TRACE=1 GIT_TRACE_PACKET=1 GIT_CURL_VERBOSE=1 bash "$(SUBMODULES_SCRIPT)"
+
+# Vérifs rapides (exemples ; adapte les chemins au besoin)
+submodules-check:
+	@echo "— .gitmodules —"; git config -f .gitmodules --get-regexp '^submodule\..*(path|url|branch)' || true
+	@echo "— GeoNature —"
+	@git -C sources/GeoNature rev-parse --abbrev-ref HEAD || true
+	@git -C sources/GeoNature remote -v || true
+	@echo -n "gitlink? "; git ls-files --stage -- sources/GeoNature | awk '$$1==160000{print "yes";found=1} END{if(!found)print "no"}'
+	@echo -n "shallow? "; git -C sources/GeoNature rev-parse --is-shallow-repository || true
+	@echo -n "partial filter: "; git -C sources/GeoNature config --get remote.origin.partialclonefilter || true
+	@echo -n "promisor: "; git -C sources/GeoNature config --get remote.origin.promisor || true

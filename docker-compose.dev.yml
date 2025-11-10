@@ -47,36 +47,83 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
 
   geonature-backend:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    user: root:root
+    # user: root:root
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    environment:
+      TZ:  Europe/Paris
+      UID: ${DOCKER_UID}
+      GID: ${DOCKER_GID}
+      PYTHONUNBUFFERED: "1"   # (logs visibles en temps réel)
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
+    command:
+      - gunicorn
+      - "geonature:create_app()"
+      - "--name=geonature"
+      - "--workers=1"
+      - "--threads=2"
+      - "--access-logfile=-"
+      - "--bind=0.0.0.0:8000"
+      - "--reload"
+      - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.owner=${STACK}"
+      - "traefik.http.routers.${STACK}-geonature-backend.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
+      - "traefik.http.routers.${STACK}-geonature-backend.entrypoints=web"
 
   geonature-worker:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
     depends_on:
       base-backend:
         condition: service_completed_successfully
+    environment:
+      TZ:  Europe/Paris
     volumes:
       - ./sources:/sources
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro   # si ce fichier n'existe pas sur ton hôte, enlève cette ligne
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
 
+  # postgres:
+  #   ports:
+  #     - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
+
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443" 
+      - "--providers.docker.constraints=Label(`traefik.owner`, `${STACK}`)"
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"  
 
   geonature-frontend:
       image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
@@ -94,6 +141,11 @@ services:
         - ./frontend/external_modules:/build/external_modules
         - ./sources:/sources
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+      labels:
+        - "traefik.enable=true"
+        - "traefik.owner=${STACK}"
+        - "traefik.http.routers.${STACK}-geonature.entrypoints=web"
+        - "traefik.http.routers.${STACK}-geonature.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
@@ -107,3 +159,13 @@ services:
       - gn
     profiles:
       - pre-built-db
+    
+  usershub:
+      depends_on:
+        userhub-build:
+          condition: service_completed_successfully
+      labels:
+         - "traefik.owner=${STACK}"
+         - "traefik.http.routers.${STACK}-usershub.entrypoints=web"
+         - "traefik.http.routers.${STACK}-usershub.rule=(Host(`localhost`) || Host(`localhost:${HTTP_PORT}`)) && PathPrefix(`${USERSHUB_PREFIX}`)"
+  
