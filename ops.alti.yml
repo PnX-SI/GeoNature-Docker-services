@@ -28,10 +28,8 @@ services:
       - gn                       # <-- on attache au réseau applicatif
 
 volumes:
-  alti_cache:
-    external: true               # crée-le une fois :  docker volume create alti_cache
+  alti_cache: {}
 
 networks:
   gn:
-    external: true
     name: "${NETWORK_NAME:-geonature_network}"   # doit matcher le nom créé par essential.yml
