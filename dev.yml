@@ -43,6 +43,7 @@ services:
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+    entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
@@ -66,11 +67,14 @@ services:
 
   geonature-worker:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
+    user: root:root
     depends_on:
       base-backend:
         condition: service_completed_successfully
     volumes:
       - ./sources:/sources
+      - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+    entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
