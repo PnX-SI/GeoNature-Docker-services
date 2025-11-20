@@ -40,4 +40,15 @@ lint_backend:
 cypress:
 	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run
 
+install_monitoring_module:
+	@if [ -z "$(MODULE_PATH)" ]; then \
+		echo "Error : Specify MODULE_PATH=<path> example: make install_monitoring_module MODULE_PATH=sources/gn_module_monitoring/contrib/sites_group_aside/"; \
+		exit 1; \
+	fi; \
+	MODULE_NAME=$$(basename "$${MODULE_PATH}"); \
+	echo $$MODULE_NAME;\
+	docker compose cp $(MODULE_PATH) geonature-backend:/dist/media/monitorings/${MODULE_NAME} && \
+	docker compose exec geonature-backend geonature monitorings install "$${MODULE_NAME}"
+
+
 -include Makefile.local
