@@ -58,6 +58,8 @@ services:
     volumes:
       - ./sources:/sources
       - ./build/dev/backend_entrypoint.sh:/dev_entrypoint.sh
+    environment:
+      GEONATURE_SKIP_POPULATE_DB: true
     entrypoint: ["/dev_entrypoint.sh"]
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
