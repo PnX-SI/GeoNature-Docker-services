@@ -33,6 +33,15 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     entrypoint: /bin/sh -c exit
+
+  atlas-build:
+    image: ${ATLAS_IMAGE}-app
+    build:
+      context: sources/GeoNature-atlas
+      target: app
+    volumes:
+      - ./config/atlas:/dist/config/
+    entrypoint: /bin/sh -c exit
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
@@ -109,3 +118,19 @@ services:
       - gn
     profiles:
       - pre-built-db
+
+  geonature-atlas:
+    image: ${ATLAS_IMAGE}
+    depends_on:
+      atlas-build:
+        condition: service_completed_successfully
+    volumes:
+      - ./sources/GeoNature-atlas:/dist/GeoNature-atlas
+      - ./sources/GeoNature-atlas/data:/dist/data
+    build:
+      context: .
+      dockerfile: build/atlas/Dockerfile
+      args:
+        DOCKER_UID: ${DOCKER_UID}
+        DOCKER_GID: ${DOCKER_GID}
+        ATLAS_IMAGE: ${ATLAS_IMAGE}
