@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:2.10.4
+    image: traefik:3.6.4
     command:
       - "--entrypoints.dashboard.address=:8080"
       - "-accesslog=${TRAEFIK_ACTIVATE_ACCESS_LOG}"
