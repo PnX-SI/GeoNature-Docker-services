@@ -35,9 +35,12 @@ lint_frontend:
 	docker compose exec geonature-frontend bash -c "cd /sources/GeoNature/frontend; npm run format"
 
 lint_backend:
-	docker compose exec geonature-backend bash -c "source /sources/GeoNature/backend/venv/bin/activate && black /sources/GeoNature/backend"
+	docker compose exec geonature-backend bash -c "black /sources/GeoNature/backend"
 
 cypress:
 	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" API_ENDPOINT="https://$${HOST}$${GEONATURE_BACKEND_PREFIX}/" URL_APPLICATION="https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}/" cypress run
+
+test:
+	docker compose exec geonature-backend bash -c "cd /sources/GeoNature/backend/geonature && GEONATURE_API_ENDPOINT='https://localhost'  pytest ."
 
 -include Makefile.local
