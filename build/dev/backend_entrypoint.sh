@@ -8,5 +8,8 @@ echo "Dependencies to install: $(ls -d /sources/GeoNature/backend/dependencies/*
 for dependencies in $(ls -d /sources/GeoNature/backend/dependencies/* | sort); do
     [ -d "$dependencies" ] && pip install -e "$dependencies"
 done
-
+echo "Contribs to install: $(ls -d /sources/GeoNature/backend/dependencies/* | sort)"
+for contrib in $(ls -d /sources/GeoNature/contrib/* | sort); do
+    [ -d "$contrib" ] && pip install -e "$contrib"
+done
 . /entrypoint.sh
