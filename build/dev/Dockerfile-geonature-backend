@@ -29,6 +29,9 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install -e /sources/GeoNature && \
     for module in $(ls -d /sources/gn_*/ | sort); do \
         [ -d "$module" ] && pip install -e "$module"; \
+    done && \
+    for module in $(ls -d /sources/GeoNature/contrib/*/ | sort); do \
+        [ -d "$module" ] && pip install -e "$module"; \
     done
 COPY --chmod=755 /build/dev/backend_entrypoint.sh /dev_entrypoint.sh
 ENTRYPOINT ["/dev_entrypoint.sh"]
