@@ -35,6 +35,6 @@ lint_backend:
 	docker compose exec geonature-backend bash -c "source /sources/GeoNature/backend/venv/bin/activate && black /sources/GeoNature/backend"
 
 cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="$${GEONATURE_URL_APPLICATION}" API_ENDPOINT="$${GEONATURE_API_ENDPOINT}" URL_APPLICATION="$${GEONATURE_URL_APPLICATION}" npm run cypress:open
+	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="$${GEONATURE_URL_APPLICATION}" API_ENDPOINT="$${GEONATURE_API_ENDPOINT}/" URL_APPLICATION="$${GEONATURE_URL_APPLICATION}" npm run cypress:open
 
 -include Makefile.local
