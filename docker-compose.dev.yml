@@ -31,7 +31,7 @@ services:
     volumes:
       - ./sources:/sources
       - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
-    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO} --schedule-filename=/dist/media/celerybeat-schedule.db
     # the build is handled by geonature-backend
     entrypoint: ["/dev_entrypoint.sh"]
 
