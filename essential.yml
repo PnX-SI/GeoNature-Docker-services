@@ -17,6 +17,12 @@ x-backend-env: &backend-env
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
 
+x-logging-json: &logging-json
+  driver: json-file
+  options:
+    max-size: "${DOCKER_LOG_MAX_SIZE:-20m}"
+    max-file: "${DOCKER_LOG_MAX_FILE:-5}"
+
 services:
   geonature-backend:
     <<: *restart-policy
@@ -38,6 +44,8 @@ services:
       - "--workers=2"
       - "--threads=2"
       - "--access-logfile=-"
+      - "--error-logfile=-"
+      - "--log-level=${GEONATURE_LOG_LEVEL:-info}"
       - "--bind=0.0.0.0:8000"
       - "--reload"
       - "--reload-extra-file=${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}"
@@ -45,6 +53,10 @@ services:
       - "--reload-extra-file=${GEONATURE_EXPORTS_CONFIG_FILE:-/dist/config/exports_config.toml}"
       - "--reload-extra-file=${GEONATURE_MONITORING_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
       - "--reload-extra-file=${GEONATURE_IMPORT_CONFIG_FILE:-/dist/config/import_config.toml}"
+    labels:
+      io.geonature.observability.logs: "${LOGS_BACKEND:-true}"
+      io.geonature.service: "geonature-backend"
+    logging: *logging-json
     networks:
       - gn
 
@@ -55,6 +67,10 @@ services:
     environment:
       - NGINX_LOCATION="/"
       - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
+    labels:
+      io.geonature.observability.logs: "${LOGS_FRONTEND:-true}"
+      io.geonature.service: "geonature-frontend"
+    logging: *logging-json
 
   redis:
     image: redis:7-alpine
@@ -66,6 +82,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *logging-json
     networks:
       - gn
 
@@ -75,11 +92,15 @@ services:
     environment:
       <<: *backend-env
     entrypoint: []
-    command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    command: celery -A geonature.celery_app:app worker --beat --loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO} --schedule-filename=/dist/media/celerybeat-schedule.db
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
       - ${GEONATURE_DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    labels:
+      io.geonature.observability.logs: "${LOGS_WORKER:-true}"
+      io.geonature.service: "geonature-worker"
+    logging: *logging-json
     networks:
       - gn
 
@@ -102,6 +123,7 @@ services:
       usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
       usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
       GEONATURE_SKIP_POPULATE_DB: ${SKIP_POPULATE_DB:-false}
+    logging: *logging-json
     networks:
       - gn
 
@@ -136,6 +158,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *logging-json
     networks:
       - gn
 
@@ -167,6 +190,10 @@ services:
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+    labels:
+      io.geonature.observability.logs: "${LOGS_USERSHUB:-true}"
+      io.geonature.service: "usershub"
+    logging: *logging-json
     networks:
       - gn
 
