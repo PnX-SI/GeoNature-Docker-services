@@ -31,19 +31,22 @@ docker compose down
 docker compose up
 ```
 
-## Quand je lance mes tests une erreur 404 apparait alors que les tests marchent sur une installation classique ou dans la CI
+## Quand je lance mes tests, une erreur 404 apparait alors que les tests fonctionnent sur une installation classique ou dans la CI
+
 Le mode d'installation via Traefik fait qu'on doit set la variable `GEONATURE_API_ENDPOINT` en fonction de l'url
-servis par Traefik. Lors des tests, qui sont executés dans le container, on ne passe plus par Traefik donc cette variable
-a une valeur qui entraine des erreurs. Il faut donc lancer les tests en changeant cette variable. 
+servie par Traefik. Lors des tests, qui sont executés dans le container, on ne passe plus par Traefik, donc cette variable
+a une valeur qui entraine des erreurs. Il faut donc lancer les tests en changeant cette variable.
+
 ```bash
 GEONATURE_API_ENDPOINT='https://localhost'  pytest .
 ```
 
+## Je ne trouve pas la branche que je cherche dans GeoNature et mes sous-modules
 
-## Je ne trouve pas la branche que je cherche dans Geonature et mes sous modules 
-Pour gagner de l'espace, nous faisons un copy shallow de nos sous module (récupération seulement du dernier commit).
-Pour avoir accès au reste de l'historique, vous pouvez vous déplacer dans le module en question `cd sources/GeoNature` puis
+Pour gagner de l'espace, nous faisons un copy shallow de nos sous-modules (récupération seulement du dernier commit).
+Pour avoir accès au reste de l'historique, vous pouvez vous déplacer dans le module en question avec `cd sources/GeoNature` puis
 executer les commandes :
+
 ```
 git fetch --unshallow
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
@@ -52,5 +55,5 @@ git fetch origin
 
 ## J'ai une question, à qui puis-je la poser ?
 
-Selon la nature de votre problème, vous pouvez créer une issue sur notre GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
+Selon la nature de votre problème, vous pouvez créer une issue sur ce dépôt GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
 
