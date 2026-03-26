@@ -3,7 +3,7 @@ services:
     image: traefik:3.6.4
     command:
       - "--entrypoints.dashboard.address=:8080"
-      - "-accesslog=${TRAEFIK_ACTIVATE_ACCESS_LOG}"
+      - "--accesslog=${TRAEFIK_ACTIVATE_ACCESS_LOG}"
       - "--entrypoints.dashboard.http.tls=true"
       - "--api.dashboard=true"
       - "--api.insecure=false"
