@@ -1,6 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1.6
 
-ARG GEONATURE_FRONTEND_IMAGE="geonature-docker-service/geonature-frontend-local:latest"
+ARG GEONATURE_FRONTEND_IMAGE="ghcr.io/pnx-si/geonature-frontend:latest"
 FROM ${GEONATURE_FRONTEND_IMAGE}-source AS source-extra
 
 WORKDIR /build/external_modules/exports
