@@ -1,18 +1,31 @@
 # CHANGELOG
 
-## GDS 2.0 
-**🚀 Nouveautés**
+## 3.0.0
 
-- Ajout de l'utilisation des profiles et des composes pour rendre plus modulaire le déploiement
-  - Il est maintenant possible de déployer la stack sans utiliser Traefik
-  - On peut aussi décider (grâce aux profils) de ne pas déployer UsersHub et la base de données. 
-- Ajout de tests automatisés dans les github action pour valider le fonctionnement de la stack GDS
-- Ajout et suppression de multiples variables d'environnement dans le .env 
-- Modification du Makefile pour permettre de fork le projet plus facilement ([57](https://github.com/PnX-SI/GeoNature-Docker-services/issues/57))
-et de réduire la taille prise par le repo ([GN 3419](https://github.com/PnX-SI/GeoNature/issues/3419))
-- [Développement] Il est maintenant possible en développement d'installer et tester des modules sans rebuild des images (voir faq de dev)
-- [Développement] Ajout de la possibilité de déployer une base de données pré-générée pour accélérer les développements
-https://github.com/PnX-SI/geonature_db
+### 🚀 Nouveautés
+
+* Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
+  * Séparation du contenu du fichier en deux parties : `essential.yml` et `traefik.yml` (le fichier `docker-compose.yml` existe toujours)
+  * Il est possible de lancer GDS selon différents scénarions : 
+    - Sans Traefik
+    - Sans base de données. Par conséquent, il vous est possible d'utiliser GDS sur une de vos bases de données existantes.
+    - Sans UsersHub. Par conséquent, il vous est possible d'utiliser GDS sur votre UsersHub.
+    - Plusieurs fichiers d'exemple sont disponibles dans le dossier `env_examples/`
+  * Ajout d'une CI `compose.yml` qui effectue les tests des différents scénarios de lancement de GDS.
+* Ajout d'un CLI pour générer un fichier `.env` (Statut expérimental). Pour l'utiliser, lancer la commande `python generate_env.py`
+* Modification de Traefik 
+  * Mise à jour de Traefik de la version 2.10.4 vers la 3.6.4 (#87 par @christophe-ramet)
+  * Ajout du Dashboard traefik. L'identifiant et le mot de passe d'accès au dashboard est paramétrable avec les variables `TRAEFIK_USER` et `TRAEFIK_PASSWORD`.
+  * Ajout d'un paramètre permettant d'activer les logs de Traefik `TRAEFIK_ACTIVATE_ACCESS_LOG`
+* Ajout de la possibilité d'ajouter un Makefile.local pour surcoucher son makefile. Cela permet d'ajouter ses propres commande make sans rentrer en conflit avec le makefile de base.
+
+#### Développement
+
+* Installation automatique des modules ajoutés par l'utilisateur (#72 par @christophe-ramet)
+* Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
+* Ajout des commandes dans le Makefile: `lint_frontend`,  `lint_backend`,`test`
+
+
 
 **⚠️ Notes de version**
 
@@ -20,12 +33,12 @@ https://github.com/PnX-SI/geonature_db
 
 **🏷️ Versions**
 
-- GeoNature 2.16.3
-- TaxHub 2.2.3
-- UsersHub 2.4.7
-- GeoNature-dashboard 1.6.0
-- GeoNature-export 1.8.0
-- GeoNature-monitoring 1.2.2
+- GeoNature 2.17.0
+- TaxHub 2.3.1
+- UsersHub 2.4.8
+- GeoNature-dashboard 1.6.1
+- GeoNature-export 1.8.1
+- GeoNature-monitoring 1.3.0
 
 ## 2.16.3
 
