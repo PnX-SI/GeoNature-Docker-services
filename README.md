@@ -152,6 +152,48 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
+## Importer les altitudes après installation de la base
+
+Le service `alti-loader` permet d'importer un raster d'altitude dans PostGIS après l'installation initiale de la base. Il s'exécute comme un service one-shot via `compose-utils.yml`.
+
+### Variables à configurer
+
+Les variables suivantes peuvent être renseignées dans le fichier `.env` ou dans les fichiers d'exemple de `env_examples/` :
+
+- `POSTGRES_IMAGE` : image PostGIS utilisée pour construire `alti-loader`. Cette valeur doit rester alignée avec l'image réellement utilisée par la base.
+- `IMPORT_ALTI` : active l'import. La valeur par défaut recommandée est `false` afin d'éviter un import involontaire.
+- `ALTI_URL` : archive ZIP contenant le raster ASCII à importer.
+- `ALTI_SCHEMA` : schéma cible dans PostgreSQL.
+- `ALTI_TABLE` : table cible créée ou recréée par l'import.
+- `ALTI_SRID` : SRID du raster source.
+- `ALTI_REINDEX` : laisser `false` par défaut. Cette option ne sert qu'à relancer explicitement un `REINDEX` de l'index raster après import.
+- `ALTI_REINDEX_CONCURRENTLY` : laisser `false` par défaut. Cette option n'a d'intérêt que si un `REINDEX` est demandé et qu'il faut limiter le verrouillage sur une base déjà en service.
+
+Dans le cas d'une base externe, il faut aussi adapter les variables de connexion suivantes :
+
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD_RAW`
+- `POSTGRES_IMAGE`
+
+### Lancer le service
+
+En mode standard :
+
+```bash
+COMPOSE_FILE=essential.yml:compose-utils.yml docker compose --profile alti-raster run --rm alti-loader
+```
+
+En mode développement :
+
+```bash
+COMPOSE_FILE=essential.yml:traefik-http.yml:dev.yml:compose-utils.yml docker compose --profile alti-raster run --rm alti-loader
+```
+
+Le service télécharge l'archive définie par `ALTI_URL`, importe le premier fichier `.asc` trouvé dans `${ALTI_SCHEMA}.${ALTI_TABLE}`, puis s'arrête. Si `ALTI_REINDEX=true`, un `REINDEX` optionnel est exécuté à la fin.
+
 ## FAQ
 
 Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature-Docker-services](/docs/faq.md).
