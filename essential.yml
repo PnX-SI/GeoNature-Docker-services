@@ -49,6 +49,7 @@ services:
       - gn
 
   geonature-frontend:
+    <<: *restart-policy
     image: ${GEONATURE_FRONTEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:2.17.0}
     ports:
       - 80:80
@@ -57,6 +58,7 @@ services:
       - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
 
   redis:
+    <<: *restart-policy
     image: redis:7-alpine
     user: redis:redis
     volumes:
@@ -70,6 +72,7 @@ services:
       - gn
 
   geonature-worker:
+    <<: *restart-policy
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.0}
     user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
