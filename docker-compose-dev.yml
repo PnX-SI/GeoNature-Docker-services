@@ -35,9 +35,6 @@ services:
     entrypoint: /bin/true
   #------------------------------------Builds section end------------------------------------#
   geonature-install-db:
-    depends_on:
-      base-backend:
-        condition: service_completed_successfully
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
@@ -47,9 +44,6 @@ services:
       - ./sources/GeoNature:/sources/GeoNature
 
   geonature-backend:
-    depends_on:
-      base-backend:
-        condition: service_completed_successfully
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
       - ./sources/gn_module_export:/sources/gn_module_export
@@ -57,9 +51,6 @@ services:
       - ./sources/gn_module_monitoring:/sources/gn_module_monitoring
 
   geonature-worker:
-    depends_on:
-      base-backend:
-        condition: service_completed_successfully
     volumes:
       - ./sources/GeoNature:/sources/GeoNature
       - ./sources/gn_module_export:/sources/gn_module_export
@@ -87,9 +78,6 @@ services:
       - "8080:8080"
 
   geonature-frontend:
-      depends_on:
-        base-frontend-source:
-          condition: service_completed_successfully
       build:
         context: .
         dockerfile: build/Dockerfile-geonature-frontend
