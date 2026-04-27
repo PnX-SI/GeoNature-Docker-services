@@ -15,7 +15,7 @@ build:
 	build/build.sh
 
 dev: dev_init
-	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d --force-recreate
+	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d
 	source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 prod:
