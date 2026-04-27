@@ -24,16 +24,13 @@ services:
       dockerfile: frontend/Dockerfile
       target: prod-base
     entrypoint: /bin/true
+  #------------------------------------Builds section end------------------------------------#
 
-  userhub-build:
-    image: ${USERSHUB_IMAGE}
+  userhub:
     build:
       target: prod
       context: sources/UsersHub
-    volumes:
-      - ./config/usershub:/dist/config/
-    entrypoint: /bin/true
-  #------------------------------------Builds section end------------------------------------#
+
   geonature-install-db:
     build:
       dockerfile: build/dev/Dockerfile-geonature-backend
