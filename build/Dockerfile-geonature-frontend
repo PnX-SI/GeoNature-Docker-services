@@ -1,7 +1,9 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.4
 
-ARG GEONATURE_FRONTEND_IMAGE
-FROM ${GEONATURE_FRONTEND_IMAGE}-source AS source-extra
+ARG GEONATURE_FRONTEND_SOURCE_IMAGE=geonature_frontend_source_image
+ARG GEONATURE_FRONTEND_NGINX_IMAGE=geonature_frontend_nginx_image
+
+FROM ${GEONATURE_FRONTEND_SOURCE_IMAGE} AS source-extra
 
 WORKDIR /build/external_modules/exports
 COPY ./sources/gn_module_export/frontend/ .
@@ -31,6 +33,6 @@ FROM source-extra AS build-extra
 WORKDIR /build/
 RUN npm run build
 
-FROM ${GEONATURE_FRONTEND_IMAGE}-nginx AS prod-extra
+FROM ${GEONATURE_FRONTEND_NGINX_IMAGE} AS prod-extra
 
 COPY --from=build-extra /build/dist /usr/share/nginx/html

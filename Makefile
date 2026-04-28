@@ -5,7 +5,7 @@ launch:
 
 dev_init:
 	./init-config.sh
-	jq '.projects.geonature.architect.build.configurations.development += {"baseHref": "/geonature/"}' sources/GeoNature/frontend/angular.json > angular.json.tmp && mv angular.json.tmp sources/GeoNature/frontend/angular.json # Pas une super pratique mais pas d'autre solution pour le moment
+	source .env; echo $${GEONATURE_FRONTEND_PREFIX}; jq ".projects.geonature.architect.build.configurations.development += {\"baseHref\": \"$${GEONATURE_FRONTEND_PREFIX}/\"}" sources/GeoNature/frontend/angular.json > angular.json.tmp && mv angular.json.tmp sources/GeoNature/frontend/angular.json # Pas une super pratique mais pas d'autre solution pour le moment
 	source .env; echo "{\"API_ENDPOINT\":\"//localhost$${GEONATURE_BACKEND_PREFIX}\"}" > sources/GeoNature/frontend/src/assets/config.json
 
 submodule_init:
@@ -15,7 +15,7 @@ build:
 	build/build.sh
 
 dev: dev_init
-	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d --force-recreate
+	COMPOSE_FILE=docker-compose.yml:docker-compose-dev.yml docker compose up -d
 	source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOST}$${GEONATURE_FRONTEND_PREFIX}"
 
 prod:

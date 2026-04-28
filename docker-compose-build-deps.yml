@@ -1,0 +1,12 @@
+services:
+  geonature-install-db:
+    build:
+      additional_contexts:
+         geonature_backend_wheels_image: "service:base-backend"
+
+  geonature-frontend:
+      build:
+        additional_contexts:
+          geonature_frontend_source_image: "service:base-frontend-source"
+          geonature_frontend_nginx_image: "service:base-frontend-nginx"
+
