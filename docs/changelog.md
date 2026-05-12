@@ -2,6 +2,12 @@
 
 ## 2.17.1.2
 
+### ⏩ En bref
+
+Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml`. Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec une base de données externe, ou sans UsersHub. 
+
+Pour explorer différentes possibilités de configurations, des exemples de `.env` sont mis à disposition dans le dossier `env_examples`.
+
 ### 🚀 Nouveautés
 
 * Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
@@ -18,16 +24,28 @@
   * Ajout du Dashboard traefik. L'identifiant et le mot de passe d'accès au dashboard est paramétrable avec les variables `TRAEFIK_USER` et `TRAEFIK_PASSWORD`.
   * Ajout d'un paramètre permettant d'activer les logs de Traefik `TRAEFIK_ACTIVATE_ACCESS_LOG`
 * Ajout de la possibilité d'ajouter un Makefile.local pour surcoucher son makefile. Cela permet d'ajouter ses propres commande make sans rentrer en conflit avec le makefile de base.
-
-#### Développement
+####  Développement
 
 * Installation automatique des modules ajoutés par l'utilisateur (#72 par @christophe-ramet)
 * Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
 * Ajout des commandes dans le Makefile: `lint_frontend`,  `lint_backend`,`test`
 
+### 🐛 Corrections
+
+* Ajout de politiques de démarrages manquantes sur certains services (#105 par @andriacap)
+
+
+
 **⚠️ Notes de version**
 
-- Au vu des multiples modifications intégrées, il est fortement recommandé de repartir du nouveau .env.sample pour construire votre .env
+Cette nouvelle version de GDS apporte des modifications profondes dans le fichier de configuration `.env` ! Il est nécessaire de reconstruire le fichier `.env` en s'appuyant de la dernière version du modèle contenue dans `env.sample`.
+
+```shell
+cp .env .env_backup
+cp .env.sample .env
+# modifier le contenu de .env en vous appuyant certaines 
+# des valeurs de la sauvegarde .env_backup 
+```
 
 ## 2.17.1
 

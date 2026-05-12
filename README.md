@@ -91,15 +91,17 @@ d'environnements spécifiques à une utilisation hors traefik (signalées par la
 
 #### Base de données déportée :
 
-Si vous préferez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
+Si vous préférez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
 d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de donnée 
-dans le `.env`.
+dans le `.env` (voir `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`).
+
+> [!INFO]
+> Si vous voulez que les mises à jours de la base de données soient effectuées à chaque lancement de la stack Docker, ajouter le profil `install-db` dans `COMPOSE_PROFILES`.
 
 #### Service UsersHub déjà existant :
 
 Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable 
-d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre usershub 
-dans le `.env`. 
+d'environnement `COMPOSE_PROFILES`.
 
 ## Configuration
 
