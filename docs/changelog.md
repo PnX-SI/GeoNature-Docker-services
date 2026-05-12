@@ -2,6 +2,15 @@
 
 ## 2.17.1.2
 
+### ⏩ En bref
+
+Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml` en modules composables (`essential.yml` et `traefik.yml`). Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec un base de données externe, ou sans UsersHub. 
+
+Un CLI experimental pour générer le fichier `.env` facilite également la configuration.
+```bash
+python generate_env.py
+```
+
 ### 🚀 Nouveautés
 
 * Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
