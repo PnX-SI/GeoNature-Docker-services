@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 3.0.0
+## 2.17.1.2
 
 ### 🚀 Nouveautés
 
@@ -25,11 +25,22 @@
 * Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
 * Ajout des commandes dans le Makefile: `lint_frontend`,  `lint_backend`,`test`
 
-
-
 **⚠️ Notes de version**
 
 - Au vu des multiples modifications intégrées, il est fortement recommandé de repartir du nouveau .env.sample pour construire votre .env
+
+## 2.17.1
+
+**🏷️ Versions**
+
+- GeoNature 2.17.1
+- TaxHub 2.3.1
+- UsersHub 2.4.8
+- GeoNature-dashboard 1.6.1
+- GeoNature-export 1.8.2
+- GeoNature-monitoring 1.3.0
+
+## 2.17.0
 
 **🏷️ Versions**
 
@@ -39,6 +50,39 @@
 - GeoNature-dashboard 1.6.1
 - GeoNature-export 1.8.1
 - GeoNature-monitoring 1.3.0
+
+## 2.16.4.2
+
+**🏷️ Versions**
+
+- GeoNature 2.16.4
+- TaxHub 2.2.3
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.1
+- GeoNature-monitoring 1.2.6
+
+## 2.16.4.1
+
+**🏷️ Versions**
+
+- GeoNature 2.16.4
+- TaxHub 2.2.3
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.1
+- GeoNature-monitoring 1.2.3
+
+## 2.16.4
+
+**🏷️ Versions**
+
+- GeoNature 2.16.4
+- TaxHub 2.2.3
+- UsersHub 2.4.7
+- GeoNature-dashboard 1.6.0
+- GeoNature-export 1.8.0
+- GeoNature-monitoring 1.2.2
 
 ## 2.16.3
 
