@@ -91,7 +91,7 @@ d'environnements spécifiques à une utilisation hors traefik (signalées par la
 
 #### Base de données déportée :
 
-Si vous préferez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
+Si vous préférez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
 d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de donnée 
 dans le `.env` (voir `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`).
 
