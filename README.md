@@ -83,13 +83,13 @@ Il est possible de déployer la stack GeoNature de plusieurs manières différen
 être autosuffisante, toutefois, dans le cas où vous voulez connecter cette stack à des outils déjà existant dans votre 
 SI, plusieurs scénarios sont possibles.
 
-#### Reverse Proxy externe :
+#### Reverse Proxy externe
 Si vous voulez utiliser votre propre Reverse Proxy (Nginx, Traefik ...), il est possible de déployer GeoNature sans Traefik.
-Les configurations spécifiques ont été déportées dans le fichier compose `traefik.yml`, si on veut s'en passer il faut modifier la variable `COMPOSE_FILE` du `.env` 
-pour qu'elle n'utilise que le fichier essential.yml : `COMPOSE_FILE=essential.yml`. Prenez soin de renseigner les variables
+Les configurations spécifiques ont été déportées dans le fichier compose `docker-compose.traefik.yml`, si on veut s'en passer il faut modifier la variable `COMPOSE_FILE` du `.env` 
+pour qu'elle n'utilise que le fichier `docker-compose.essential.yml` : `COMPOSE_FILE=docker-compose.essential.yml`. Prenez soin de renseigner les variables
 d'environnements spécifiques à une utilisation hors traefik (signalées par la mention "*If you don't use traefik*").
 
-#### Base de données déportée :
+#### Base de données déportée
 
 Si vous préférez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable 
 d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de donnée 
