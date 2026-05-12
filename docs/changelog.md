@@ -11,7 +11,7 @@ Pour explorer différentes possibilités de configurations, des exemples de `.en
 ### 🚀 Nouveautés
 
 * Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
-  * Séparation du contenu du fichier en deux parties : `essential.yml` et `traefik.yml` (le fichier `docker-compose.yml` existe toujours)
+  * Séparation du contenu du fichier en deux parties : `docker-compose.essential.yml` et `docker-compose.traefik.yml` (le fichier `docker-compose.yml` existe toujours)
   * Il est possible de lancer GDS selon différents scénarions : 
     - Sans Traefik
     - Sans base de données. Par conséquent, il vous est possible d'utiliser GDS sur une de vos bases de données existantes.
