@@ -77,7 +77,7 @@ services:
       dockerfile: build/dev/Dockerfile-geonature-backend
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO} --schedule-filename=/dist/media/celerybeat-schedule.db
 
 
   geonature-frontend:
