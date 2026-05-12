@@ -33,7 +33,7 @@ Pour explorer différentes possibilités de configurations, des exemples de `.en
 
 **⚠️ Notes de version**
 
-Cette nouvelle version de GDS apporte des modifications profondes dans le fichier de configuration `.env` ! Il est nécessaire de reconstruire le fihcier `.env` en s'appuyant de la dernière version du modèle contenue dans `env.sample`.
+Cette nouvelle version de GDS apporte des modifications profondes dans le fichier de configuration `.env` ! Il est nécessaire de reconstruire le fichier `.env` en s'appuyant de la dernière version du modèle contenue dans `env.sample`.
 
 ```shell
 cp .env .env_backup
