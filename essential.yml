@@ -88,6 +88,7 @@ services:
     user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
+      - install-db
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
