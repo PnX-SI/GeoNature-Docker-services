@@ -4,12 +4,9 @@
 
 ### ⏩ En bref
 
-Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml` en modules composables (`essential.yml` et `traefik.yml`). Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec un base de données externe, ou sans UsersHub. 
+Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml` en modules composables (`essential.yml` et `traefik.yml`). Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec une base de données externe, ou sans UsersHub. 
 
-Un CLI experimental pour générer le fichier `.env` facilite également la configuration.
-```bash
-python generate_env.py
-```
+Pour explorer différentes possibilités de configurations, des exemples de `.env` sont mis à disposition dans le dossier `env_examples`.
 
 ### 🚀 Nouveautés
 
@@ -36,7 +33,14 @@ python generate_env.py
 
 **⚠️ Notes de version**
 
-- Au vu des multiples modifications intégrées, il est fortement recommandé de repartir du nouveau .env.sample pour construire votre .env
+Cette nouvelle version de GDS apporte des modifications profondes dans le fichier de configuration `.env` ! Il est nécessaire de reconstruire le fihcier `.env` en s'appuyant de la dernière version du modèle contenue dans `env.sample`.
+
+```shell
+cp .env .env_backup
+cp .env.sample .env
+# modifier le contenu de .env en vous appuyant certaines 
+# des valeurs de la sauvegarde .env_backup 
+```
 
 ## 2.17.1
 
