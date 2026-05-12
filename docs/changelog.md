@@ -1,5 +1,52 @@
 # CHANGELOG
 
+## 2.17.1.2
+
+### ⏩ En bref
+
+Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml`. Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec une base de données externe, ou sans UsersHub. 
+
+Pour explorer différentes possibilités de configurations, des exemples de `.env` sont mis à disposition dans le dossier `env_examples`.
+
+### 🚀 Nouveautés
+
+* Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
+  * Séparation du contenu du fichier en deux parties : `docker-compose.essential.yml` et `docker-compose.traefik.yml` (le fichier `docker-compose.yml` existe toujours)
+  * Il est possible de lancer GDS selon différents scénarions : 
+    - Sans Traefik
+    - Sans base de données. Par conséquent, il vous est possible d'utiliser GDS sur une de vos bases de données existantes.
+    - Sans UsersHub. Par conséquent, il vous est possible d'utiliser GDS sur votre UsersHub.
+    - Plusieurs fichiers d'exemple sont disponibles dans le dossier `env_examples/`
+  * Ajout d'une CI `compose.yml` qui effectue les tests des différents scénarios de lancement de GDS.
+* Ajout d'un CLI pour générer un fichier `.env` (Statut expérimental). Pour l'utiliser, lancer la commande `python generate_env.py`
+* Modification de Traefik 
+  * Mise à jour de Traefik de la version 2.10.4 vers la 3.6.4 (#87 par @christophe-ramet)
+  * Ajout du Dashboard traefik. L'identifiant et le mot de passe d'accès au dashboard est paramétrable avec les variables `TRAEFIK_USER` et `TRAEFIK_PASSWORD`.
+  * Ajout d'un paramètre permettant d'activer les logs de Traefik `TRAEFIK_ACTIVATE_ACCESS_LOG`
+* Ajout de la possibilité d'ajouter un Makefile.local pour surcoucher son makefile. Cela permet d'ajouter ses propres commande make sans rentrer en conflit avec le makefile de base.
+####  Développement
+
+* Installation automatique des modules ajoutés par l'utilisateur (#72 par @christophe-ramet)
+* Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
+* Ajout des commandes dans le Makefile: `lint_frontend`,  `lint_backend`,`test`
+
+### 🐛 Corrections
+
+* Ajout de politiques de démarrages manquantes sur certains services (#105 par @andriacap)
+
+
+
+**⚠️ Notes de version**
+
+Cette nouvelle version de GDS apporte des modifications profondes dans le fichier de configuration `.env` ! Il est nécessaire de reconstruire le fichier `.env` en s'appuyant de la dernière version du modèle contenue dans `env.sample`.
+
+```shell
+cp .env .env_backup
+cp .env.sample .env
+# modifier le contenu de .env en vous appuyant certaines 
+# des valeurs de la sauvegarde .env_backup 
+```
+
 ## 2.17.1
 
 **🏷️ Versions**
@@ -19,7 +66,7 @@
 - TaxHub 2.3.1
 - UsersHub 2.4.8
 - GeoNature-dashboard 1.6.1
-- GeoNature-export 1.8.2
+- GeoNature-export 1.8.1
 - GeoNature-monitoring 1.3.0
 
 ## 2.16.4.2
