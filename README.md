@@ -1,4 +1,4 @@
-# GeoNature Docker Services
+# GeoNature Docker services
 
 Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS.
 
@@ -7,9 +7,23 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
 - Occtax
 - Occhab
 - Validation
-- [Monitorings](https://github.com/PnX-SI/gn_module_monitoring)
+- [Monitoring](https://github.com/PnX-SI/gn_module_monitoring)
 - [Dashboard](https://github.com/PnX-SI/gn_module_dashboard)
 - [Export](https://github.com/PnX-SI/gn_module_export)
+
+## Principes et objectifs
+
+**1. GeoNature clé en main**
+   
+   Un fichier de configuration et une commande suffisent à déployer et mettre à jour facilement un environnement GeoNature dockerisé, fonctionnel et complet (GeoNature et ses principaux modules)
+   
+**2. Modulaire et adaptable**
+   
+   Doit permettre à chacun d'adapter le projet pour ses besoins spécifiques et on infrastructure
+   
+**3. Limiter la complexité globale**
+
+   Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contexte. L'ajout de fonctionnalités (paramètres, makefile...) ne doit pas se substituer à une maitrise de Docker, GeoNature ou d'administration système
 
 ## Démarrage rapide
 
