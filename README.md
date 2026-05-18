@@ -19,7 +19,7 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
    
 **2. Modulaire et adaptable**
    
-   Doit permettre à chacun d'adapter le projet pour ses besoins spécifiques et on infrastructure
+   Doit permettre à chacun d'adapter le projet pour ses besoins spécifiques et son infrastructure
    
 **3. Limiter la complexité globale**
 
