@@ -183,6 +183,12 @@ Plusieurs exemples de surcharge sont disponibles dans le dossier `override_galer
 pour une version précise de GDS et permettant de modifier la configuration de GDS ou de déployer des services supplémentaires.
 
 
+## Lancer plusieurs instances de GDS sur le même serveur
+
+Il existe de multiples façons de lancer plusieurs instances de GDS sur le même serveur. En mode traefik,
+une méthode est présentée dans `override_gallery/docker-compose.additional_stack.yml`. Cette methode attribut un dossier 
+à chaque instance de GDS, ce qui permet de les identifier facilement et évite les erreurs. C'est une implémentation assez
+simple, selon les contraintes de votre système, il est conseillé de l'adapter. 
 
 ## FAQ
 
