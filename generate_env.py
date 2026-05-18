@@ -33,11 +33,9 @@ def comment_line(content, pattern):
 def get_default_from_sample(var_name, lines):
     for line in lines:
         if line.strip().startswith(f"{var_name}="):
-            # Remove var= and optional quotes
-            val = re.sub(rf"^{var_name}=\s*", "", line).strip()
-            return val.strip('"').strip("'")
+            # Remove var= and leading whitespace
+            return re.sub(rf"^{var_name}=\s*", "", line).strip()
     return ""
-
 
 def generate_password(length=16):
     alphabet = string.ascii_letters + string.digits
@@ -210,8 +208,8 @@ def generate_env():
                 new_lines.append(f"{var}={value}")
             return new_lines
 
-        modified = update_line(modified, "POSTGRES_USER", f'"{postgres_user}"')
-        modified = update_line(modified, "POSTGRES_PASSWORD", f'"{postgres_password}"')
+        modified = update_line(modified, "POSTGRES_USER", postgres_user)
+        modified = update_line(modified, "POSTGRES_PASSWORD", postgres_password)
         modified = update_line(modified, "TRAEFIK_PASSWORD", traefik_password)
         modified = update_line(modified, "POSTGRES_PORT_ON_HOST", postgres_port_on_host)
 
