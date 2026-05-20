@@ -23,7 +23,6 @@ WORKDIR /build
 RUN npm link @angular/cli
 COPY ./build/dev/frontend_entrypoint.sh /entrypoint.sh
 ENTRYPOINT /entrypoint.sh
-RUN npm install
 EXPOSE 80
 
 FROM source-extra AS build-extra
