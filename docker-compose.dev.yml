@@ -2,11 +2,11 @@ services:
 
   #------------------------------------Builds section start-----------------------------------#
   base-backend:
-    image: ${GEONATURE_BACKEND_IMAGE}-wheels
+    image: ${GEONATURE_BACKEND_IMAGE}-dev
     build:
       context: sources/GeoNature
       dockerfile: backend/Dockerfile
-      target: wheels
+      target: dev
     entrypoint: /bin/bash -c exit
 
   base-frontend-source:
