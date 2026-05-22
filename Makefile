@@ -20,7 +20,7 @@ build_images:
 	build/build.sh
 
 dev: dev_init
-	COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.dev.yml docker compose up -d --force-recreate
+	COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.build.yml:docker-compose.dev.yml docker compose up -d --force-recreate
 	source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
 prod:
