@@ -21,7 +21,7 @@ COPY --chown=${DOCKER_UID}:${DOCKER_GUID} sources/GeoNature/backend/requirements
 RUN pip install uv
 RUN --mount=type=cache,target=/root/.cache  uv pip install --system watchdog pytest pytest-flask pytest-benchmark pip-tools
 
-COPY --chmod=755 /build/dev/backend_entrypoint.sh /dev_entrypoint.sh
+COPY --chmod=755 /build/dev/dev_entrypoint.sh /
 ENTRYPOINT ["/dev_entrypoint.sh"]
 
 USER geonature
