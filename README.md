@@ -212,7 +212,7 @@ Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt insta
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivi de `make dev`.
 Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
 cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes.
