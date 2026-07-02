@@ -172,6 +172,23 @@ services:
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
     networks:
+      - gn  
+      
+  geonature-atlas:
+    <<: [*restart-policy]
+    image: ${ATLAS_IMAGE:-ghcr.io/pnx-si/geonature-atlas:2.0.0}
+    profiles:
+      - atlas
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./sources/GeoNature-atlas/atlas/configuration/config.py:/dist/atlas/configuration/config.py
+      - ./sources/GeoNature-atlas/atlas/configuration/settings.ini:/dist/atlas/configuration/settings.ini
+      - ./sources/GeoNature-atlas/atlas/static/custom:/dist/atlas/static/custom
+    ports:
+      - 8082:8080
+    networks:
       - gn
 
 volumes:

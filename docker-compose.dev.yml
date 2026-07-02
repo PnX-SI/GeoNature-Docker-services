@@ -113,3 +113,13 @@ services:
       - gn
     profiles:
       - pre-built-db
+
+  geonature-atlas:
+    image: ${ATLAS_IMAGE}
+    entrypoint: ["/entrypoint-dev.sh"]
+    volumes:
+      - ./sources/GeoNature-atlas:/dist
+      - ./build/dev/atlas/entrypoint-dev.sh:/entrypoint-dev.sh
+    build:
+      context: sources/GeoNature-atlas
+      target: dev

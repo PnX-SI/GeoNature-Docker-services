@@ -1,6 +1,6 @@
 # GeoNature Docker services
 
-Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS.
+Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub et GeoNature-atlas - optionnellement - dans un environnement dockerisé et accessible en HTTPS.
 
 De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules suivants :
 
@@ -52,12 +52,40 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
    - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
    - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
 
-8. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature et UsersHub respectivement dans les fichiers suivants :
+8. Si GeoNature-atlas est activé, lancer la commande suivante :
+   ```bash
+   make submodule_init
+   ```
+
+9. Si GeoNature-atlas est activé, initialiser et adapter le fichier settings.ini :
+   ```bash
+   cd sources/GeoNature-atlas/atlas/static/configuration
+
+   cp settings.ini.sample settings.ini
+
+   nano settings.ini
+   ```
+
+10. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature, UsersHub et GeoNature-atlas respectivement dans les fichiers suivants :
 
    - `config/geonature/geonature_config.toml`
    - `config/usershub/config.py`
+   - `sources/GeoNature-atlas/atlas/configuration/config.py`
 
-9. **Lancer la création des conteneurs Docker** : `docker compose up -d`
+11. **Lancer la création des conteneurs Docker** : `docker compose up -d`
+
+12. Si GeoNature-atlas est activé, il faut, au premier lancement, exécuter l'installation en base de données avec la commande suivante : 
+   ```bash
+   docker compose exec geonature-atlas bash -c "./install/install_db.sh --docker"
+   ```
+   - N.B. : pour une mise à jour ultérieure des données, voir la section "## Comment mettre à jour les données de GeoNature-atlas ?" de la FÀQ
+
+13. Si GeoNature-atlas est activé, il faut, au premier lancement, peupler le dossier "sources/GeoNature-atlas/atlas/static/custom" - on peut partir de ce qui est dans "sources/GeoNature-atlas/atlas/static/custom_samples" - avec la commande suivante, et, dans l'idéal, adapter :
+   ```bash
+   cd sources/GeoNature-atlas/atlas/static
+
+   cp -r custom_samples/* custom
+   ```
 
 ## Accéder aux logs
 
@@ -76,6 +104,7 @@ Pour n'afficher les logs que d'un service en particulier, on utilise la commande
 - `geonature-worker` : exécution de certaines tâches de GeoNature en arrière-plan (import, export, mail, etc...)
 - `redis` : service de communication entre le worker et le backend
 - `traefik` : serveur web redirigeant les requêtes vers le bon service
+- `geonature-atlas` - si profile 'atlas' : l'application GeoNature-Atlas
 
 ```
 SERVICE              PORTS
@@ -86,6 +115,7 @@ postgres             0.0.0.0:5435->5432/tcp, :::5435->5432/tcp
 redis                6379/tcp
 traefik              0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:80->80/tcp, [::]:443->443/tcp
 usershub             5001/tcp
+geonature-atlas      0.0.0.0:8082->8080/tcp, [::]:8082->8080/tcp
 ```
 
 ![Schéma des services](docs/schema_services_0.1.png)
@@ -117,17 +147,23 @@ dans le `.env` (voir `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_
 Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable 
 d'environnement `COMPOSE_PROFILES`.
 
+#### Ajout de GeoNature-atlas
+
+Si vous désirez avoir l'application GeoNature-atlas, il faut adapter la variable d'environnement `COMPOSE_PROFILES` pour qu'elle comprenne le profil `atlas`.
+Le plus direct est de décommenter la ligne "#COMPOSE_PROFILES=db,usershub,atlas" à la fin du fichier `.env`.
+
 ## Configuration
 
 Voir la documentation des différentes applications pour renseigner les fichiers de configuration :
 
 - GeoNature : `./config/geonature/geonature_config.toml` ([fichier d’exemple](https://github.com/PnX-SI/GeoNature/tree/master/config/geonature_config.toml.sample))
 - UsersHub : `./config/usershub/config.py` ([fichier d’exemple](https://github.com/PnX-SI/UsersHub/tree/master/config/config.py.sample))
+- GeoNature-atlas : `./sources/GeoNature-atlas/atlas/configuration/config.py` ([fichier d’exemple](https://github.com/PnX-SI/GeoNature-atlas/blob/master/atlas/configuration/config.py.sample))
 
 Ces fichiers doivent contenir _a minima_ le paramètre `SECRET_KEY`.  
 Vous pouvez générer automatiquement des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
 
-Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de UsersHub, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`).
+Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de UsersHub, de GeoNature-atlas, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`). Pour GeoNature, un de ses modules ainsi que pour GeoNature-atlas, le mode dev - voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](docs/dev-faq.md) - permet d'avoir une répercussion de ces modifications sans besoin de relancer les conteneurs.
 
 À noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [`.env`](./.env.sample) et [`docker-compose.yml`](./docker-compose.yml)), comme par exemple :
 
@@ -145,10 +181,11 @@ de fonctionnement, voir [la section Surcharger son installation](#override).
 - Les fichiers de configuration de GeoNature, de ses modules et de UsersHub sont donc dans le dossier `GeoNature-Docker-services/config/`
 - Les fichiers de customisation de GeoNature sont stockés dans le dossier `GeoNature-Docker-services/data/geonature/custom/`
 - Les fichiers des médias de GeoNature (photos, application mobile...) sont stockés dans le dossier `GeoNature-Docker-services/data/geonature/media/`
+- Les fichiers de configuration de GeoNature-atlas sont dans le dossier `GeoNature-Docker-services/sources/GeoNature-atlas/atlas/configuration/config.py`
 
 ### Configuration par variable d’environnement
 
-Les applications peuvent être configurées par des variables d’environnement préfixées respectivement par `GEONATURE_` et `USERSHUB_` (voir [from_prefix_env](https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env)).  
+Les applications GeoNature et UsersHub peuvent être configurées par des variables d’environnement préfixées respectivement par `GEONATURE_` et `USERSHUB_` (voir [from_prefix_env](https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env)).  
 Ces variables d’environnement doivent être renseignées directement dans le fichier `docker-compose.yml`, bien que certaines variables sont définies à partir d’une variable du même nom en provenance du fichier `.env`.
 
 ## Mettre à jour GeoNature et ses modules
@@ -156,7 +193,7 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 - Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
 - Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
 - Mettez à jour le contenu du dossier dans sa dernière version : `git pull`
-- Changez la version de GeoNature dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour passer de la version 2.15.2 à 2.15.3, effectuez les modifications suivantes :
+- Changez la version de GeoNature dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, de UsersHub dans `USERSHUB_IMAGE` et de GeoNature-atlas dans `ATLAS_IMAGE` dans votre fichier `.env`. Par exemple, pour passer de la version 2.15.2 à 2.15.3 et en l'absence de GeoNature-atlas, effectuez les modifications suivantes :
 
   ```env
 
@@ -205,7 +242,7 @@ Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt insta
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivi de `make dev`.
 Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
 cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes.
@@ -244,3 +281,8 @@ qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en s
 
 - [Dépôt](https://github.com/PnX-SI/UsersHub)
 - [`Dockerfile`](https://github.com/PnX-SI/UsersHub/blob/master/Dockerfile)
+
+### GeoNature-atlas
+
+- [Dépôt](https://github.com/PnX-SI/GeoNature-atlas)
+- [`Dockerfile`](https://github.com/PnX-SI/GeoNature-atlas/blob/master/Dockerfile)
