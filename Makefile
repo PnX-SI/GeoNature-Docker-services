@@ -46,7 +46,6 @@ install_monitoring_module:
 		exit 1; \
 	fi; \
 	MODULE_NAME=$$(basename "$${MODULE_PATH}"); \
-	echo $$MODULE_NAME;\
 	cp -r $(MODULE_PATH) data/geonature/media/monitorings/${MODULE_NAME} && \
 	docker compose exec geonature-backend geonature monitorings install "$${MODULE_NAME}"
 
