@@ -57,3 +57,10 @@ git fetch origin
 
 Selon la nature de votre problème, vous pouvez créer une issue sur ce dépôt GitHub ou nous contacter [sur Element](https://matrix.to/#/#geonature:matrix.org)
 
+## GeoNature-Atlas en mode dev - Comment recharger suite à des modifications dans sources/GeoNature-atlas/atlas/static ?
+
+En dehors du conteneur, i.e. sur l'hôte, lancer la commande suivante :
+```bash
+cd sources/GeoNature-atlas/atlas/static && npm ci --omit=dev
+```
+
