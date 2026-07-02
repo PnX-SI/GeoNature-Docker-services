@@ -149,7 +149,7 @@ Voir la documentation des différentes applications pour renseigner les fichiers
 Ces fichiers doivent contenir _a minima_ le paramètre `SECRET_KEY`.  
 Vous pouvez générer automatiquement des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
 
-Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de UsersHub, de GeoNature-atlas, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`).
+Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de UsersHub, de GeoNature-atlas, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`). Pour GeoNature, un de ses modules ainsi que pour GeoNature-atlas, le mode dev - voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](docs/dev-faq.md) - permet d'avoir une répercussion de ces modifications sans besoin de relancer les conteneurs.
 
 À noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [`.env`](./.env.sample) et [`docker-compose.yml`](./docker-compose.yml)), comme par exemple :
 
