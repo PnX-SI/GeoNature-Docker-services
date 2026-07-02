@@ -190,6 +190,26 @@ services:
       - 8082:8080
     networks:
       - gn
+      
+  geonature-cron:
+    <<: *restart-policy
+    image: alpine/psql:18.1
+    profiles:
+      - atlas-cron
+    volumes:
+      - ./assets/atlas/cron_refresh_atlas.sh:/cron_refresh_atlas.sh
+    environment:
+      <<: *db-env
+    #command: >
+    #  sh -c "cat /cron_refresh_atlas.sh > /etc/crontabs/root && crond -f -l 8"
+    entrypoint: 
+      - "sh"
+      - "-c"
+      - |
+        (printenv | grep -E '^POSTGRES_|^PGPASSWORD='; cat /cron_refresh_atlas.sh) | crontab - && 
+        crond -f -l 8
+    networks:
+      - gn
 
 volumes:
   redis:
