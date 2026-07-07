@@ -3,9 +3,6 @@ services:
   geonature-backend:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
     user: root:root
-    depends_on:
-      base-backend:
-        condition: service_completed_successfully
     volumes:
       - ./sources:/sources
       - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
@@ -36,7 +33,7 @@ services:
       - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
     # the build is handled by geonature-backend
-
+    entrypoint: ["/dev_entrypoint.sh"]
 
   geonature-frontend:
       image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
