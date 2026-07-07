@@ -171,6 +171,18 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
+## Monitoring
+
+### Installer un sous-module 
+Pour installer un sous-module Monitoring, il faut utiliser la commande `make install_monitoring_module`.
+Il faut lui indiquer le chemin vers le dossier du sous-module, par exemple :
+
+`make install_monitoring_module MODULE_PATH=sources/gn_module_monitoring/contrib/sites_group_aside/`
+
+### Executer une commande monitoring
+Pour des actions plus avancées, vous pouvez vous attacher au docker ` docker compose exec geonature-backend bash` et 
+suivre la [documentation du module Monitoring](https://github.com/PnX-SI/gn_module_monitoring/blob/main/docs/commandes.md)
+
 ## <a name="override"></a> Surcharger son installation
 
    En fonction de l'environnement dans lequel vous déployez, il est possible que vous soyez amené à vouloir modifier le
