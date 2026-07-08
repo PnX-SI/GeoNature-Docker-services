@@ -20,8 +20,8 @@ x-backend-env: &backend-env
 x-logging-json: &logging-json
   driver: json-file
   options:
-    max-size: "${DOCKER_LOG_MAX_SIZE:-20m}"
-    max-file: "${DOCKER_LOG_MAX_FILE:-5}"
+    max-size: "20m"
+    max-file: "5"
 
 services:
   geonature-backend:
@@ -54,7 +54,7 @@ services:
       - "--reload-extra-file=${GEONATURE_MONITORING_CONFIG_FILE:-/dist/config/monitorings_config.toml}"
       - "--reload-extra-file=${GEONATURE_IMPORT_CONFIG_FILE:-/dist/config/import_config.toml}"
     labels:
-      io.geonature.observability.logs: "${LOGS_BACKEND:-true}"
+      io.geonature.observability.logs: "true"
       io.geonature.service: "geonature-backend"
     logging: *logging-json
     networks:
@@ -69,7 +69,7 @@ services:
       - NGINX_LOCATION="/"
       - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
     labels:
-      io.geonature.observability.logs: "${LOGS_FRONTEND:-true}"
+      io.geonature.observability.logs: "true"
       io.geonature.service: "geonature-frontend"
     logging: *logging-json
 
@@ -95,13 +95,13 @@ services:
     environment:
       <<: *backend-env
     entrypoint: []
-    command: celery -A geonature.celery_app:app worker --beat --loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO} --schedule-filename=/dist/media/celerybeat-schedule.db
+    command: celery -A geonature.celery_app:app worker --beat --loglevel=INFO --schedule-filename=/dist/media/celerybeat-schedule.db
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
       - ${GEONATURE_DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
     labels:
-      io.geonature.observability.logs: "${LOGS_WORKER:-true}"
+      io.geonature.observability.logs: "true"
       io.geonature.service: "geonature-worker"
     logging: *logging-json
     networks:
@@ -195,7 +195,7 @@ services:
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
     labels:
-      io.geonature.observability.logs: "${LOGS_USERSHUB:-true}"
+      io.geonature.observability.logs: "true"
       io.geonature.service: "usershub"
     logging: *logging-json
     networks:
