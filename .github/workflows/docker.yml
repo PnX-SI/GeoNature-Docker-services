@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - fix/docker-compose-ci
   release:
     types: [published]
 

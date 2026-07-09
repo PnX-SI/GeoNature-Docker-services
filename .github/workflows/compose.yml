@@ -1,16 +1,21 @@
 name: CI - Docker Compose
 
 on:
-  push:
+  workflow_run:
+    workflows: [Docker]
+    types:
+      - completed
     branches:
       - main
       - develop
+      - fix/docker-compose-ci
   pull_request:
     branches:
       - main
       - develop
 jobs:
   test-docker-compose:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,6 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install -y make jq git-lfs curl
@@ -44,6 +51,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and start stack (${{ matrix.config.name }})
+        env:
+          GEONATURE_BACKEND_EXTRA_IMAGE: ghcr.io/pnx-si/geonature-backend-extra:${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.head_branch }}
+          GEONATURE_FRONTEND_EXTRA_IMAGE: ghcr.io/pnx-si/geonature-frontend-extra:${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.head_branch }}
         run: |
           ${{ matrix.config.env_setup }}
           make prod > /dev/null
@@ -99,7 +109,6 @@ jobs:
 
           echo "✅ All expected services are running and no unexpected services detected!"
           echo "Running services: $RUNNING_SERVICES"
-
 
       - name: Run integration tests
         run: |
