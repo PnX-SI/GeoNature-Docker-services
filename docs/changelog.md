@@ -1,40 +1,64 @@
 # CHANGELOG
 
+## 2.17.4
+
+### 🚀 Nouveautés
+
+- Ajout d'un dossier `override_gallery` contenant des exemples d'intégrations de plugins. Ici, nous proposons un exemple d'intégration de [flower](https://flower.readthedocs.io/en/latest/) (#117 par @christophe-ramet)
+- Ajout d'une section "Principes et objectifs" dans le README.md (#115 par @camillemonchicourt)
+- Les dépendances de GeoNature sont maintenant compilées et installées à l'initialisation du mode dev (#83 par @christophe-ramet)
+- Ajout de la possibilités d'installer un sous module monitoring depuis l'hôte (#84 par @christophe-ramet)
+- Ajout du fichier CONTRIBUTING.md (#116 par @christophe-ramet)
+- Ajout d'un docker-compose d'exemple permettant de faire du multi-instances sur un serveur (#118 par @christophe-ramet)
+- Amélioration de la création des images Docker (#120 par @christophe-ramet)
+
+### 🐛 Corrections
+
+- Correction d'un bug dans la création du fichier .env (#119 par @christophe-ramet)
+- Correction de la target cypress dans le Makefile (#95 par @VincentCauchois)
+
+**🏷️ Versions**
+
+- GeoNature 2.17.4
+- UsersHub 2.4.8
+- GeoNature-dashboard 1.6.1
+- GeoNature-export 1.8.2
+- GeoNature-monitoring 1.3.0
+
 ## 2.17.1.2
 
 ### ⏩ En bref
 
-Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml`. Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec une base de données externe, ou sans UsersHub. 
+Cette version apporte une restructuration majeure de la stack Docker avec la séparation du fichier `docker-compose.yml`. Cette refonte permet une bien meilleure flexibilité, en offrant la possibilité de lancer GDS selon différents scénarios : sans Traefik, avec une base de données externe, ou sans UsersHub.
 
 Pour explorer différentes possibilités de configurations, des exemples de `.env` sont mis à disposition dans le dossier `env_examples`.
 
 ### 🚀 Nouveautés
 
-* Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
-  * Séparation du contenu du fichier en deux parties : `docker-compose.essential.yml` et `docker-compose.traefik.yml` (le fichier `docker-compose.yml` existe toujours)
-  * Il est possible de lancer GDS selon différents scénarions : 
+- Changement important sur le fichier `docker-compose.yml` (#18 par @christophe-ramet et @jacquesfize):
+  - Séparation du contenu du fichier en deux parties : `docker-compose.essential.yml` et `docker-compose.traefik.yml` (le fichier `docker-compose.yml` existe toujours)
+  - Il est possible de lancer GDS selon différents scénarions :
     - Sans Traefik
     - Sans base de données. Par conséquent, il vous est possible d'utiliser GDS sur une de vos bases de données existantes.
     - Sans UsersHub. Par conséquent, il vous est possible d'utiliser GDS sur votre UsersHub.
     - Plusieurs fichiers d'exemple sont disponibles dans le dossier `env_examples/`
-  * Ajout d'une CI `compose.yml` qui effectue les tests des différents scénarios de lancement de GDS.
-* Ajout d'un CLI pour générer un fichier `.env` (Statut expérimental). Pour l'utiliser, lancer la commande `python generate_env.py`
-* Modification de Traefik 
-  * Mise à jour de Traefik de la version 2.10.4 vers la 3.6.4 (#87 par @christophe-ramet)
-  * Ajout du Dashboard traefik. L'identifiant et le mot de passe d'accès au dashboard est paramétrable avec les variables `TRAEFIK_USER` et `TRAEFIK_PASSWORD`.
-  * Ajout d'un paramètre permettant d'activer les logs de Traefik `TRAEFIK_ACTIVATE_ACCESS_LOG`
-* Ajout de la possibilité d'ajouter un Makefile.local pour surcoucher son makefile. Cela permet d'ajouter ses propres commande make sans rentrer en conflit avec le makefile de base.
-####  Développement
+  - Ajout d'une CI `compose.yml` qui effectue les tests des différents scénarios de lancement de GDS.
+- Ajout d'un CLI pour générer un fichier `.env` (Statut expérimental). Pour l'utiliser, lancer la commande `python generate_env.py`
+- Modification de Traefik
+  - Mise à jour de Traefik de la version 2.10.4 vers la 3.6.4 (#87 par @christophe-ramet)
+  - Ajout du Dashboard traefik. L'identifiant et le mot de passe d'accès au dashboard est paramétrable avec les variables `TRAEFIK_USER` et `TRAEFIK_PASSWORD`.
+  - Ajout d'un paramètre permettant d'activer les logs de Traefik `TRAEFIK_ACTIVATE_ACCESS_LOG`
+- Ajout de la possibilité d'ajouter un Makefile.local pour surcoucher son makefile. Cela permet d'ajouter ses propres commande make sans rentrer en conflit avec le makefile de base.
 
-* Installation automatique des modules ajoutés par l'utilisateur (#72 par @christophe-ramet)
-* Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
-* Ajout des commandes dans le Makefile: `lint_frontend`,  `lint_backend`,`test`
+#### Développement
+
+- Installation automatique des modules ajoutés par l'utilisateur (#72 par @christophe-ramet)
+- Ajout de la possibilité de déployer une base de données GeoNature pré-peuplée (https://github.com/PnX-SI/geonature_db)
+- Ajout des commandes dans le Makefile: `lint_frontend`, `lint_backend`,`test`
 
 ### 🐛 Corrections
 
-* Ajout de politiques de démarrages manquantes sur certains services (#105 par @andriacap)
-
-
+- Ajout de politiques de démarrages manquantes sur certains services (#105 par @andriacap)
 
 **⚠️ Notes de version**
 
@@ -43,8 +67,8 @@ Cette nouvelle version de GDS apporte des modifications profondes dans le fichie
 ```shell
 cp .env .env_backup
 cp .env.sample .env
-# modifier le contenu de .env en vous appuyant certaines 
-# des valeurs de la sauvegarde .env_backup 
+# modifier le contenu de .env en vous appuyant certaines
+# des valeurs de la sauvegarde .env_backup
 ```
 
 ## 2.17.1
