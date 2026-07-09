@@ -1,0 +1,66 @@
+###
+# STACK ADDITIONNELLE - Déploiement d'une instance additionnelle de GDS
+#
+# Contexte :
+#   Ajouter ce fichier pour déployer une instance additionnelle GDS en réutilisant l'infrastructure Traefik
+#   d'une première stack déjà en cours d'exécution. Chaque stack est isolée avec sa propre base de données
+#   et ses propres services, tandis que Traefik gère le routage centralisé.
+#
+# Prérequis :
+#   Une stack GDS principale déjà lancée avec Traefik actif (via docker-compose.traefik.yml)
+#   - Adapter la configuration .env pour éviter les conflits de ports/services
+#
+# Mise en place :
+#   1. Créer un clone/copie de GDS dans un nouveau dossier avec un nom différent de la première stack (ex: GDS_2 au lieu de GeoNature Docker services)
+#   2. Copier tous les fichiers de configuration, les modifier au besoin
+#   3. Modifier obligatoirement dans .env :
+#      - GEONATURE_BACKEND_PREFIX : chemin unique (ex: /geonature2/api)
+#      - GEONATURE_FRONTEND_PREFIX : chemin unique qui servira à acceder à l'application (ex: /geonature2)
+#      - COMPOSE_FILE : docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.additional_stack.yml
+#      - POSTGRES_PORT_ON_HOST : port différent (ex: 5433 au lieu de 5432)
+#      - COMPOSE_PROJECT_NAME : nom de projet unique (ex: gds_2)
+#
+#
+# Limitations :
+#   ⚠️ Traefik est géré par la première stack. Dans un environnement complexe avec plusieurs instances,
+#   il est plus judicieux de déployer une stack Traefik dédiée et isolée pour éviter que l'arrêt d'une
+#   stack GDS n'interrompe l'accès aux autres.
+#
+# Testé :
+#   date: 18/05/2026
+#   version GDS: 2.17.1.2
+###
+
+services:
+  traefik:
+    deploy:
+      replicas: 0
+
+
+  geonature-backend:
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature-backend.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature-backend.tls.certResolver=acme-resolver"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-geonature-backend.loadbalancer.server.port=8000"
+
+  geonature-frontend:
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-geonature.tls.certResolver=acme-resolver"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-geonature.loadbalancer.server.port=80"
+    networks:
+      - gn
+
+  usershub:
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-usershub.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-usershub.tls.certResolver=acme-resolver"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-usershub.loadbalancer.server.port=5001"
+    networks:
+      - gn

@@ -20,8 +20,8 @@ build_images:
 	build/build.sh
 
 dev: dev_init
-	COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.dev.yml docker compose up -d --force-recreate
-	source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
+	COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.build.yml:docker-compose.dev.yml docker compose up -d --force-recreate
+	source .env; echo "Services de developpement lancés, vous pourrez y acceder dans quelques minutes sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
 prod:
 	./init-config.sh
@@ -35,9 +35,19 @@ lint_backend:
 	docker compose exec geonature-backend bash -c "black /sources/GeoNature/backend"
 
 cypress:
-	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="$${GEONATURE_URL_APPLICATION}" API_ENDPOINT="$${GEONATURE_API_ENDPOINT}" URL_APPLICATION="$${GEONATURE_URL_APPLICATION}" npm run cypress:open
+	source .env; cd sources/GeoNature/frontend; CYPRESS_baseUrl="$${GEONATURE_URL_APPLICATION}" API_ENDPOINT="$${GEONATURE_API_ENDPOINT}/" URL_APPLICATION="$${GEONATURE_URL_APPLICATION}" npm run cypress:open
 
 test:
 	docker compose exec geonature-backend bash -c "cd /sources/GeoNature/backend/geonature && GEONATURE_API_ENDPOINT='https://localhost'  pytest ."
+
+install_monitoring_module:
+	@if [ -z "$(MODULE_PATH)" ]; then \
+		echo "Error : Specify MODULE_PATH=<path> example: make install_monitoring_module MODULE_PATH=sources/gn_module_monitoring/contrib/sites_group_aside/"; \
+		exit 1; \
+	fi; \
+	MODULE_NAME=$$(basename "$${MODULE_PATH}"); \
+	cp -r $(MODULE_PATH) data/geonature/media/monitorings/${MODULE_NAME} && \
+	docker compose exec geonature-backend geonature monitorings install "$${MODULE_NAME}"
+
 
 -include Makefile.local

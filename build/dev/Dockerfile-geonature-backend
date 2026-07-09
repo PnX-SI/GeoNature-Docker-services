@@ -1,7 +1,7 @@
 # syntax=docker.io/docker/dockerfile:1.6
 
 ARG GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
-FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS base_env
+FROM ${GEONATURE_BACKEND_IMAGE}-dev as dev
 
 ARG DOCKER_UID=1000
 ARG DOCKER_GID=1000
@@ -15,25 +15,13 @@ RUN if echo "Creating user geonature with UID: ${UID}, GID: ${GID}" && groupadd 
 
 RUN rm -f geonature-*
 
-COPY --chown=${DOCKER_UID}:${DOCKER_GUID} /sources/GeoNature /sources/GeoNature
-COPY --chown=${DOCKER_UID}:${DOCKER_GUID} /sources /sources
-
-RUN --mount=type=cache,target=/root/.cache \
-    pip install *.whl sentry_sdk[flask]
+COPY --chown=${DOCKER_UID}:${DOCKER_GUID} sources/GeoNature/backend/requirements-dev.txt .
 
 # Delete when those dependency will be added to requirements-dev
-RUN pip install watchdog pytest pytest-flask pytest-benchmark pip-tools
-RUN cd /sources/GeoNature/backend && pip install -r requirements-dev.txt
+RUN pip install uv
+RUN --mount=type=cache,target=/root/.cache  uv pip install --system watchdog pytest pytest-flask pytest-benchmark pip-tools
 
-RUN --mount=type=cache,target=/root/.cache \
-    pip install -e /sources/GeoNature && \
-    for module in $(ls -d /sources/gn_*/ | sort); do \
-        [ -d "$module" ] && pip install -e "$module"; \
-    done
-COPY --chmod=755 /build/dev/backend_entrypoint.sh /dev_entrypoint.sh
+COPY --chmod=755 /build/dev/dev_entrypoint.sh /
 ENTRYPOINT ["/dev_entrypoint.sh"]
-
-# Nettoyage final
-RUN rm -f *.whl
 
 USER geonature

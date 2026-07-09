@@ -1,4 +1,4 @@
-# GeoNature Docker Services
+# GeoNature Docker services
 
 Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS.
 
@@ -7,9 +7,23 @@ De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules 
 - Occtax
 - Occhab
 - Validation
-- [Monitorings](https://github.com/PnX-SI/gn_module_monitoring)
+- [Monitoring](https://github.com/PnX-SI/gn_module_monitoring)
 - [Dashboard](https://github.com/PnX-SI/gn_module_dashboard)
 - [Export](https://github.com/PnX-SI/gn_module_export)
+
+## Principes et objectifs
+
+**1. GeoNature clé en main**
+   
+   Un fichier de configuration et une commande suffisent à déployer et mettre à jour facilement un environnement GeoNature dockerisé, fonctionnel et complet (GeoNature et ses principaux modules)
+   
+**2. Modulaire et adaptable**
+   
+   Doit permettre à chacun d'adapter le projet pour ses besoins spécifiques et son infrastructure.
+   
+**3. Limiter la complexité globale**
+
+   Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contexte. L'ajout de fonctionnalités (paramètres, makefile...) ne doit pas se substituer à une maitrise de Docker, GeoNature ou d'administration système.
 
 ## Démarrage rapide
 
@@ -123,6 +137,9 @@ Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules
 
 Vous pouvez personnaliser la [politique de redémarrage automatique des services](https://github.com/compose-spec/compose-spec/blob/master/spec.md#restart) en paramétrant la variable `RESTART_POLICY` du fichier `.env` (valeur par défaut: `unless-stopped`)
 
+Il est aussi possible de personnaliser son installation en créant un fichier d'override de docker compose. Pour le détail
+de fonctionnement, voir [la section Surcharger son installation](#override).
+
 ### Dossiers de configuration et de customisation
 
 - Les fichiers de configuration de GeoNature, de ses modules et de UsersHub sont donc dans le dossier `GeoNature-Docker-services/config/`
@@ -154,6 +171,37 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 - Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
+## Monitoring
+
+### Installer un sous-module 
+Pour installer un sous-module Monitoring, il faut utiliser la commande `make install_monitoring_module`.
+Il faut lui indiquer le chemin vers le dossier du sous-module, par exemple :
+
+`make install_monitoring_module MODULE_PATH=sources/gn_module_monitoring/contrib/sites_group_aside/`
+
+### Executer une commande monitoring
+Pour des actions plus avancées, vous pouvez vous attacher au docker ` docker compose exec geonature-backend bash` et 
+suivre la [documentation du module Monitoring](https://github.com/PnX-SI/gn_module_monitoring/blob/main/docs/commandes.md)
+
+## <a name="override"></a> Surcharger son installation
+
+   En fonction de l'environnement dans lequel vous déployez, il est possible que vous soyez amené à vouloir modifier le
+fichier `docker-compose.yml` afin de personnaliser le comportement de GDS. Afin de pouvoir mettre à jour votre repo, il
+est fortement conseillé de passer par un fichier d'override (voir [documentation docker compose sur les overrides](https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/)). Pour cela, vous pouvez créer un docker compose qui
+contient les modifications que vous souhaitez apporter à la stack et l'ajouter à votre variable d'environnement
+`COMPOSE_FILE` (voir [documentation docker](https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_file))
+
+Plusieurs exemples de surcharge sont disponibles dans le dossier `override_galery`. Ce dossier contient des `compose.yml` testés
+pour une version précise de GDS et permettant de modifier la configuration de GDS ou de déployer des services supplémentaires.
+
+
+## Lancer plusieurs instances de GDS sur le même serveur
+
+Il existe de multiples façons de lancer plusieurs instances de GDS sur le même serveur. En mode traefik,
+une méthode est présentée dans `override_gallery/docker-compose.additional_stack.yml`. Cette methode attribut un dossier 
+à chaque instance de GDS, ce qui permet de les identifier facilement et évite les erreurs. C'est une implémentation assez
+simple, selon les contraintes de votre système, il est conseillé de l'adapter. 
+
 ## FAQ
 
 Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, intégrer le MNT, modifier votre domaine,...), consultez la [FAQ GeoNature-Docker-services](/docs/faq.md).
@@ -175,10 +223,10 @@ Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt insta
 
 Il faut ensuite, dans votre fichier .env décommenter les lignes de l'environnement de dev.
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init` suivit de `make dev`.
+Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init`, `make build_images` suivit de `make dev`.
 Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
 cela ne fonctionnera pas sans relancer `make dev_init`.
-Le premier lancement peut mettre quelques dizaines de minutes.
+Le premier lancement peut mettre quelques dizaines de minutes le temps de build les images.
 
 Vous pouvez visiter votre GeoNature à l'adresse https://localhost/geonature et le proxy traefik http://localhost:8080/.
 

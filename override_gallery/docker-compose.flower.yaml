@@ -1,0 +1,36 @@
+###
+# FLOWER - Interface de monitoring Celery
+#
+# Contexte :
+#   Ajouter ce fichier si vous souhaitez monitorer les workers via une interface web. Attention, ce fichier
+#   est fait pour le development et pas la production, déployer ce fichier dans un environnement de production présente
+#   des risques de sécurité.
+#
+# Prérequis :
+#   Utilisation de traefik (et donc de docker-compose.traefik.yaml)
+#
+# Accès :
+#   https://<GEONATURE_BACKEND_HOST>/flower
+#
+# Testé:
+#   date: 18/05/2026
+#   version GDS: 2.17.1.2
+###
+
+services:
+    flower:
+      image: mher/flower:2.0
+      environment:
+        CELERY_BROKER_URL: ${GEONATURE_CELERY__broker_url:-redis://redis}
+        FLOWER_URL_PREFIX: /flower
+      depends_on:
+        - geonature-worker
+        - traefik
+      networks:
+        - gn
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.flower.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`/flower`)"
+        - "traefik.http.routers.flower.entrypoints=websecure"
+        - "traefik.http.routers.flower.tls.certResolver=acme-resolver"
+        - "traefik.http.services.flower.loadbalancer.server.port=5555"
