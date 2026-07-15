@@ -4,12 +4,12 @@
 
 ### 🚀 Nouveautés
 
-- Ajout d'un dossier `override_gallery` contenant des exemples d'intégrations de plugins. Ici, nous proposons un exemple d'intégration de [flower](https://flower.readthedocs.io/en/latest/) (#117 par @christophe-ramet)
+- Ajout d'un dossier `/override_gallery` contenant des exemples d'intégration de plugins. Ici, nous proposons un exemple d'intégration de [flower](https://flower.readthedocs.io/en/latest/) (#117 par @christophe-ramet)
+- Ajout d'un docker-compose d'exemple dans le dossier `/override_gallery` permettant de faire du multi-instances sur un serveur (#118 par @christophe-ramet)
+- Ajout de la commande `make install_monitoring_module` pour installer un sous-module Monitoring (#84 par @christophe-ramet)
 - Ajout d'une section "Principes et objectifs" dans le README.md (#115 par @camillemonchicourt)
 - Les dépendances de GeoNature sont maintenant compilées et installées à l'initialisation du mode dev (#83 par @christophe-ramet)
-- Ajout de la possibilités d'installer un sous module monitoring depuis l'hôte (#84 par @christophe-ramet)
-- Ajout du fichier CONTRIBUTING.md (#116 par @christophe-ramet)
-- Ajout d'un docker-compose d'exemple permettant de faire du multi-instances sur un serveur (#118 par @christophe-ramet)
+- Ajout d'un fichier CONTRIBUTING.md (#116 par @christophe-ramet)
 - Amélioration de la création des images Docker (#120 par @christophe-ramet)
 
 ### 🐛 Corrections
@@ -23,7 +23,7 @@
 - UsersHub 2.4.8
 - GeoNature-dashboard 1.6.1
 - GeoNature-export 1.8.2
-- GeoNature-monitoring 1.3.0
+- GeoNature-monitoring 1.3.1
 
 ## 2.17.1.2
 
