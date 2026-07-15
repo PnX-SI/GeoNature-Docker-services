@@ -185,6 +185,8 @@ Exemple :
 make install_monitoring_module MODULE_PATH=protocoles_suivi/chiro/
 ```
 
+Le dossier de configuration du sous-module est alors copié dans le répertoire `data/geonature/media/monitorings/`. Si vous souhaitez modifier le sous-module, faites le directement dans les fichiers de ce dossier car ce sont ceux pris en compte.
+
 ### Exécuter une commande Monitoring
 
 Pour des actions plus avancées, vous pouvez vous attacher au Docker avec la commande `docker compose exec geonature-backend bash` et 
