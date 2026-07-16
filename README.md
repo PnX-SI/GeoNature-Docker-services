@@ -151,23 +151,29 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## Mettre à jour GeoNature et ses modules
 
-- Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
-- Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
-- Mettez à jour le contenu du dossier dans sa dernière version : `git pull`
-- Changez la version de GeoNature dans les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour passer de la version 2.15.2 à 2.15.3, effectuez les modifications suivantes :
+Pour récupérer la dernière version de GeoNature-docker-services : 
+1. Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
+2. Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
+3. Mettez à jour le contenu du dossier dans sa dernière version : `git fetch && git checkout <numéro de version>`
+4. Pour télécharger les nouvelles images et relancer la stack, il suffit de lancer la commande suivante : `docker compose pull && docker compose up -d --remove-orphans`
 
-  ```env
+>[!WARNING]
+> N'oubliez pas de mettre la variable `SKIP_POPULATE_DB` à `false` pour appliquer les modifications de base de données provenant de la nouvelle version.
 
-  USERSHUB_IMAGE="ghcr.io/pnx-si/usershub:2.4.4"
-  [...]
-  GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra:2.15.3"
-  [...]
-  GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
-  ```
+>[!NOTE]
+> Avec chaque release de GeoNature-docker-services, la version de l'image GeoNature est systématiquement modifiée dans le `docker-compose.essential.yml`.
 
-  Pour connaître la version de UsersHub, consultez la note de version.
+>[!NOTE]
+> Pour fixer la version de GeoNature, vous pouvez modifier les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour utiliser la version 2.15.3, effectuez les modifications suivantes :
+  >```env
+  >
+  >USERSHUB_IMAGE="ghcr.io/pnx-si/usershub:2.4.4"
+  >[...]
+  >GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra:2.15.3"
+  >[...]
+  >GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
+  >```
 
-- Lancez la commande qui va télécharger les dernières versions des différentes applications et les relancer : `docker compose pull && docker compose up -d --remove-orphans`
 
 ## Monitoring
 
