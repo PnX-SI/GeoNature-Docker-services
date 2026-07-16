@@ -161,7 +161,7 @@ Pour récupérer la dernière version de GeoNature-docker-services :
 > N'oubliez pas de mettre la variable `SKIP_POPULATE_DB` à `false` pour appliquer les modifications de base de données provenant de la nouvelle version.
 
 >[!NOTE]
-> Avec chaque release de GeoNature-docker-services, la version de l'image GeoNature est systématiquement modifiée dans le `docker-compose.essential.yml`.
+> Avec chaque release de GeoNature-docker-services, la version de l'image GeoNature est systématiquement modifiée dans le fichier `docker-compose.essential.yml`.
 
 >[!NOTE]
 > Pour fixer la version de GeoNature, vous pouvez modifier les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour utiliser la version 2.15.3, effectuez les modifications suivantes :
