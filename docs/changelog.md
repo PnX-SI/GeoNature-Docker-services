@@ -6,15 +6,18 @@
 
 - Ajout d'un dossier `/override_gallery` contenant des exemples d'intégration de plugins. Ici, nous proposons un exemple d'intégration de [flower](https://flower.readthedocs.io/en/latest/) (#117 par @christophe-ramet)
 - Ajout d'un docker-compose d'exemple dans le dossier `/override_gallery` permettant de faire du multi-instances sur un serveur (#118 par @christophe-ramet)
-- Ajout de la commande `make install_monitoring_module` pour installer un sous-module Monitoring (#84 par @christophe-ramet)
 - Ajout d'une section "Principes et objectifs" dans le README.md (#115 par @camillemonchicourt)
 - Les dépendances de GeoNature sont maintenant compilées et installées à l'initialisation du mode dev (#83 par @christophe-ramet)
 - Ajout d'un fichier CONTRIBUTING.md (#116 par @christophe-ramet)
 - Amélioration de la création des images Docker (#120 par @christophe-ramet)
 
+### 🖥️ Développement
+
+- Ajout de la commande `make install_monitoring_module` pour installer un sous-module Monitoring (#84 par @christophe-ramet)
+
 ### 🐛 Corrections
 
-- Correction d'un bug dans la création du fichier .env (#119 par @christophe-ramet)
+- Correction d'un bug dans la création du fichier `.env` (#119 par @christophe-ramet)
 - Correction de la target cypress dans le Makefile (#95 par @VincentCauchois)
 
 **🏷️ Versions**
