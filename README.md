@@ -158,7 +158,7 @@ Pour récupérer la dernière version de GeoNature-docker-services :
 4. Pour télécharger les nouvelles images et relancer la stack, il suffit de lancer la commande suivante : `docker compose pull && docker compose up -d --remove-orphans`
 
 >[!WARNING]
-> N'oubliez pas de mettre la variable `SKIP_POPULATE_DB` à `false` pour appliquer les modifications de base de données provenant de la nouvelle version.
+> La variable `SKIP_POPULATE_DB` doit être à `false` pour appliquer les modifications de base de données provenant de la nouvelle version.
 
 >[!NOTE]
 > Avec chaque release de GeoNature-docker-services, la version de l'image GeoNature est systématiquement modifiée dans le fichier `docker-compose.essential.yml`.
