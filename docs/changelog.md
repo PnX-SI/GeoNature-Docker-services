@@ -17,7 +17,7 @@
 
 ### 🐛 Corrections
 
-- Correction d'un bug dans la création du fichier .env (#119 par @christophe-ramet)
+- Correction d'un bug dans la création du fichier `.env` (#119 par @christophe-ramet)
 - Correction de la target cypress dans le Makefile (#95 par @VincentCauchois)
 
 **🏷️ Versions**
