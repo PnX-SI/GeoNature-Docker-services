@@ -1,6 +1,6 @@
 ## Release
 
-Pour sortir une nouvelle version de **GeoNature-docker-services**, il faut :
+Pour publier une nouvelle version de **GeoNature-docker-services**, il faut :
 
 - Vérifier que le changelog reprend l'ensemble des contributions.
 - Vérifier que la version de l'image de GeoNature dans `.github/workflows/docker.yml` correspond à la dernière version de GeoNature.
