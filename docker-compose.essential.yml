@@ -17,6 +17,16 @@ x-backend-env: &backend-env
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
 
+x-starting-healtcheck: &start-healthcheck
+  start_period: 10s
+  start_interval: 10s
+
+x-healthcheck: &healthcheck
+  <<: *start-healthcheck
+  interval: 120s
+  timeout: 5s
+  retries: 10
+
 services:
   geonature-backend:
     <<: *restart-policy
@@ -47,6 +57,9 @@ services:
       - "--reload-extra-file=${GEONATURE_IMPORT_CONFIG_FILE:-/dist/config/import_config.toml}"
     networks:
       - gn
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://${HOST}:8000${GEONATURE_BACKEND_PREFIX}/healthz"]
+      <<: *healthcheck
 
   geonature-frontend:
     <<: *restart-policy
@@ -56,18 +69,18 @@ services:
     environment:
       - NGINX_LOCATION="/"
       - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://${HOST}:80${GEONATURE_FRONTEND_PREFIX}"]
+      <<: *healthcheck
 
   redis:
     <<: *restart-policy
     image: redis:7-alpine
-    user: redis:redis
     volumes:
       - redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck
     networks:
       - gn
 
@@ -85,13 +98,19 @@ services:
       - ${GEONATURE_DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
     networks:
       - gn
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery .* worker' >/dev/null"]
+      <<: *healthcheck
+      # BEaucoup ieux mais trop long ?
+#      test: ["CMD", "celery", "-A", "geonature.celery_app:app", "inspect", "ping"]
+#      timeout: 40s # Celery command need to load geonature and can take a long time
+#      retries: 3
 
   geonature-install-db:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.1}
     user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
-      - install-db
     command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
@@ -137,9 +156,7 @@ services:
           "-h",
           "localhost",
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck
     networks:
       - gn
 
@@ -173,7 +190,7 @@ services:
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
     networks:
       - gn
-
+    # Quid de userhub ?
 volumes:
   redis:
   postgres:
