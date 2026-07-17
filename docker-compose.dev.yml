@@ -14,7 +14,8 @@ services:
       target: dev
       args:
         GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-
+    healthcheck:
+      retries: 50
 
   geonature-install-db:
     image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
@@ -34,6 +35,8 @@ services:
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
     # the build is handled by geonature-backend
     entrypoint: ["/dev_entrypoint.sh"]
+    healthcheck:
+      retries: 5
 
   geonature-frontend:
       image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
@@ -48,6 +51,8 @@ services:
         - ./frontend/external_modules:/build/external_modules
         - ./sources:/sources
         - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
+      healthcheck:
+        retries: 50
 
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}

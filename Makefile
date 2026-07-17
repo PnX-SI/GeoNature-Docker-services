@@ -20,13 +20,15 @@ build_images:
 	build/build.sh
 
 dev: dev_init
-	COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.build.yml:docker-compose.dev.yml docker compose up -d --force-recreate
-	source .env; echo "Services de developpement lancés, vous pourrez y acceder dans quelques minutes sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
-
+	@ echo "Le lancement de l'envitonnement de dev peut prendre quelques minutes la première fois"
+	@ COMPOSE_FILE=docker-compose.essential.yml:docker-compose.traefik.yml:docker-compose.build.yml:docker-compose.dev.yml docker compose up --wait --wait-timeout 180 -d --force-recreate \
+	|| { sleep 1; echo "Une erreur s'est produite en démarrant les dockers, essayez de lancer la commande 'docker compose logs' et examinez les logs"; exit 1; }
+	@ source .env; echo "Services de developpement lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 prod:
 	./init-config.sh
-	docker compose up -d
-	source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
+	@ docker compose up --wait --wait-timeout 180 -d \
+	|| { sleep 1; echo "Une erreur s'est produite en démarrant les dockers, essayez de lancer la commande 'docker compose logs' et examinez les logs"; exit 1; }
+	@ source .env; echo "Services de production lancés, vous pouvez y acceder sur : https://$${HOSTPORT}$${GEONATURE_FRONTEND_PREFIX}"
 
 lint_frontend:
 	docker compose exec geonature-frontend bash -c "cd /sources/GeoNature/frontend; npm run format"
