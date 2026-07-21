@@ -62,6 +62,13 @@ Pour explorer différentes possibilités de configurations, des exemples de `.en
 ### 🐛 Corrections
 
 - Ajout de politiques de démarrages manquantes sur certains services (#105 par @andriacap)
+- [Développement] Correction du build de l'image backend (#58 par @lpofredc)
+- [Développement] Correction de la construction de l'url `API_ENDPOINT` (#79 par @VincentCauchois)
+- [Développement] Ajout des arguments UID et GID dns la dockerfile du backend (#61 par @lpofredc)
+- [Développement] Correction de la commande `submodule_init` dans le Makefile (par @jpm-cbna)
+- Correction dans la documentation (#66 par @VincentCauchois)
+
+
 
 **⚠️ Notes de version**
 
