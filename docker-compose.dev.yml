@@ -61,3 +61,8 @@ services:
       - gn
     profiles:
       - pre-built-db
+
+  base-backend:
+    image: ${GEONATURE_BACKEND_IMAGE}-dev
+    build:
+      target: dev
