@@ -33,6 +33,8 @@ services:
       - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
     command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
     # the build is handled by geonature-backend
+    environment:
+      GEONATURE_SKIP_POPULATE_DB: true
     entrypoint: ["/dev_entrypoint.sh"]
 
   geonature-frontend:
