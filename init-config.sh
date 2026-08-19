@@ -23,7 +23,8 @@ if [ ! -f "$GEONATURE_CONFIG_DIR/usershub/config.py" ]; then
 fi
 
 if [ ! -f "./sources/GeoNature-atlas/atlas/configuration/config.py" ]; then
-    mkdir -p "./sources/GeoNature-atlas/atlas/configuration/config.py"
+    mkdir -p "./sources/GeoNature-atlas/atlas/configuration/"
+
     echo "SECRET_KEY = \"$(openssl rand -hex 16)\"" > "./sources/GeoNature-atlas/atlas/configuration/config.py"
 fi
 
