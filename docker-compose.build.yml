@@ -35,6 +35,10 @@ services:
       target: prod-extra
       args:
           GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
+    # So docker compose know that it is normal that base backend stop running and exit
+    depends_on:
+      base-backend:
+        condition: service_completed_successfully
 
   geonature-frontend:
       build:
@@ -43,3 +47,9 @@ services:
         target: prod-extra
         args:
           GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
+      # So docker compose know that it is normal that base frontend stop running and exit
+      depends_on:
+        base-frontend-source:
+          condition: service_completed_successfully
+        base-frontend-nginx:
+          condition: service_completed_successfully
