@@ -1,4 +1,156 @@
-include:
-  - path:
-      - docker-compose.essential.yml
-      - docker-compose.traefik.yml
+x-restart-policy: &restart-policy
+  restart: ${RESTART_POLICY:-unless-stopped}
+
+x-defaults: &defaults
+  user: ${DOCKER_UID:-0}:${DOCKER_GID:-0}
+
+x-geonature-depends-on-defaults: &geonature-depends-on-defaults
+  redis:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+
+x-env: &env
+  TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
+
+x-geonature-backend-env: &geonature-backend-env
+  <<: *env
+  GEONATURE_SKIP_POPULATE_DB: true
+  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
+  GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+  GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
+  GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
+  DATA_DIRECTORY: ${GEONATURE_CACHE_FOLDER:-/dist/geonature/cache}
+
+
+x-geonature-backend-defaults: &geonature-backend-defaults
+  <<: *defaults
+  image: ${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}
+  depends_on:
+    <<: *geonature-depends-on-defaults
+  volumes:
+    - ./config/geonature:/dist/config
+    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/geonature/media}
+    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/geonature/custom}
+    - ./data/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/geonature/cache}
+  environment:
+    <<: *geonature-backend-env
+
+services:
+  redis:
+    <<: *restart-policy
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    volumes:
+      - redis:/data
+    environment:
+      <<: *env
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    <<: *restart-policy
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
+    environment:
+      <<: *env
+      POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
+      POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB:-geonature2db}",
+          "-U",
+          "${POSTGRES_USER:-geonatadmin}",
+          "-h",
+          "localhost",
+          "-p",
+          "5432",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    <<: [*restart-policy, *defaults]
+    image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      geonature-install-db:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/usershub:/dist/config/
+    ports:
+      - ${USERSHUB_PORT}:5001
+    environment:
+      <<: *env
+      USERSHUB_URL_APPLICATION: "${USERSHUB_URL_APPLICATION}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+
+  geonature-install-db:
+    <<: *geonature-backend-defaults
+    command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+    environment:
+      <<: *geonature-backend-env
+      GEONATURE_SKIP_POPULATE_DB: false
+      srid_local: ${GEONATURE_DB_LOCAL_SRID}
+      add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_DB_INSTALL_SIG_LAYERS:-true}
+      install_grid_layer: ${GEONATURE_DB_INSTALL_GRID_LAYER:-true}
+      install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
+      usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
+
+  geonature-worker:
+    <<: [*restart-policy, *geonature-backend-defaults]
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    command:
+      [
+        "celery", "-A", "geonature.celery_app:app", "worker", "--beat",
+        "--loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO}",
+        "--schedule-filename=/dist/geonature/cache/celerybeat-schedule.db"
+      ]
+
+  geonature-backend:
+    <<: [*restart-policy, *geonature-backend-defaults]
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_completed_successfully
+    ports:
+      - ${GEONATURE_BACKEND_PORT}:8000
+
+  geonature-frontend:
+    <<: *restart-policy
+    image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}
+    ports:
+      - ${GEONATURE_FRONTEND_PORT}:4200
+    environment:
+      <<: *env
+      GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
+      API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
+
+volumes:
+  redis:
+  postgres:

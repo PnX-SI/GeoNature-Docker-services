@@ -1,70 +1,30 @@
 services:
-
-  geonature-backend:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    user: root:root
-    volumes:
-      - ./sources:/sources
-      - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
-    environment:
-      GEONATURE_SKIP_POPULATE_DB: true
-    entrypoint: ["/dev_entrypoint.sh"]
-    build:
-      dockerfile: build/dev/Dockerfile-geonature-backend
-      target: dev
-      args:
-        GEONATURE_BACKEND_IMAGE: ${GEONATURE_BACKEND_IMAGE}
-
-
   geonature-install-db:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    user: root:root
+    image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
     volumes:
-      - ./sources:/sources
-      - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
-    # the build is handled by geonature-backend
-    entrypoint: ["/dev_entrypoint.sh"]
+      - ./GeoNature-extra/:/sources
 
   geonature-worker:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE}
-    user: root:root
+    image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
     volumes:
-      - ./sources:/sources
-      - ./build/dev/dev_entrypoint.sh:/dev_entrypoint.sh
-    command: watchmedo auto-restart --directory=/sources/GeoNature --pattern=*.py --recursive -- celery -A geonature.celery_app:app worker --beat --loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO} --schedule-filename=/dist/media/celerybeat-schedule.db
-    # the build is handled by geonature-backend
-    environment:
-      GEONATURE_SKIP_POPULATE_DB: true
-    entrypoint: ["/dev_entrypoint.sh"]
+      - ./GeoNature-extra/:/sources
+
+  geonature-backend:
+    image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
+    volumes:
+      - ./GeoNature-extra/:/sources
 
   geonature-frontend:
-      image: ${GEONATURE_FRONTEND_EXTRA_IMAGE}
-      build:
-        context: .
-        dockerfile: build/Dockerfile-geonature-frontend
-        target: dev-extra
-        args:
-          GEONATURE_FRONTEND_IMAGE: ${GEONATURE_FRONTEND_IMAGE}
-      volumes:
-        - ./sources/GeoNature/frontend:/build
-        - ./frontend/external_modules:/build/external_modules
-        - ./sources:/sources
-        - ./build/dev/frontend_entrypoint.sh:/entrypoint.sh
-
-  geonature-pre-built-db:
-    image: ${GEONATURE_PRE_BUILT_DB}
-    ports:
-      - ${POSTGRES_PORT_ON_HOST}:5432
-    environment:
-      user_pg: ${POSTGRES_USER}
-      password_pg: ${POSTGRES_PASSWORD}
-      pg_port: 5432
-    networks:
-      - gn
-    profiles:
-      - pre-built-db
-
-  base-backend:
-    image: ${GEONATURE_BACKEND_IMAGE}-dev
-    build:
-      target: dev
+    image: ${GEONATURE_FRONTEND_DEV_IMAGE:-${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}-dev}
+    volumes:
+      - ./GeoNature-extra/GeoNature/frontend/src:/dist/geonature/src
+      - ./GeoNature-extra/GeoNature/contrib/occtax/frontend:/dist/occtax
+      - ./GeoNature-extra/GeoNature/contrib/gn_module_validation/frontend:/dist/gn_module_validation
+      - ./GeoNature-extra/GeoNature/contrib/gn_module_occhab/frontend/app:/dist/gn_module_occhab/app
+      - ./GeoNature-extra/GeoNature/contrib/gn_module_occhab/frontend/assets:/dist/gn_module_occhab/assets
+      - ./GeoNature-extra/gn_module_export/frontend/app:/dist/gn_module_export/app
+      - ./GeoNature-extra/gn_module_export/frontend/assets:/dist/gn_module_export/assets
+      - ./GeoNature-extra/gn_module_monitoring/frontend/app:/dist/gn_module_monitoring/app
+      - ./GeoNature-extra/gn_module_monitoring/frontend/assets:/dist/gn_module_monitoring/assets
+    labels:
+      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"

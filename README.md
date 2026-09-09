@@ -2,15 +2,6 @@
 
 Ce dépôt permet de déployer automatiquement et facilement GeoNature, UsersHub dans un environnement dockerisé et accessible en HTTPS.
 
-De plus, ce dépôt fournit une image Docker de GeoNature contenant les modules suivants :
-
-- Occtax
-- Occhab
-- Validation
-- [Monitoring](https://github.com/PnX-SI/gn_module_monitoring)
-- [Dashboard](https://github.com/PnX-SI/gn_module_dashboard)
-- [Export](https://github.com/PnX-SI/gn_module_export)
-
 ## Principes et objectifs
 
 **1. GeoNature clé en main**
@@ -110,7 +101,7 @@ dans le `.env` (voir `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_
 > [!INFO]
 > Si vous voulez que les mises à jour de la base de données soient effectuées à chaque lancement de la stack Docker, ajouter le profil `install-db` dans `COMPOSE_PROFILES`.
 
-#### Service UsersHub déjà existant :
+#### Service UsersHub déjà existant
 
 Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable
 d'environnement `COMPOSE_PROFILES`.
@@ -151,7 +142,8 @@ Ces variables d’environnement doivent être renseignées directement dans le f
 
 ## Mettre à jour GeoNature et ses modules
 
-Pour récupérer la dernière version de GeoNature-docker-services : 
+Pour récupérer la dernière version de GeoNature-docker-services :
+
 1. Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
 2. Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
 3. Mettez à jour le contenu du dossier dans sa dernière version : `git fetch && git checkout <numéro de version>`
@@ -165,6 +157,7 @@ Pour récupérer la dernière version de GeoNature-docker-services :
 
 >[!NOTE]
 > Pour fixer la version de GeoNature, vous pouvez modifier les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour utiliser la version 2.15.3, effectuez les modifications suivantes :
+>
   >```env
   >
   >USERSHUB_IMAGE="ghcr.io/pnx-si/usershub:2.4.4"
@@ -174,16 +167,18 @@ Pour récupérer la dernière version de GeoNature-docker-services :
   >GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
   >```
 
-
 ## Monitoring
 
 ### Installer un sous-module
 
 1. Déposer le dossier contenant la configuration du protocole dans `data/geonature/media/monitorings/`. Par exemple :
+
    ```sh
    cp -r protocole_suivi/chiro data/geonature/media/monitorings/chiro
    ```
+
 2. Lancer l'installation du sous-module avec la commande :
+
    ```sh
    docker compose exec geonature-backend geonature monitorings install <nom_sous_module>
    ```
@@ -242,7 +237,7 @@ Il est déconseillé de lancer avec la commande `docker compose up -d` car si vo
 cela ne fonctionnera pas sans relancer `make dev_init`.
 Le premier lancement peut mettre quelques dizaines de minutes le temps de build les images.
 
-Vous pouvez accéder à votre GeoNature à l'adresse https://localhost/geonature et au proxy traefik http://localhost:8080/.
+Vous pouvez accéder à votre GeoNature à l'adresse <https://localhost/geonature> et au proxy traefik <http://localhost:8080/>.
 
 ### Exécuter les test Cypress
 

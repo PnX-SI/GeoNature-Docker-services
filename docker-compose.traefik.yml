@@ -1,80 +1,53 @@
 services:
   traefik:
-    image: traefik:3.6.4
-    command:
-      - "--entrypoints.dashboard.address=:8080"
-      - "--accesslog=${TRAEFIK_ACTIVATE_ACCESS_LOG}"
-      - "--entrypoints.dashboard.http.tls=true"
-      - "--api.dashboard=true"
-      - "--api.insecure=false"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.web.address=:80"
-      - "--entryPoints.web.http.redirections.entrypoint.to=:${HTTPS_PORT}"
-      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesResolvers.acme-resolver.acme.email=${ACME_EMAIL-test.test@test.com}"
-      - "--certificatesResolvers.acme-resolver.acme.storage=/etc/traefik/certs/acme.json"
-      - "--certificatesResolvers.acme-resolver.acme.tlsChallenge=true"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/traefik:/etc/traefik/dynamic
-      - ./data/traefik/certs:/etc/traefik/certs
+    image: traefik:3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
-      - TRAEFIK_USER="${TRAEFIK_USER}"
-      - TRAEFIK_PASSWORD="${TRAEFIK_PASSWORD}"
-      - TRAEFIK_ACTIVATE_ACCESS_LOG="${TRAEFIK_ACTIVATE_ACCESS_LOG}"
+      # Observability
+      TRAEFIK_LOG_LEVEL: "INFO"
+      TRAEFIK_ACCESSLOG: "${TRAEFIK_ACCESS_LOG:-true}"
+      # Dashboard
+      TRAEFIK_API_DASHBOARD: "true"
+      # Providers
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      # EntryPoints
+      TRAEFIK_ENTRYPOINTS_DASHBOARD_ADDRESS: ":${TRAEFIK_DASHBOARD_PORT:-8080}"
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":${TRAEFIK_HTTP_PORT:-80}"
+    volumes:
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - ./config/traefik/dynamic:/dynamic
     ports:
-      - ${HTTP_PORT:-80}:80
-      - ${HTTPS_PORT:-443}:443
-      - ${TRAEFIK_PORT_ON_HOST:-8080}:8080
+      - ${TRAEFIK_DASHBOARD_PORT:-8080}:${TRAEFIK_DASHBOARD_PORT:-8080}
+      - ${TRAEFIK_HTTP_PORT:-80}:${TRAEFIK_HTTP_PORT:-80}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
       - "traefik.http.routers.dashboard.entrypoints=dashboard"
       - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD}"
-      - "io.geonature.observability.logs=${LOGS_TRAEFIK:-true}"
-      - "io.geonature.service=traefik"
-    logging:
-      driver: json-file
-      options:
-        max-size: "${DOCKER_LOG_MAX_SIZE:-20m}"
-        max-file: "${DOCKER_LOG_MAX_FILE:-5}"
-    networks:
-      - gn
 
   geonature-backend:
+    ports: !reset []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX}`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
-      - "traefik.http.routers.geonature-backend.tls.certResolver=acme-resolver"
+      - "traefik.http.routers.geonature-backend.entrypoints=web"
       - "traefik.http.services.geonature-backend.loadbalancer.server.port=8000"
-    ports: !reset null
-    networks:
-      - gn
+
   geonature-frontend:
-    environment:
-      - NGINX_LOCATION="${GEONATURE_FRONTEND_PREFIX}"
-      - API_ENDPOINT="${GEONATURE_API_ENDPOINT}"
+    ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
-      - "traefik.http.routers.geonature.entrypoints=websecure"
-      - "traefik.http.routers.geonature.tls.certResolver=acme-resolver"
-      - "traefik.http.services.geonature.loadbalancer.server.port=80"
-    ports: !reset null
-    networks:
-      - gn
+      - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX}`)"
+      - "traefik.http.routers.geonature-frontend.entrypoints=web"
+      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=80"
 
   usershub:
+    ports: !reset []
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX}`)"
-      - "traefik.http.routers.usershub.entrypoints=websecure"
-      - "traefik.http.routers.usershub.tls.certResolver=acme-resolver"
+      - "traefik.http.routers.usershub.entrypoints=web"
       - "traefik.http.services.usershub.loadbalancer.server.port=5001"
-    networks:
-      - gn

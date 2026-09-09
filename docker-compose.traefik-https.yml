@@ -1,0 +1,29 @@
+services:
+  traefik:
+    volumes:
+      - ./data/traefik/certs:/etc/traefik/certs
+    environment:
+      # EntryPoints
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: "websecure"
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: "https"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: ":${TRAEFIK_HTTPS_PORT:-443}"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS: "true"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_CERTRESOLVER: "acme-resolver"
+      # Certificates
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_STORAGE: "/etc/traefik/certs/acme_json"
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_EMAIL: "${ACME_EMAIL}"
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_TLSCHALLENGE: "true"
+    ports:
+      - ${TRAEFIK_HTTPS_PORT:-443}:${TRAEFIK_HTTPS_PORT:-443}
+
+  geonature-backend:
+    labels:
+      - "traefik.http.routers.geonature-backend.entrypoints=websecure"
+
+  geonature-frontend:
+    labels:
+      - "traefik.http.routers.geonature-frontend.entrypoints=websecure"
+
+  usershub:
+    labels:
+      - "traefik.http.routers.usershub.entrypoints=websecure"
