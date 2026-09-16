@@ -8,25 +8,18 @@ services:
       # Observability
       TRAEFIK_LOG_LEVEL: "INFO"
       TRAEFIK_ACCESSLOG: "${TRAEFIK_ACCESS_LOG:-true}"
-      # Dashboard
-      TRAEFIK_API_DASHBOARD: "true"
       # Providers
       TRAEFIK_PROVIDERS_DOCKER: "true"
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
       # EntryPoints
-      TRAEFIK_ENTRYPOINTS_DASHBOARD_ADDRESS: ":${TRAEFIK_DASHBOARD_PORT:-8080}"
       TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":${TRAEFIK_HTTP_PORT:-80}"
     volumes:
       - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
       - ./config/traefik/dynamic:/dynamic
     ports:
-      - ${TRAEFIK_DASHBOARD_PORT:-8080}:${TRAEFIK_DASHBOARD_PORT:-8080}
       - ${TRAEFIK_HTTP_PORT:-80}:${TRAEFIK_HTTP_PORT:-80}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
-      - "traefik.http.routers.dashboard.entrypoints=dashboard"
-      - "traefik.http.routers.dashboard.service=api@internal"
 
   geonature-backend:
     ports: !reset []

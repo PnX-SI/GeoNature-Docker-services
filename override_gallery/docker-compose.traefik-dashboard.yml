@@ -1,0 +1,17 @@
+services:
+  traefik:
+    environment:
+      # Dashboard
+      TRAEFIK_API_DASHBOARD: "true"
+      TRAEFIK_API_INSECURE: "false"  # to enable SSL on the dashboard
+      # EntryPoints
+      TRAEFIK_ENTRYPOINTS_DASHBOARD_ADDRESS: ":${TRAEFIK_DASHBOARD_PORT:-8080}"
+    ports:
+      - ${TRAEFIK_DASHBOARD_PORT:-8080}:${TRAEFIK_DASHBOARD_PORT:-8080}
+    labels:
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=dashboard"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      # To add authentication to access the dashboard:
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD}"
