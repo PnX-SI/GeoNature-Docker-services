@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    environment:
+      TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
+      POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
+      POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB:-geonature2db}",
+          "-U",
+          "${POSTGRES_USER:-geonatadmin}",
+          "-h",
+          "localhost",
+          "-p",
+          "5432",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-install-db:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-worker:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres:
