@@ -89,7 +89,7 @@ services:
       postgres:
         condition: service_healthy
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     volumes:
       - ./config/usershub:/dist/config/
     ports:
@@ -106,10 +106,16 @@ services:
 
   geonature-install-db:
     <<: *geonature-backend-defaults
-    command: "geonature permissions supergrant --yes ${GEONATURE_SUPERGRANT_ARGS:---help}"
+    command: [ "sleep", "infinity"]
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 1s
+      timeout: 1s
+      retries: 99999
     environment:
       <<: *geonature-backend-env
       GEONATURE_SKIP_POPULATE_DB: false
+      GEONATURE_SUPERGRANT_ARGS: ${GEONATURE_SUPERGRANT_ARGS:-}
       srid_local: ${GEONATURE_DB_LOCAL_SRID}
       add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
       install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
@@ -124,7 +130,7 @@ services:
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     command:
       [
         "celery", "-A", "geonature.celery_app:app", "worker", "--beat",
@@ -137,7 +143,7 @@ services:
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     ports:
       - ${GEONATURE_BACKEND_PORT}:8000
 
