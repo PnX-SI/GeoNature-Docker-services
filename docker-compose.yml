@@ -16,9 +16,9 @@ x-env: &env
 x-geonature-backend-env: &geonature-backend-env
   <<: *env
   GEONATURE_SKIP_POPULATE_DB: true
-  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
-  GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION}
-  GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
+  GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION?}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
   GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
@@ -59,7 +59,7 @@ services:
       <<: *env
       POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
       POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?}
     volumes:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
@@ -93,11 +93,11 @@ services:
     volumes:
       - ./config/usershub:/dist/config/
     ports:
-      - ${USERSHUB_PORT}:5001
+      - ${USERSHUB_PORT?}:5001
     environment:
       <<: *env
-      USERSHUB_URL_APPLICATION: "${USERSHUB_URL_APPLICATION}"
-      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
+      USERSHUB_URL_APPLICATION: "${USERSHUB_URL_APPLICATION?}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:-geonatadmin}:${POSTGRES_PASSWORD?}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-geonature2db}
       USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
       USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
@@ -116,7 +116,7 @@ services:
       <<: *geonature-backend-env
       GEONATURE_SKIP_POPULATE_DB: false
       GEONATURE_SUPERGRANT_ARGS: ${GEONATURE_SUPERGRANT_ARGS:-}
-      srid_local: ${GEONATURE_DB_LOCAL_SRID}
+      srid_local: ${GEONATURE_DB_LOCAL_SRID?}
       add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
       install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
       install_sig_layers: ${GEONATURE_DB_INSTALL_SIG_LAYERS:-true}
@@ -145,17 +145,17 @@ services:
       geonature-install-db:
         condition: service_healthy
     ports:
-      - ${GEONATURE_BACKEND_PORT}:8000
+      - ${GEONATURE_BACKEND_PORT?}:8000
 
   geonature-frontend:
     <<: *restart-policy
     image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}
     ports:
-      - ${GEONATURE_FRONTEND_PORT}:4200
+      - ${GEONATURE_FRONTEND_PORT?}:4200
     environment:
       <<: *env
       GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
-      API_ENDPOINT: ${GEONATURE_API_ENDPOINT}
+      API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
 
 volumes:
   redis:
