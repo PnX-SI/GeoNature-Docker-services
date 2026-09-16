@@ -1,10 +1,7 @@
 name: CI - Docker Compose
 
 on:
-  workflow_run:
-    workflows: [Docker]
-    types:
-      - completed
+  push:
     branches:
       - main
       - develop
@@ -12,57 +9,75 @@ on:
     branches:
       - main
       - develop
+
 jobs:
   test-docker-compose:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    name: "traefik=${{ matrix.traefik }}"
     strategy:
       matrix:
-        config:
-          - name: "Traefik"
-            env_setup: "cp .env.sample .env"
-            url_frontend: "https://localhost/geonature/"
-            url_backend: "https://localhost/geonature/api/healthz"
-            expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
-
-          - name: "Essential"
-            env_setup: "cp env_examples/.env.sample.without_traefik .env"
-            url_frontend: "http://localhost/#/"
-            url_backend: "localhost:8000/geonature/api/healthz"
+        traefik: [false, true]
+        include:
+          - traefik: false
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
-
-          - name: "Minimal"
-            env_setup: "cp env_examples/.env.sample.without_db_and_usershub .env"
-            url_frontend: "http://localhost/#/"
-            url_backend: "localhost:8000/geonature/api/gn_commons/config"
-            expected_services: "geonature-backend geonature-frontend geonature-worker redis"
+            url_backend: http://localhost:8000/geonature/api/healthz
+            url_frontend: http://localhost:4200/geonature/#/
+          - traefik: true
+            expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
+            url_backend: http://localhost:8080/geonature/api/healthz
+            url_frontend: http://localhost:8080/geonature/#/
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install -y make jq git-lfs curl
+        run: sudo apt-get update && sudo apt-get install -y curl
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and start stack (${{ matrix.config.name }})
-        env:
-          GEONATURE_BACKEND_EXTRA_IMAGE: ghcr.io/pnx-si/geonature-backend-extra:${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.head_branch }}
-          GEONATURE_FRONTEND_EXTRA_IMAGE: ghcr.io/pnx-si/geonature-frontend-extra:${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.head_branch }}
+      - name: Configure compose
+        env: # FIXME: use default images
+          GEONATURE_BACKEND_IMAGE: ghcr.io/bouttier/geonature-backend-extra:develop
+          GEONATURE_FRONTEND_IMAGE: ghcr.io/bouttier/geonature-frontend-extra:develop
         run: |
-          ${{ matrix.config.env_setup }}
-          make prod > /dev/null
-          docker ps -a
+          cp .env.sample .env
+          sed -i "s|^DOCKER_UID=.*|DOCKER_UID=$(id -u)|" .env
+          sed -i "s|^DOCKER_GID=.*|DOCKER_GID=$(id -g)|" .env
+          sed  -i 's/.*\(GEONATURE_FRONTEND_PREFIX=.*\)/GEONATURE_FRONTEND_PREFIX=\/geonature/' .env
+          sed  -i 's/.*\(GEONATURE_BACKEND_PREFIX=.*\)/GEONATURE_BACKEND_PREFIX=\/geonature\/api/' .env
+          if [ "${{ matrix.traefik }}" = true ]; then
+            echo Enable traefik
+            sed -i 's/.*\(COMPOSE_FILE=.*:docker-compose.traefik.yml.*\)/\1/' .env
+            sed -i 's/.*\(TRAEFIK_HTTP_PORT=.*\)/TRAEFIK_HTTP_PORT=8080/' .env
+          else
+            echo Disable traefik
+            sed -i 's/.*\(COMPOSE_FILE=.*:docker-compose.traefik.yml.*\)/# \1/' .env
+            sed -i 's/.*\(TRAEFIK_HTTP_PORT=.*\)/# \1/' .env
+          fi
+          sed -i "s|^GEONATURE_BACKEND_IMAGE=.*|# &|" .env
+          sed -i "s|^GEONATURE_FRONTEND_IMAGE=.*|# &|" .env
+          sed -i "s|^GEONATURE_BACKEND_DEV_IMAGE=.*|# &|" .env
+          sed -i "s|^GEONATURE_FRONTEND_DEV_IMAGE=.*|# &|" .env
+          {
+            echo "GEONATURE_BACKEND_IMAGE=\"${GEONATURE_BACKEND_IMAGE}\""
+            echo "GEONATURE_FRONTEND_IMAGE=\"${GEONATURE_FRONTEND_IMAGE}\""
+            echo "GEONATURE_BACKEND_DEV_IMAGE=\"${GEONATURE_BACKEND_IMAGE}\""
+            echo "GEONATURE_FRONTEND_DEV_IMAGE=\"${GEONATURE_FRONTEND_IMAGE}\""
+          } >> .env
+          echo "----- .env -----"
+          cat .env
+          echo "----- docker compose config -----"
+          docker compose config
+
+      - name: Start stack
+        run: |
+          ./init-config.sh
+          docker compose up -d
 
       - name: Wait for services to be running
         run: |
           MAX_RETRIES=5
           RETRY_INTERVAL=10
-          EXPECTED_SERVICES="${{ matrix.config.expected_services }}"
+          EXPECTED_SERVICES="${{ matrix.expected_services }}"
 
           echo "Expected services: $EXPECTED_SERVICES"
 
@@ -115,8 +130,8 @@ jobs:
           SLEEP_TIME=10
           for i in $(seq 1 $MAX_ATTEMPTS); do
             echo "Attempt $i/$MAX_ATTEMPTS - Testing GeoNature availability..."
-            if curl --insecure --fail --silent ${{ matrix.config.url_frontend }} && \
-               curl --insecure --fail --silent ${{ matrix.config.url_backend }}; then
+            if curl --insecure --fail --silent "${{ matrix.url_frontend }}" && \
+               curl --insecure --fail --silent "${{ matrix.url_backend }}"; then
               echo "✅ GeoNature is ready!"
               exit 0
             fi
@@ -124,8 +139,41 @@ jobs:
             sleep $SLEEP_TIME
           done
           echo "🚨 GeoNature failed to become available after $MAX_ATTEMPTS attempts"
-          docker compose logs
           exit 1
+
+      - name: Collect diagnostics
+        if: always()
+        run: |
+          mkdir -p logs
+          docker compose ps -a --format json > logs/compose-ps.json 2>&1 || true
+          docker compose ps -a > logs/compose-ps.txt 2>&1 || true
+          docker compose config  > logs/compose-config.yml 2>&1 || true
+          # Save aggregated logs
+          docker compose logs --no-color --timestamps --tail=all > logs/compose-logs.txt 2>&1 || true
+          # Save per-service logs
+          for id in $(docker compose ps -aq 2>/dev/null); do
+            name=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.service" }}' "$id" 2>/dev/null || docker inspect --format '{{ .Name }}' "$id" 2>/dev/null | sed 's|^/||')
+            [ -z "$name" ] && name="$id"
+            docker logs --timestamps "$id" > "logs/${name}.log" 2>&1 || true
+          done
+          # Save env files
+          for file in .env geonature-backend.env usershub.env geonature-frontend.env; do
+            [ -f "$file" ] && cp "$file" "logs/$file" || true
+          done
+          echo "----- docker compose ps -a -----"
+          docker compose ps -a
+          echo "----- docker compose logs -----"
+          docker compose logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs-traefik=${{ matrix.traefik }}
+          path: logs/
+          retention-days: 7
+          if-no-files-found: warn
+          include-hidden-files: true
 
       - name: Tear down
         if: always()
