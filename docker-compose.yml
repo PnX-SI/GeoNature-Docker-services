@@ -56,6 +56,8 @@ services:
     depends_on:
       geonature-install-db:
         condition: service_healthy
+    profiles:
+      - usershub
     volumes:
       - ./config/usershub:/dist/config/
     ports:
