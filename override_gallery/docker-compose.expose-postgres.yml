@@ -1,0 +1,4 @@
+services:
+  postgres:
+    ports:
+      - ${POSTGRES_EXPOSED_PORT:-5432}:${POSGRES_PORT:-5432}
