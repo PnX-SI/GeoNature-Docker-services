@@ -20,7 +20,7 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
 
 1. **Installation de Docker** ([Voir la documentation](https://docs.docker.com/engine/install/))
 2. **Ajout de votre utilisateur courant au groupe `docker`**
-   - Ajouter votre utilisateur courant dans le groupe docker : `sudo usermod -aG docker $USER`
+   - Ajouter votre utilisateur courant dans le groupe docker : `sudo usermod -aG docker USER`
    - Réouvrir sa session Linux pour appliquer les changements
    - Plus d'infos sur la [documentation officielle](https://docs.docker.com/engine/install/linux-postinstall)
 
@@ -36,15 +36,22 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
 7. **Changement des variables de configurations obligatoires dans le fichier `.env`**. Les variables obligatoires sont les suivantes :
    - `GEONATURE_DB_LOCAL_SRID` : Code des projections des géométries stockées dans GeoNature (par défaut 2154)
    - `POSTGRES_PASSWORD` : Mot de passe de la base de données [PostgreSQL](https://www.postgresql.org/)
-   - `TRAEFIK_PASSWORD` : Mot de passe de l'instance [Traefik](https://doc.traefik.io/traefik/)
-   - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
-   - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
+   - `UID` et `GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `UID` et `id -g` pour récupérer la valeur pour `GID`
+   - `COMPOSE_FILE` : Indique les fichiers compose que vous souhaitez utiliser.
+    - `docker-compose.postgres.yml` : À désactiver pour utiliser une base de données externe (voir section dédiée).
+    - `docker-compose.traefik.yml` : À activer pour utiliser traefik et servir GeoNature et UsersHub derrière un même port. Dans ce cas, vous devez renseigner également `TRAEFIK_HTTP_PORT` (laisser vide pour utiliser le port 80, mais la variable doit être impérativement définie), `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX`.
+    - `docker-compose.traefik-https.yml` : À activer pour que traefik écoute également en HTTPS. Dans ce cas vous devez également renseigner `TRAEFIK_HTTPS_PORT` (laisser vide pour utiliser le port  443, mais la variable doit impérativement être définie). Vous devez également définir `ACME_EMAIL` pour que soit générer des certificats SSL valides par [Let's Encrypt](https://letsencrypt.org/fr/).
+    - `docker-compose.dev.yml`: À activer pour le développement (voir section dédiée).
 
-8. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature et UsersHub respectivement dans les fichiers suivants :
+- Pour éviter les mise à jour inattendues, il est recommandé de décommenter les variables `GEONATURE_BACKEND_IMAGE`, `GEONATURE_FRONTEND_IMAGE` et `USERSHUB_IMAGE` et de remplacer `latest` par le numéro de version à utiliser.
+
+  Vous pouvez à tout moment vérifier la configuration finale avec `docker compose config`.
+
+1. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature et UsersHub respectivement dans les fichiers suivants :
    - `config/geonature/geonature_config.toml`
    - `config/usershub/config.py`
 
-9. **Lancer la création des conteneurs Docker** : `docker compose up -d`
+2. **Lancer la création des conteneurs Docker** : `docker compose up -d`
 
 ## Accéder aux logs
 
@@ -53,6 +60,12 @@ Les logs de tous les services sont accessibles avec la commande `docker compose 
 Pour n'afficher que les 100 dernières lignes, on utilise l'option `--tail 100` et donc la commande `docker compose logs -f --tail 100`.
 
 Pour n'afficher les logs que d'un service en particulier, on utilise la commande `docker compose logs -f <nom du service>`.
+
+## Exécuter la commande `geonature`
+
+Utilisez `docker compose exec -it geonature-backend /entrypoint.sh geonature --help`
+
+Pour faciliter l’accès à la commande `geonature`, vous pouvez utiliser [`direnv`](https://direnv.net/). Une fois installé, lancé `direnv allow` dans le dossier GeoNature-Docker-services. Le dossier `bin` sera alors automatiquement ajouter à votre `PATH` lorsque vous rentrez dans le dossier, et vous pourrez alors exécuter la commande `geonature` directement.
 
 ## Les services
 
@@ -85,26 +98,30 @@ SI, plusieurs scénarios sont possibles.
 
 #### Reverse Proxy externe
 
-Si vous voulez utiliser votre propre Reverse Proxy (Nginx, Traefik ...), il est possible de déployer GeoNature sans Traefik.
+Si vous voulez utiliser votre propre Reverse Proxy (Apache, Nginx, ...), vous pouvez au choix :
 
-Les configurations spécifiques à Traefik ont été déportées dans le fichier compose `docker-compose.traefik.yml`. Si on veut s'en passer, il faut modifier la variable `COMPOSE_FILE` du `.env`
-pour qu'elle n'utilise que le fichier `docker-compose.essential.yml` : `COMPOSE_FILE=docker-compose.essential.yml`.
+- Utiliser Traefik en HTTP sur le port par exemple 8080 :
+  - `COMPOSE_FILE` doit contenir `docker-compose.traefik.yml` mais pas `docker-compose.traefik-https.yml`
+  - Définisez `TRAEFIK_HTTP_PORT=8080` (et assurez-vous que `TRAEFIK_HTTPS_PORT` soit commenté)
+  - Assurez vous que `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX` vous convienne
+  - Votre Reverse Proxy doit transmettre le trafic de votre domaine vers `http://127.0.0.1:8080`.
+  - TODO: Traefik doit truster le Reverse Proxy pour présenter la bonne IP de l’utilisateur
 
-Prenez soin de renseigner les variables d'environnement spécifiques à une utilisation hors Traefik (signalées par la mention "_If you don't use traefik_").
+- Désactiver complétement Traefik :
+  - `COMPOSE_FILE` ne doit contenir ni `docker-compose.traefik.yml`, ni `docker-compose.traefik-https.yml`, et les variables correspondantes doivent être commentées.
+  - Votre Reverse Proxy doit alors transmettre :
+    - `/api` vers `http://127.0.0.1:8000/api` (configurable via `GEONATURE_BACKEND_PREFIX` et `GEONATURE_BACKEND_PORT`)
+    - `/usershub` vers `http://127.0.0.1:5001/usershub` (configurable via `USERSHUB_PREFIX` et `USERSHUB_PORT`)
+    - `/` vers `http://127.0.0.1:4200` (configurable via `GEONATURE_FRONTEND_PREFIX` et `GEONATURE_FRONTEND_PORT`)
 
 #### Base de données déportée
 
-Si vous préférez stocker les données dans un SGBD externe, vous devrez enlever le profil `db` de la variable
-d'environnement `COMPOSE_PROFILES`. Il faudra ensuite renseigner les informations de connexion à votre base de données
-dans le `.env` (voir `POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`).
-
-> [!INFO]
-> Si vous voulez que les mises à jour de la base de données soient effectuées à chaque lancement de la stack Docker, ajouter le profil `install-db` dans `COMPOSE_PROFILES`.
+Si vous préférez stocker les données dans un SGBD externe, vous devez enlevez `docker-compose.postgres.yml` de la variable `COMPOSE_FILE`.
+Il faudra ensuite renseigner les informations de connexion à votre base de données à travers les variables suivantes : `POSTGRES_HOST`, `POSTGRES_PORT` (si différent de 5432), `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`.
 
 #### Service UsersHub déjà existant
 
-Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable
-d'environnement `COMPOSE_PROFILES`.
+Si pour d'autres besoins, vous disposez déjà d'un service UsersHub, vous devrez enlever le profil `usershub` de la variable `COMPOSE_PROFILES`.
 
 ## Configuration
 
@@ -127,7 +144,7 @@ Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules
 Vous pouvez personnaliser la [politique de redémarrage automatique des services](https://github.com/compose-spec/compose-spec/blob/master/spec.md#restart) en paramétrant la variable `RESTART_POLICY` du fichier `.env` (valeur par défaut: `unless-stopped`)
 
 Il est aussi possible de personnaliser son installation en créant un fichier d'override de docker compose. Pour le détail
-de fonctionnement, voir [la section Surcharger son installation](#override).
+de fonctionnement, voir la section [Surcharger son installation](#override).
 
 ### Dossiers de configuration et de customisation
 
@@ -137,44 +154,22 @@ de fonctionnement, voir [la section Surcharger son installation](#override).
 
 ### Configuration par variable d’environnement
 
-Les applications peuvent être configurées par des variables d’environnement préfixées respectivement par `GEONATURE_` et `USERSHUB_` (voir [from_prefix_env](https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env)).  
-Ces variables d’environnement doivent être renseignées directement dans le fichier `docker-compose.yml`, bien que certaines variables sont définies à partir d’une variable du même nom en provenance du fichier `.env`.
+Les applications peuvent être configurées par des variables d’environnement préfixées respectivement par `GEONATURE_` et `USERSHUB_` (voir [from_prefix_env](https://flask.palletsprojects.com/en/2.2.x/api/#flask.Config.from_prefixed_env)).
+Si vous souhaitez définir de nouvelles variables d’environnement, il est recommandé de les définir dans un fichier `docker-compose.override.yml` (voir [Surcharger son installation](#override)).
 
 ## Mettre à jour GeoNature et ses modules
 
-Pour récupérer la dernière version de GeoNature-docker-services :
-
-1. Vérifiez si la [dernière version disponible](https://github.com/PnX-SI/GeoNature-Docker-services/releases) correspond aux versions des applications que vous souhaitez mettre à jour
-2. Placez vous dans le dossier `GeoNature-Docker-services` de votre serveur
-3. Mettez à jour le contenu du dossier dans sa dernière version : `git fetch && git checkout <numéro de version>`
-4. Pour télécharger les nouvelles images et relancer la stack, il suffit de lancer la commande suivante : `docker compose pull && docker compose up -d --remove-orphans`
-
->[!WARNING]
-> La variable `SKIP_POPULATE_DB` doit être à `false` pour appliquer les modifications de base de données provenant de la nouvelle version.
-
->[!NOTE]
-> Avec chaque release de GeoNature-docker-services, la version de l'image GeoNature est systématiquement modifiée dans le fichier `docker-compose.essential.yml`.
-
->[!NOTE]
-> Pour fixer la version de GeoNature, vous pouvez modifier les variables `GEONATURE_BACKEND_EXTRA_IMAGE`, `GEONATURE_FRONTEND_EXTRA_IMAGE`, et de UsersHub dans `USERSHUB_IMAGE` dans votre fichier `.env`. Par exemple, pour utiliser la version 2.15.3, effectuez les modifications suivantes :
->
-  >```env
-  >
-  >USERSHUB_IMAGE="ghcr.io/pnx-si/usershub:2.4.4"
-  >[...]
-  >GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra:2.15.3"
-  >[...]
-  >GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
-  >```
+1. Éditez le tag des variables `GEONATURE_BACKEND_IMAGE`, `GEONATURE_FRONTEND_IMAGE` et `USERSHUB_IMAGE`. Si vous n’avez pas définie ces variables, ou si vous utilisez le tag `latest` (par défaut), vous devez explicitement demander à docker de mettre à jour les images : `docker compose pull`
+2. Relancer les services : `docker compose up -d`
 
 ## Monitoring
 
 ### Installer un sous-module
 
-1. Déposer le dossier contenant la configuration du protocole dans `data/geonature/media/monitorings/`. Par exemple :
+1. Déposer le dossier contenant la configuration du protocole dans `data/geonature/media/monitorings/`. Par exemple, lorsque vous avez récupéré le dépôt [protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi/) :
 
    ```sh
-   cp -r protocole_suivi/chiro data/geonature/media/monitorings/chiro
+   cp -r protocoles_suivi/chiro data/geonature/media/monitorings/chiro
    ```
 
 2. Lancer l'installation du sous-module avec la commande :
@@ -197,19 +192,22 @@ suivre la [documentation du module Monitoring](https://github.com/PnX-SI/gn_modu
 En fonction de l'environnement dans lequel vous déployez, il est possible que vous soyez amené à vouloir modifier le
 fichier `docker-compose.yml` afin de personnaliser le comportement de GDS. Afin de pouvoir mettre à jour votre repo, il
 est fortement conseillé de passer par un fichier d'override (voir [documentation docker compose sur les overrides](https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/)).
-Pour cela, vous pouvez créer un docker compose qui contient les modifications que vous souhaitez apporter à la stack et l'ajouter à votre variable d'environnement
+Pour cela, vous pouvez créer un fichier `docker-compose.override.yml` qui contient les modifications que vous souhaitez apporter à la stack et l'ajouter à votre variable d'environnement
 `COMPOSE_FILE` (voir [documentation docker](https://docs.docker.com/compose/how-tos/environment-variables/envvars/#compose_file))
+
+Vous pouvez vérifier après modification de votre `.env` ou de votre fichier `docker-compose.override.yml` la configuration effective de docker compose avec la commande `docker compose config`.
 
 Plusieurs exemples de surcharge sont disponibles dans le dossier `override_gallery`. Ce dossier contient des fichiers `compose.yml` testés
 pour une version précise de GDS et permettant de modifier la configuration de GDS ou de déployer des services supplémentaires.
 
 ## Lancer plusieurs instances de GDS sur le même serveur
 
-Il existe de multiples façons de lancer plusieurs instances de GDS sur le même serveur.
+Il existe de multiples façons de lancer plusieurs instances (stack) de GDS sur le même serveur. Dans tous les cas, assurez-vous de définir dans votre `.env` la variable `COMPOSE_PROJECT_NAME` à des valeurs distincts pour chaque instance.
 
-En mode traefik, une méthode est présentée dans `override_gallery/docker-compose.additional_stack.yml`. Cette methode attribut un dossier
-à chaque instance de GDS, ce qui permet de les identifier facilement et évite les erreurs. C'est une implémentation assez
-simple, selon les contraintes de votre système, il est conseillé de l'adapter.
+- Pour des instances de développement, vous pouvez lancer Traefik sur des ports distincts en utilisant différentes valeurs pour la variable `TRAEFIK_HTTP_PORT`.
+- Pour la production, vous ne pouvez nécessairement avoir qu’un seul serveur web en écoute sur les ports 80 et 443. Dans ce cas, vous pouvez :
+  - Utilisez un Reverse Proxy externe. Lancer vos deux stacks avec Traefik en HTTP sur deux ports distincts, et utilisez votre Reverse Proxy pour rediriger le trafic sur l’une ou l’autre stack.
+  - Activer Traefik uniquement sur votre première stack. Pour l’ensemble des stacks, utilisez le fichier `override_gallery/docker-compose.additional_stack.yml`. Celui permet d’éviter les conflits de label entre les différentes stacks. Par ailleur, pour la première stack qui fait tourner Traefik, celui-ci supprime le filtre le limitant à sa propre stack afin qu’il serve également les services des autres stacks.
 
 ## FAQ
 
@@ -217,27 +215,22 @@ Pour en savoir plus (lancer des commandes `geonature`, accéder à la BDD, inté
 
 Pour des informations spécifiques sur le mode développement, voir la section [Lancer une instance de développement](#dev) et sa propre [FAQ de développement](docs/dev-faq.md).
 
-## Images Docker publiées
-
-Une action Github permet la publication automatique d'images Docker frontend et backend de GeoNature sur [les packages du dépôt](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature-Docker-services) :
-
-- `ghcr.io/pnx-si/geonature-frontend-extra`
-- `ghcr.io/pnx-si/geonature-backend-extra`
-
-Ces images sont le pendant de [celles publiées sur le dépôt de GeoNature](https://github.com/orgs/PnX-SI/packages?repo_name=GeoNature) mais contiennent en supplément les modules externes pré-cités en introduction.
-
 ## <a name="dev"></a> Lancer une instance de développement
 
-Commencez par vous assurer d'avoir installé make, jq et git-lfs `sudo apt install make jq git-lfs openssl`.
+1. Commencez par vous assurer d'avoir installé make, jq et git-lfs : `sudo apt install make jq git-lfs openssl`.
 
-Il faut ensuite, dans votre fichier `.env`, décommenter les lignes de l'environnement de dev.
+1. Initialisez le sous-module `GeoNature-extra` :
 
-Une fois cela fait, il ne vous reste plus qu'à lancer `make submodule_init`, `make build_images` suivi de `make dev`.
-Il est déconseillé de lancer avec la commande `docker compose up -d` car si vous mettez à jour le projet GeoNature,
-cela ne fonctionnera pas sans relancer `make dev_init`.
-Le premier lancement peut mettre quelques dizaines de minutes le temps de build les images.
+    ```
+   git submodule update --init --recursive --depth 1 --remote
+   ```
 
-Vous pouvez accéder à votre GeoNature à l'adresse <https://localhost/geonature> et au proxy traefik <http://localhost:8080/>.
+1. Vous pouvez à présent entrer dans le dossier `GeoNature-extra` et consulter son README afin de suivre la procédure de création des images. En théorie, celle-ci se résume à lancer `make docker-dev`. Vous pouvez visualiser le nom des images produites avec la commande `make docker-list-images`.
+1. Dans votre fichier `.env`, ajouter `docker-compose.dev.yml` à `COMPOSE_FILE`.
+1. Vérifiez le nom des images et leur tag dans les variables `GEONATURE_BACKEND_IMAGE` et `GEONATURE_FRONTEND_IMAGE`. Attention, les tags se verrons automatiquement rajouté le suffix `-dev`.
+1. Relancer votre stack avec `docker compose up -d`
+
+Vous devez rebuild vos images de dev et relancer la stack lorsque vous modifiez notamment les dépendances Python ou node.
 
 ### Exécuter les test Cypress
 
@@ -265,8 +258,8 @@ qui est fait dans le Makefile, par exemple pour lancer cypress en headed et en s
 - [Dépôt](https://github.com/PnX-SI/GeoNature)
 - [`Dockerfile` backend](https://github.com/PnX-SI/GeoNature/blob/master/backend/Dockerfile)
 - [`Dockerfile` frontend](https://github.com/PnX-SI/GeoNature/blob/master/frontend/Dockerfile)
-- [`Dockerfile` backend-extra](./build/Dockerfile-geonature-backend)
-- [`Dockerfile` frontend-extra](./build/Dockerfile-geonature-frontend)
+- [`Dockerfile` backend-extra](ttps://github.com/PnX-SI/GeoNature-images/blob/main/Dockerfile-backend)
+- [`Dockerfile` frontend-extra](ttps://github.com/PnX-SI/GeoNature/blob/main/Dockerfile-frontend)
 
 ### UsersHub
 
