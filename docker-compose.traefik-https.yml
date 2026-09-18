@@ -1,3 +1,6 @@
+x-validation:
+  https: "${TRAEFIK_HTTPS_PORT?Error: leave empty to use port 443 but define me!}"
+
 services:
   traefik:
     volumes:
