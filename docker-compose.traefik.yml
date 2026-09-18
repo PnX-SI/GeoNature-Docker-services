@@ -7,7 +7,7 @@ services:
     environment:
       # Observability
       TRAEFIK_LOG_LEVEL: "INFO"
-      TRAEFIK_ACCESSLOG: "${TRAEFIK_ACCESS_LOG:-true}"
+      TRAEFIK_ACCESSLOG: "${TRAEFIK_ACCESS_LOG:-false}"
       # Providers
       TRAEFIK_PROVIDERS_DOCKER: "true"
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
