@@ -11,6 +11,7 @@ services:
       # Providers
       TRAEFIK_PROVIDERS_DOCKER: "true"
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS: "Label(`com.docker.compose.project`, `${COMPOSE_PROJECT_NAME}`)"
       # EntryPoints
       TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":${TRAEFIK_HTTP_PORT:-80}"
     volumes:
