@@ -20,7 +20,9 @@ x-geonature-backend-env: &geonature-backend-env
   GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
   GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
   GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
-  DATA_DIRECTORY: ${GEONATURE_CACHE_FOLDER:-/dist/geonature/cache}
+  GEONATURE_MEDIA_FOLDER: ${GEONATURE_MEDIA_FOLDER:-/dist/media}
+  GEONATURE_CUSTOM_STATIC_FOLDER: ${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+  DATA_DIRECTORY: ${GEONATURE_CACHE_FOLDER:-/dist/cache}
 
 
 x-geonature-backend-defaults: &geonature-backend-defaults
@@ -30,9 +32,9 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     <<: *geonature-depends-on-defaults
   volumes:
     - ./config/geonature:/dist/config
-    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/geonature/media}
-    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/geonature/custom}
-    - ./data/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/geonature/cache}
+    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    - ./data/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/cache}
   environment:
     <<: *geonature-backend-env
 
@@ -103,7 +105,7 @@ services:
       [
         "celery", "-A", "geonature.celery_app:app", "worker", "--beat",
         "--loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO}",
-        "--schedule-filename=/dist/geonature/cache/celerybeat-schedule.db"
+        "--schedule-filename=${GEONATURE_CACHE_FOLDER:-/dist/cache}/celerybeat-schedule.db"
       ]
 
   geonature-backend:
