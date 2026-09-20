@@ -2,29 +2,29 @@ services:
   geonature-install-db:
     image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
     volumes:
-      - ./GeoNature-extra/:/sources
+      - ./GeoNature-images/:/sources
 
   geonature-worker:
     image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
     volumes:
-      - ./GeoNature-extra/:/sources
+      - ./GeoNature-images/:/sources
 
   geonature-backend:
     image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
     volumes:
-      - ./GeoNature-extra/:/sources
+      - ./GeoNature-images/:/sources
 
   geonature-frontend:
     image: ${GEONATURE_FRONTEND_DEV_IMAGE:-${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}-dev}
     volumes:
-      - ./GeoNature-extra/GeoNature/frontend/src:/dist/geonature/src
-      - ./GeoNature-extra/GeoNature/contrib/occtax/frontend:/dist/occtax
-      - ./GeoNature-extra/GeoNature/contrib/gn_module_validation/frontend:/dist/gn_module_validation
-      - ./GeoNature-extra/GeoNature/contrib/gn_module_occhab/frontend/app:/dist/gn_module_occhab/app
-      - ./GeoNature-extra/GeoNature/contrib/gn_module_occhab/frontend/assets:/dist/gn_module_occhab/assets
-      - ./GeoNature-extra/gn_module_export/frontend/app:/dist/gn_module_export/app
-      - ./GeoNature-extra/gn_module_export/frontend/assets:/dist/gn_module_export/assets
-      - ./GeoNature-extra/gn_module_monitoring/frontend/app:/dist/gn_module_monitoring/app
-      - ./GeoNature-extra/gn_module_monitoring/frontend/assets:/dist/gn_module_monitoring/assets
+      - ./GeoNature-images/GeoNature/frontend/src:/dist/geonature/src
+      - ./GeoNature-images/GeoNature/contrib/occtax/frontend:/dist/occtax
+      - ./GeoNature-images/GeoNature/contrib/gn_module_validation/frontend:/dist/gn_module_validation
+      - ./GeoNature-images/GeoNature/contrib/gn_module_occhab/frontend/app:/dist/gn_module_occhab/app
+      - ./GeoNature-images/GeoNature/contrib/gn_module_occhab/frontend/assets:/dist/gn_module_occhab/assets
+      - ./GeoNature-images/gn_module_export/frontend/app:/dist/gn_module_export/app
+      - ./GeoNature-images/gn_module_export/frontend/assets:/dist/gn_module_export/assets
+      - ./GeoNature-images/gn_module_monitoring/frontend/app:/dist/gn_module_monitoring/app
+      - ./GeoNature-images/gn_module_monitoring/frontend/assets:/dist/gn_module_monitoring/assets
     labels:
       - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"

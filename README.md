@@ -219,13 +219,13 @@ Pour des informations spécifiques sur le mode développement, voir la section [
 
 1. Commencez par vous assurer d'avoir installé make, jq et git-lfs : `sudo apt install make jq git-lfs openssl`.
 
-1. Initialisez le sous-module `GeoNature-extra` :
+1. Initialisez le sous-module `GeoNature-images` :
 
     ```
    git submodule update --init --recursive --depth 1 --remote
    ```
 
-1. Vous pouvez à présent entrer dans le dossier `GeoNature-extra` et consulter son README afin de suivre la procédure de création des images. En théorie, celle-ci se résume à lancer `make docker-dev`. Vous pouvez visualiser le nom des images produites avec la commande `make docker-list-images`.
+1. Vous pouvez à présent entrer dans le dossier `GeoNature-images` et consulter son README afin de suivre la procédure de création des images. En théorie, celle-ci se résume à lancer `make docker-dev`. Vous pouvez visualiser le nom des images produites avec la commande `make docker-list-images`.
 1. Dans votre fichier `.env`, ajouter `docker-compose.dev.yml` à `COMPOSE_FILE`.
 1. Vérifiez le nom des images et leur tag dans les variables `GEONATURE_BACKEND_IMAGE` et `GEONATURE_FRONTEND_IMAGE`. Attention, les tags se verrons automatiquement rajouté le suffix `-dev`.
 1. Relancer votre stack avec `docker compose up -d`

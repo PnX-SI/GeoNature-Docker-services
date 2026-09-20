@@ -1,4 +1,4 @@
-[submodule "GeoNature-extra"]
-	path = GeoNature-extra
+[submodule "GeoNature-images"]
+	path = GeoNature-images
 	url = https://github.com/PnX-SI/GeoNature-images.git
   branch = develop
