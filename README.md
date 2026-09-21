@@ -102,7 +102,8 @@ Si vous voulez utiliser votre propre Reverse Proxy (Apache, Nginx, ...), vous po
 
 - Utiliser Traefik en HTTP sur le port par exemple 8080 :
   - `COMPOSE_FILE` doit contenir `docker-compose.traefik.yml` mais pas `docker-compose.traefik-https.yml`
-  - Définisez `TRAEFIK_HTTP_PORT=8080` (et assurez-vous que `TRAEFIK_HTTPS_PORT` soit commenté)
+  - Définissez `TRAEFIK_HTTP_PORT=8080`
+  - Définissez `BASE_PROTOCOL=https` (ou `http` si votre reverse proxy ne gère pas l’HTTPS) et `BASE_PORT=` (vide, sauf si port exotique différent de 80 en http ou 443 en https) 
   - Assurez vous que `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX` vous convienne
   - Votre Reverse Proxy doit transmettre le trafic de votre domaine vers `http://127.0.0.1:8080`.
   - TODO: Traefik doit truster le Reverse Proxy pour présenter la bonne IP de l’utilisateur
