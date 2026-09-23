@@ -11,6 +11,8 @@ services:
 
   geonature-backend:
     image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
+    environment:
+      PYTHONUNBUFFERED: 1
     volumes:
       - ./GeoNature-images/:/sources
 

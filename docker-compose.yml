@@ -37,6 +37,9 @@ x-geonature-backend-defaults: &geonature-backend-defaults
     - ./data/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/cache}
   environment:
     <<: *geonature-backend-env
+  env_file:
+    - path: geonature-backend.env
+      required: false
 
 services:
   redis:
@@ -73,6 +76,9 @@ services:
       USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
       USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
       USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+    env_file:
+      - path: usershub.env
+        required: false
 
   geonature-install-db:
     <<: *geonature-backend-defaults
@@ -126,6 +132,9 @@ services:
       <<: *env
       GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
       API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
+    env_file:
+      - path: geonature-frontend.env
+        required: false
 
 volumes:
   redis:
