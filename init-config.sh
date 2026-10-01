@@ -4,25 +4,32 @@
 
 set -a && source .env && set +a
 
-if [ ! -d "$GEONATURE_CONFIG_DIR" ]; then
-  mkdir -p "$GEONATURE_CONFIG_DIR"
+### CONFIG_DIR
+if [ -z "$CONFIG_DIR" ]; then
+  CONFIG_DIR="./config"
 fi
 
-if [ ! -d "$GEONATURE_DATA_DIR" ]; then
-  mkdir -p "$GEONATURE_DATA_DIR"
-  mkdir -p "$GEONATURE_DATA_DIR/custom"
-  mkdir -p "$GEONATURE_DATA_DIR/media"
+# geonature
+mkdir -p "$CONFIG_DIR/geonature"
+if [ ! -f "${CONFIG_DIR}/geonature/geonature_config.toml" ]; then
+  mkdir -p "$CONFIG_DIR/geonature"
+  echo SECRET_KEY = \"$(openssl rand -hex 16)\" >"${CONFIG_DIR}/geonature/geonature_config.toml"
 fi
 
-if [ ! -f "${GEONATURE_CONFIG_DIR}/geonature/geonature_config.toml" ]; then
-  mkdir -p "$GEONATURE_CONFIG_DIR/geonature"
-  echo SECRET_KEY = \"$(openssl rand -hex 16)\" >"${GEONATURE_CONFIG_DIR}/geonature/geonature_config.toml"
-fi
-if [ ! -f "${GEONATURE_CONFIG_DIR}/usershub/config.py" ]; then
-  mkdir -p "$GEONATURE_CONFIG_DIR/usershub"
-  echo SECRET_KEY = \"$(openssl rand -hex 16)\" >"${GEONATURE_CONFIG_DIR}/usershub/config.py"
+# usershub
+mkdir -p "$CONFIG_DIR/usershub"
+if [ ! -f "${CONFIG_DIR}/usershub/config.py" ]; then
+  echo SECRET_KEY = \"$(openssl rand -hex 16)\" >"${CONFIG_DIR}/usershub/config.py"
 fi
 
-if [ ! -d "$GEONATURE_CONFIG_DIR/traefik" ]; then
-  mkdir -p "$GEONATURE_CONFIG_DIR/traefik/certs"
+# traefik
+mkdir -p "$CONFIG_DIR/traefik/certs"
+
+### DATA_DIR
+if [ -z "$DATA_DIR" ]; then
+  DATA_DIR="./data"
 fi
+
+mkdir -p "$DATA_DIR/geonature/custom"
+mkdir -p "$DATA_DIR/geonature/media"
+mkdir -p "$DATA_DIR/geonature/cache"
