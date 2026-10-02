@@ -20,19 +20,19 @@ jobs:
         include:
           - traefik: false
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
-            url_backend: http://localhost:8000/geonature/api/healthz
-            url_frontend: http://localhost:4200/geonature/#/
+            backend_port: 8000
+            frontend_port: 4200
           - traefik: true
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
-            url_backend: http://localhost:8080/geonature/api/healthz
-            url_frontend: http://localhost:8080/geonature/#/
+            backend_port: 8080
+            frontend_port: 8080
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install -y curl
+        run: sudo apt-get update && sudo apt-get install -y curl monitoring-plugins-standard
 
       - name: Configure compose
         env: # FIXME: use default images
@@ -125,20 +125,74 @@ jobs:
           echo "Running services: $RUNNING_SERVICES"
 
       - name: Run integration tests
+        env:
+          CHECK_CURL: /usr/lib/nagios/plugins/check_curl --onredirect=curl
+          BACKEND_PORT: ${{ matrix.backend_port }}
+          BACKEND_URI: /geonature/api/healthz
+          FRONTEND_PORT: ${{ matrix.frontend_port }}
+          FRONTEND_URI: /geonature
         run: |
           MAX_ATTEMPTS=5
           SLEEP_TIME=10
+
+          check_backend() {
+            echo "--- backend check (localhost:${BACKEND_PORT}${BACKEND_URI}, expect 'OK') ---"
+             $CHECK_CURL \
+              --hostname localhost \
+              --port "$BACKEND_PORT" \
+              --url "$BACKEND_URI" \
+              --string OK
+          }
+
+          check_frontend() {
+            echo "--- frontend check (localhost:${FRONTEND_PORT}${FRONTEND_URI}, expect 'GeoNature') ---"
+            $CHECK_CURL \
+              --hostname localhost \
+              --port "$FRONTEND_PORT" \
+              --url "$FRONTEND_URI" \
+              --string GeoNature
+          }
+
+          backend_ok=0
+          frontend_ok=0
+
           for i in $(seq 1 $MAX_ATTEMPTS); do
-            echo "Attempt $i/$MAX_ATTEMPTS - Testing GeoNature availability..."
-            if curl --insecure --fail --silent "${{ matrix.url_frontend }}" && \
-               curl --insecure --fail --silent "${{ matrix.url_backend }}"; then
-              echo "✅ GeoNature is ready!"
+            echo "===== Attempt $i/$MAX_ATTEMPTS ====="
+
+            if [ "$backend_ok" -eq 0 ]; then
+              if check_backend; then
+                echo "✅ backend is up"
+                backend_ok=1
+              else
+                echo "❌ backend check failed"
+              fi
+            fi
+
+            if [ "$frontend_ok" -eq 0 ]; then
+              if check_frontend; then
+                echo "✅ frontend is up"
+                frontend_ok=1
+              else
+                echo "❌ frontend check failed"
+              fi
+            fi
+
+            if [ "$backend_ok" -eq 1 ] && [ "$frontend_ok" -eq 1 ]; then
+              echo "✅ GeoNature is ready (backend + frontend)!"
               exit 0
             fi
-            echo "❌ Services not ready yet, waiting ${SLEEP_TIME}s..."
+
+            echo "Not ready yet, waiting ${SLEEP_TIME}s..."
             sleep $SLEEP_TIME
           done
-          echo "🚨 GeoNature failed to become available after $MAX_ATTEMPTS attempts"
+
+          echo "===== Summary after $MAX_ATTEMPTS attempts ====="
+          if [ "$backend_ok" -eq 0 ]; then
+            echo "🚨 BACKEND failed"
+          fi
+          if [ "$frontend_ok" -eq 0 ]; then
+            echo "🚨 FRONTEND failed"
+          fi
           exit 1
 
       - name: Collect diagnostics
