@@ -130,6 +130,7 @@ services:
       - ${GEONATURE_FRONTEND_PORT?}:4200
     environment:
       <<: *env
+      NGINX_PORT: 4200
       GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
       API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
     env_file:

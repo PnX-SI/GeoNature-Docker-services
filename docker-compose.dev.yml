@@ -28,5 +28,3 @@ services:
       - ./GeoNature-images/gn_module_export/frontend/assets:/dist/gn_module_export/assets
       - ./GeoNature-images/gn_module_monitoring/frontend/app:/dist/gn_module_monitoring/app
       - ./GeoNature-images/gn_module_monitoring/frontend/assets:/dist/gn_module_monitoring/assets
-    labels:
-      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"

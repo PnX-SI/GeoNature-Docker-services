@@ -39,7 +39,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX?}`)"
       - "traefik.http.routers.geonature-frontend.entrypoints=web"
-      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=80"
+      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"
 
   usershub:
     ports: !reset []
