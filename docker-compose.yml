@@ -31,10 +31,10 @@ x-geonature-backend-defaults: &geonature-backend-defaults
   depends_on:
     <<: *geonature-depends-on-defaults
   volumes:
-    - ./config/geonature:/dist/config
-    - ./data/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
-    - ./data/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
-    - ./data/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/cache}
+    - ${CONFIG_DIR:-./config}/geonature:/dist/config
+    - ${DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - ${DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    - ${DATA_DIR:-./data}/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/cache}
   environment:
     <<: *geonature-backend-env
   env_file:
@@ -64,7 +64,7 @@ services:
     profiles:
       - usershub
     volumes:
-      - ./config/usershub:/dist/config/
+      - ${CONFIG_DIR:-./config}/usershub:/dist/config/
     ports:
       - ${USERSHUB_PORT?}:5001
     environment:
