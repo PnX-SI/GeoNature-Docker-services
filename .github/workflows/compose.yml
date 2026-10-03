@@ -13,11 +13,18 @@ on:
 jobs:
   test-docker-compose:
     runs-on: ubuntu-latest
-    name: "traefik=${{ matrix.traefik }}"
+    name: "geonature=${{ matrix.version }} traefik=${{ matrix.traefik }}"
     strategy:
       matrix:
+        version: ["2.17.5", "develop"]
         traefik: [false, true]
-        include:
+        include: # /!\ image_owner must be lowercase
+          - version: "2.17.5"
+            image_owner: bouttier
+            image_tag: "2.17.5-docker"
+          - version: "develop"
+            image_owner: "pnx-si"
+            image_tag: "develop"
           - traefik: false
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
             backend_port: 8000
@@ -35,9 +42,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y curl monitoring-plugins-standard
 
       - name: Configure compose
-        env: # FIXME: use default images
-          GEONATURE_BACKEND_IMAGE: ghcr.io/bouttier/geonature-backend-extra:develop
-          GEONATURE_FRONTEND_IMAGE: ghcr.io/bouttier/geonature-frontend-extra:develop
+        env:
+          GEONATURE_BACKEND_IMAGE: ghcr.io/${{ matrix.image_owner }}/geonature-backend-extra:${{ matrix.image_tag }}
+          GEONATURE_FRONTEND_IMAGE: ghcr.io/${{ matrix.image_owner }}/geonature-frontend-extra:${{ matrix.image_tag }}
         run: |
           cp .env.sample .env
           sed -i "s|^DOCKER_UID=.*|DOCKER_UID=$(id -u)|" .env
@@ -223,7 +230,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: compose-logs-traefik=${{ matrix.traefik }}
+          name: compose-logs-${{ matrix.version }}-traefik=${{ matrix.traefik }}
           path: logs/
           retention-days: 7
           if-no-files-found: warn
