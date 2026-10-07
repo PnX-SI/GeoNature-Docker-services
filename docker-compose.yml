@@ -3,6 +3,11 @@ x-restart-policy: &restart-policy
 
 x-defaults: &defaults
   user: ${DOCKER_UID:-0}:${DOCKER_GID:-0}
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
 
 x-geonature-depends-on-defaults: &geonature-depends-on-defaults
   redis:
