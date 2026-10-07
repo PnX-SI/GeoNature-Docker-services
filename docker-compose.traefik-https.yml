@@ -1,3 +1,14 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+# Ce fichier prolonge docker-compose.traefik.yml et doit être ajouté après lui dans COMPOSE_FILE.
+#
+#   TRAEFIK_HTTPS_PORT (obligatoire) — port d'écoute HTTPS de Traefik; laisser vide dans `.env`
+#       pour utiliser le port 443, mais la variable doit être définie.
+#   ACME_EMAIL — adresse email de contact utilisée par Let's Encrypt pour les certificats
+#       TLS; requise pour obtenir des certificats valides.
+###
+
 x-validation:
   https: "${TRAEFIK_HTTPS_PORT?Error: leave empty to use port 443 but define me!}"
 

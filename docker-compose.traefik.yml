@@ -1,3 +1,25 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   TRAEFIK_HTTP_PORT (obligatoire) — port d'écoute HTTP de Traefik; laisser vide dans `.env`
+#       pour utiliser le port 80, mais la variable doit être définie.
+#   TRAEFIK_ACCESS_LOG [défaut: false] — active le log d'accès de Traefik.
+#       Généralement redondant avec les logs des services eux-mêmes.
+#   COMPOSE_PROJECT_NAME — nom du projet compose; utilisé comme contrainte de label pour que
+#       Traefik ne route que les services de ce projet (défaut: nom du dossier du projet).
+#   DOCKER_SOCK [défaut: /var/run/docker.sock] — chemin du socket Docker monté en lecture seule,
+#       nécessaire au provider Docker de Traefik.
+#       Pour Docker rootless, définir par exemple à /run/user/1000/docker.sock.
+#   GEONATURE_BACKEND_HOST (obligatoire) — domaine du backend.
+#   GEONATURE_BACKEND_PREFIX (obligatoire) — chemin de base de l'API (ex: /api).
+#   GEONATURE_FRONTEND_HOST (obligatoire) — domaine du frontend.
+#   GEONATURE_FRONTEND_PREFIX (obligatoire) — chemin de base du frontend (ex: /).
+#   USERSHUB_HOST (obligatoire) — domaine de UsersHub.
+#   USERSHUB_PREFIX (obligatoire) — chemin de base d'UsersHub (ex: /usershub).
+#
+# Les variables *_HOST sont en général calculées à partir de BASE_HOST dans `.env`.
+###
+
 x-validation:
   http: "${TRAEFIK_HTTP_PORT?leave empty to use port 80 but define me!}"
 
@@ -29,7 +51,7 @@ services:
     ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX?}`)"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST?}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX?}`)"
       - "traefik.http.routers.geonature-backend.entrypoints=web"
       - "traefik.http.services.geonature-backend.loadbalancer.server.port=8000"
 
@@ -37,7 +59,7 @@ services:
     ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX?}`)"
+      - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST?}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX?}`)"
       - "traefik.http.routers.geonature-frontend.entrypoints=web"
       - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"
 
@@ -45,6 +67,6 @@ services:
     ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST}`) && PathPrefix(`${USERSHUB_PREFIX?}`)"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST?}`) && PathPrefix(`${USERSHUB_PREFIX?}`)"
       - "traefik.http.routers.usershub.entrypoints=web"
       - "traefik.http.services.usershub.loadbalancer.server.port=5001"

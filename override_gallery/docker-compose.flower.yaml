@@ -15,6 +15,15 @@
 # Testé:
 #   date: 18/05/2026
 #   version GDS: 2.17.1.2
+#
+# VARIABLES D'ENVIRONNEMENT
+#
+#   GEONATURE_CELERY__broker_url [défaut: redis://redis] — broker Celery suivi par Flower; c'est
+#       la même variable que celle utilisée par le backend et le worker (injectée en
+#       CELERY_BROKER_URL dans le conteneur).
+#   FLOWER_HOST [défaut: GEONATURE_BACKEND_HOST] — domaine de Flower.
+#   FLOWER_PREFIX [défaut: /flower] - chemin de base de Flower.
+#       Par défaut, Flower est accessible à https://<GEONATURE_BACKEND_HOST>/flower.
 ###
 
 services:

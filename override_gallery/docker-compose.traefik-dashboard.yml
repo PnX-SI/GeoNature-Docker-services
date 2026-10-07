@@ -1,3 +1,13 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   TRAEFIK_DASHBOARD_PORT [défaut: 8080] — port d'écoute du dashboard.
+#   TRAEFIK_USER — identifiant de l'authentification basic du dashboard.
+#   TRAEFIK_PASSWORD — hash htpasswd du mot de passe, pas le mot de passe en clair
+#       (générer avec `openssl passwd -apr1`). Les deux variables sont utilisées ensemble dans le
+#       middleware basicauth; les définir toutes les deux.
+###
+
 services:
   traefik:
     environment:

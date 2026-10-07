@@ -1,3 +1,15 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   POSTGRES_IMAGE [défaut: postgis/postgis:18-3.6] — image PostgreSQL/PostGIS utilisée.
+#   RESTART_POLICY [défaut: unless-stopped] — politique `restart:` du service postgres.
+#   TIMEZONE [défaut: Europe/Paris] — fuseau horaire (TZ) du conteneur, pour dater les logs.
+#   POSTGRES_DB [défaut: geonature2db] — nom de la base créée au premier démarrage.
+#   POSTGRES_USER [défaut: geonatadmin] — utilisateur PostgreSQL créé au premier démarrage.
+#   POSTGRES_PASSWORD [défaut: vide] — mot de passe PostgreSQL; /!\ doit être renseigné avant le
+#       premier démarrage car la base n'est initialisée qu'une seule fois.
+###
+
 services:
   postgres:
     image: ${POSTGRES_IMAGE:-postgis/postgis:18-3.6}

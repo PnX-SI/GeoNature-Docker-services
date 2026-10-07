@@ -29,6 +29,14 @@
 # Testé :
 #   date: 18/05/2026
 #   version GDS: 2.17.1.2
+#
+# VARIABLES D'ENVIRONNEMENT
+#
+#   COMPOSE_PROJECT_NAME — nom du projet compose; utilisé comme contrainte de label pour que
+#       Traefik ne route que les services de ce projet (défaut: nom du dossier du projet).
+#       ⚠️ Doit impérativement être différent d’une stack à l’autre.
+#
+#   Pour les autres variables, voir docker-compose.traefik.yml
 ###
 
 services:

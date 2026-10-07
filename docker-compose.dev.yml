@@ -1,3 +1,14 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   GEONATURE_BACKEND_DEV_IMAGE [défaut: ${GEONATURE_BACKEND_IMAGE}-dev] — image de développement du backend.
+#   GEONATURE_BACKEND_IMAGE [défaut: ghcr.io/pnx-si/geonature-backend-extra:latest] — image de prod du backend,
+#       production servant de base au nom d'image de dev si GEONATURE_BACKEND_DEV_IMAGE est absente.
+#   GEONATURE_FRONTEND_DEV_IMAGE [défaut: ${GEONATURE_FRONTEND_IMAGE}-dev] — image de développement du frontend.
+#   GEONATURE_FRONTEND_IMAGE [défaut: ghcr.io/pnx-si/geonature-frontend-extra:latest] — image de
+#       production servant de base au nom d'image de dev si GEONATURE_FRONTEND_DEV_IMAGE est absente.
+###
+
 services:
   geonature-install-db:
     image: ${GEONATURE_BACKEND_DEV_IMAGE:-${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}-dev}
