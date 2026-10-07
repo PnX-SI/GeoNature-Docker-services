@@ -1,3 +1,10 @@
+###
+# Ce fichier d’override permet de sauter l’installation / la mise à jour de la base de données
+# au démarrage de la stack. Normalement pas utile, le service geonature-install-db redémarrant
+# uniquement lors d’une évolution de l’image Docker du backend ou de la modification de
+# paramètre d’environment.
+###
+
 services:
   geonature-install-db:
     environment:
