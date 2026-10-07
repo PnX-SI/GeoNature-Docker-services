@@ -27,6 +27,6 @@ services:
         - geonature-worker
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.flower.rule=Host(`${GEONATURE_BACKEND_HOST}`) && PathPrefix(`/flower`)"
+        - "traefik.http.routers.flower.rule=Host(`${FLOWER_HOST:-${GEONATURE_BACKEND_HOST}}`) && PathPrefix(`${FLOWER_PREFIX:-/flower}`)"
         - "traefik.http.routers.flower.entrypoints=websecure"
         - "traefik.http.services.flower.loadbalancer.server.port=5555"
