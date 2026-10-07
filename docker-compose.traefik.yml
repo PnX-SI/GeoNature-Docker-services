@@ -5,6 +5,9 @@
 #       pour utiliser le port 80, mais la variable doit être définie.
 #   TRAEFIK_ACCESS_LOG [défaut: false] — active le log d'accès de Traefik.
 #       Généralement redondant avec les logs des services eux-mêmes.
+#   TRAEFIK_ENTRYPOINT [défaut: web] - entrypoint à utiliser pour le backend, le frontend et usershub.
+#       Normalement définie dans .env à web, ou websecure si TRAEFIK_HTTPS_PORT est définie,
+#       auquel cas il faut également utiliser docker-compose.traefik-https.yml.
 #   COMPOSE_PROJECT_NAME — nom du projet compose; utilisé comme contrainte de label pour que
 #       Traefik ne route que les services de ce projet (défaut: nom du dossier du projet).
 #   DOCKER_SOCK [défaut: /var/run/docker.sock] — chemin du socket Docker monté en lecture seule,
@@ -52,7 +55,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST?}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX?}`)"
-      - "traefik.http.routers.geonature-backend.entrypoints=web"
+      - "traefik.http.routers.geonature-backend.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
       - "traefik.http.services.geonature-backend.loadbalancer.server.port=8000"
 
   geonature-frontend:
@@ -60,7 +63,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST?}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX?}`)"
-      - "traefik.http.routers.geonature-frontend.entrypoints=web"
+      - "traefik.http.routers.geonature-frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
       - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"
 
   usershub:
@@ -68,5 +71,5 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST?}`) && PathPrefix(`${USERSHUB_PREFIX?}`)"
-      - "traefik.http.routers.usershub.entrypoints=web"
+      - "traefik.http.routers.usershub.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
       - "traefik.http.services.usershub.loadbalancer.server.port=5001"
