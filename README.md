@@ -65,7 +65,7 @@ Pour n'afficher les logs que d'un service en particulier, on utilise la commande
 
 Utilisez `docker compose exec -it geonature-backend /entrypoint.sh geonature --help`
 
-Pour faciliter l’accès à la commande `geonature`, vous pouvez utiliser [`direnv`](https://direnv.net/). Une fois installé, lancé `direnv allow` dans le dossier GeoNature-Docker-services. Le dossier `bin` sera alors automatiquement ajouter à votre `PATH` lorsque vous rentrez dans le dossier, et vous pourrez alors exécuter la commande `geonature` directement.
+Pour faciliter l’accès à la commande `geonature`, vous pouvez utiliser [`direnv`](https://direnv.net/). Une fois installé, lancez `direnv allow` dans le dossier GeoNature-Docker-services. Le dossier `bin` sera alors automatiquement ajouter à votre `PATH` lorsque vous rentrez dans le dossier, et vous pourrez alors exécuter la commande `geonature` directement.
 
 ## Les services
 
@@ -103,7 +103,7 @@ Si vous voulez utiliser votre propre Reverse Proxy (Apache, Nginx, ...), vous po
 - Utiliser Traefik en HTTP sur le port par exemple 8080 :
   - `COMPOSE_FILE` doit contenir `docker-compose.traefik.yml` mais pas `docker-compose.traefik-https.yml`
   - Définissez `TRAEFIK_HTTP_PORT=8080`
-  - Définissez `BASE_PROTOCOL=https` (ou `http` si votre reverse proxy ne gère pas l’HTTPS) et `BASE_PORT=` (vide, sauf si port exotique différent de 80 en http ou 443 en https) 
+  - Définissez `BASE_PROTOCOL=https` (ou `http` si votre reverse proxy ne gère pas l’HTTPS) et `BASE_PORT=` (vide, sauf si port exotique différent de 80 en http ou 443 en https)
   - Assurez vous que `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX` vous convienne
   - Votre Reverse Proxy doit transmettre le trafic de votre domaine vers `http://127.0.0.1:8080`.
   - TODO: Traefik doit truster le Reverse Proxy pour présenter la bonne IP de l’utilisateur
