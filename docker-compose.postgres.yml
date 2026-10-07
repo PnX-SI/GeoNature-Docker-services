@@ -1,0 +1,66 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   POSTGRES_IMAGE [défaut: postgis/postgis:18-3.6] — image PostgreSQL/PostGIS utilisée.
+#   RESTART_POLICY [défaut: unless-stopped] — politique `restart:` du service postgres.
+#   TIMEZONE [défaut: Europe/Paris] — fuseau horaire (TZ) du conteneur, pour dater les logs.
+#   POSTGRES_DB [défaut: geonature2db] — nom de la base créée au premier démarrage.
+#   POSTGRES_USER [défaut: geonatadmin] — utilisateur PostgreSQL créé au premier démarrage.
+#   POSTGRES_PASSWORD [défaut: vide] — mot de passe PostgreSQL; /!\ doit être renseigné avant le
+#       premier démarrage car la base n'est initialisée qu'une seule fois.
+###
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:18-3.6}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    environment:
+      TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
+      POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
+      POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres18:/var/lib/postgresql
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB:-geonature2db}",
+          "-U",
+          "${POSTGRES_USER:-geonatadmin}",
+          "-h",
+          "localhost",
+          "-p",
+          "5432",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-install-db:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-worker:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  geonature-backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres18:
+    name: ${POSTGRES_VOLUME_NAME:-${COMPOSE_PROJECT_NAME}_postgres18}

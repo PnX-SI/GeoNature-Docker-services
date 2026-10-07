@@ -1,0 +1,12 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   POSTGRES_EXPOSED_PORT [défaut: 5432] — port publié sur l'hôte pour accéder à PostgreSQL.
+#       Il est généralement nécessaire de définir une valeur distinctes afin d’éviter les conflits avec
+#       une éventuelle base de données déjà présente sur l’hôte.
+###
+
+services:
+  postgres:
+    ports:
+      - ${POSTGRES_EXPOSED_PORT:-5432}:5432

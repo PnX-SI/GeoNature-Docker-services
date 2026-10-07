@@ -1,0 +1,33 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+# Ce fichier prolonge docker-compose.traefik.yml et doit être ajouté après lui dans COMPOSE_FILE.
+#
+#   TRAEFIK_HTTPS_PORT (obligatoire) — port d'écoute HTTPS de Traefik; laisser vide dans `.env`
+#       pour utiliser le port 443, mais la variable doit être définie.
+#   TRAEFIK_ENTRYPOINT (obligatoire) - nom d’entrypoint à utiliser pour l’https.
+#       Normalement définie à websecure dans le .env dès lors que TRAEFIK_HTTPS_PORT est définie.
+#   ACME_EMAIL — adresse email de contact utilisée par Let's Encrypt pour les certificats
+#       TLS; requise pour obtenir des certificats valides.
+###
+
+x-validation:
+  https: "${TRAEFIK_HTTPS_PORT?Error: leave empty to use port 443 but define me!}"
+
+services:
+  traefik:
+    volumes:
+      - ./data/traefik/certs:/etc/traefik/certs
+    environment:
+      # EntryPoints
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: "${TRAEFIK_ENTRYPOINT?}"
+      TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: "https"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: ":${TRAEFIK_HTTPS_PORT:-443}"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS: "true"
+      TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_CERTRESOLVER: "acme-resolver"
+      # Certificates
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_STORAGE: "/etc/traefik/certs/acme_json"
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_EMAIL: "${ACME_EMAIL}"
+      TRAEFIK_CERTIFICATESRESOLVERS_ACME-RESOLVER_ACME_TLSCHALLENGE: "true"
+    ports:
+      - ${TRAEFIK_HTTPS_PORT:-443}:${TRAEFIK_HTTPS_PORT:-443}
