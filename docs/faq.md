@@ -168,6 +168,7 @@ Sans make:
 - Apporter vos éventuelles modifications au code source.
 - Il est conseillé de renommer les images dans le fichier `.env` afin de ne pas rentrer en conflit avec les images officielles, par exemple en leur rajoutant un suffix `-local` :
   ```shell
+  ATLAS_IMAGE="localhost/geonature-atlas-local:latest"
   USERSHUB_IMAGE="ghcr.io/pnx-si/usershub-local:latest"
   GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
   GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra-local:latest"
@@ -176,3 +177,10 @@ Sans make:
   ```
 - Lancer le script `build/build.sh` depuis la racine du dépôt.
 - Relancer `docker compose up -d` afin de recréer les conteneurs avec vos propres images Docker.
+
+## Comment mettre à jour les données de GeoNature-atlas ?
+
+```bash
+docker compose exec postgres bash
+psql -U geonatadmin -d geonature2db -c "SELECT RefreshAllMaterializedViews('atlas');"
+```
