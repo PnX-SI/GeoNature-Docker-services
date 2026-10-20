@@ -85,4 +85,7 @@ services:
       - "traefik.http.routers.geonature-atlas.rule=Host(`${ATLAS_HOST}`) && PathPrefix(`${ATLAS_PREFIX}`)"
       - "traefik.http.routers.geonature-atlas.entrypoints=websecure"
       - "traefik.http.routers.geonature-atlas.tls.certResolver=acme-resolver"
+      - "traefik.http.services.geonature-atlas.loadbalancer.server.port=8080"
     ports: !reset null
+    networks:
+      - gn

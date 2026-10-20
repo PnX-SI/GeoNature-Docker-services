@@ -79,3 +79,5 @@ services:
     build:
       context: sources/GeoNature-atlas
       target: dev
+    networks:
+      - gn
