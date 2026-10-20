@@ -68,3 +68,16 @@ services:
     image: ${GEONATURE_BACKEND_IMAGE}-dev
     build:
       target: dev
+
+
+  geonature-atlas:
+    image: ${ATLAS_IMAGE}
+    entrypoint: ["/entrypoint-dev.sh"]
+    volumes:
+      - ./sources/GeoNature-atlas:/dist
+      - ./build/dev/atlas/entrypoint-dev.sh:/entrypoint-dev.sh
+    build:
+      context: sources/GeoNature-atlas
+      target: dev
+    networks:
+      - gn
