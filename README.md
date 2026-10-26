@@ -149,7 +149,7 @@ d'environnement `COMPOSE_PROFILES`.
 #### Ajout de GeoNature-atlas
 
 Si vous désirez avoir l'application GeoNature-atlas, il faut adapter la variable d'environnement `COMPOSE_PROFILES` pour qu'elle comprenne le profil `atlas`.
-Le plus direct est de décommenter la ligne "#COMPOSE_PROFILES=db,usershub,atlas" à la fin du fichier `.env`.
+Le plus direct est de décommenter la ligne `#COMPOSE_PROFILES=db,usershub,atlas` à la fin du fichier `.env`.
 
 ## Configuration
 
