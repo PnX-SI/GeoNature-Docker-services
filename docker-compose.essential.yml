@@ -204,6 +204,8 @@ services:
   geonature-atlas:
     <<: [*restart-policy]
     image: ${ATLAS_IMAGE:-ghcr.io/pnx-si/geonature-atlas:2.0.0}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     profiles:
       - atlas
     depends_on:
