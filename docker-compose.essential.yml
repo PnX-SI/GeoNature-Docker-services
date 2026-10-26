@@ -214,7 +214,7 @@ services:
       - ./sources/GeoNature-atlas/atlas/configuration/settings.ini:/dist/atlas/configuration/settings.ini
       - ./sources/GeoNature-atlas/atlas/static/custom:/dist/atlas/static/custom
     ports:
-      - 8082:8080
+      - 8082:${ATLAS_INTERNAL_PORT:-8080}
     networks:
       - gn
 
