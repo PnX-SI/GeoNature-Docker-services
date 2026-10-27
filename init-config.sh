@@ -31,6 +31,7 @@ if [ ! -f "$GEONATURE_CONFIG_DIR/atlas/configuration/config.py" ] || [ ! -f "$GE
         ATLAS_LOCAL_CONFIG_FILE="$GEONATURE_CONFIG_DIR/atlas/configuration/config.py"
         docker cp "$atlas_container_id:/dist/atlas/configuration/config.py.sample" "$ATLAS_LOCAL_CONFIG_FILE"
         sed -i 's/SQLALCHEMY_DATABASE_URI = "postgresql:\/\/geonatatlas:monpassachanger@localhost:5432\/geonatureatlas"/SQLALCHEMY_DATABASE_URI = "postgresql:\/\/'$PG_ATLAS_USER_NAME':'$PG_ATLAS_USER_PASS'@postgres:5432\/'$PG_ATLAS_DB_NAME'"/g' $ATLAS_LOCAL_CONFIG_FILE
+        sed -i 's/URL_APPLICATION = "\/atlas"/URL_APPLICATION = "\'$ATLAS_PREFIX'"/g' "./config/atlas/configuration/config.py"
         # Voir pour utiliser la variable GEONATURE_API_ENDPOINT ci-après, mais demande de bien gérer l'ajout de '\' devant les caractères '/'
         sed -i 's/REMOTE_MEDIAS_URL = "https:\/\/<URL_GEONATURE>\/api\/media\/taxhub\/"/REMOTE_MEDIAS_URL = "'$GEONATURE_BACKEND_PROTOCOL':\/\/'$GEONATURE_BACKEND_HOSTPORT'\/geonature\/api\/media\/taxhub\/"/g' $ATLAS_LOCAL_CONFIG_FILE
         # Voir pour utiliser la variable GEONATURE_API_ENDPOINT ci-après, mais demande de bien gérer l'ajout de '\' devant les caractères '/'
