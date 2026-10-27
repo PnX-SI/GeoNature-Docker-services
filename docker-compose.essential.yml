@@ -212,9 +212,11 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./sources/GeoNature-atlas/atlas/configuration/config.py:/dist/atlas/configuration/config.py
-      - ./sources/GeoNature-atlas/atlas/configuration/settings.ini:/dist/atlas/configuration/settings.ini
-      - ./sources/GeoNature-atlas/atlas/static/custom:/dist/atlas/static/custom
+      - ${GEONATURE_CONFIG_DIR:-./config}/atlas/configuration/config.py:/dist/atlas/configuration/config.py
+      - ${GEONATURE_CONFIG_DIR:-./config}/atlas/configuration/settings.ini:/dist/atlas/configuration/settings.ini
+      - type: volume
+        source: custom-atlas
+        target: /dist/atlas/static/custom
     ports:
       - 8082:${ATLAS_INTERNAL_PORT:-8080}
     networks:
@@ -223,6 +225,12 @@ services:
 volumes:
   redis:
   postgres:
+  custom-atlas:
+    driver: local
+    driver_opts:
+      type: noneRE_DATA_DIR:-./data}/atlas/static/custom
+      o: bind
+      device: ${GEONATU
 networks:
   gn:
     name: "${NETWORK_NAME:-geonature_network}"
