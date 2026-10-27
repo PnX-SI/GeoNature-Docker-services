@@ -74,8 +74,19 @@ services:
     image: ${ATLAS_IMAGE}
     volumes:
       - ./sources/GeoNature-atlas:/dist
+      - type: volume
+        source: custom-atlas
+        target: /dist/atlas/static/custom
     build:
       context: sources/GeoNature-atlas
       target: dev
     networks:
       - gn
+
+volumes:
+  custom-atlas:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${GEONATURE_DATA_DIR:-./data}/atlas/static/custom
+      o: bind
