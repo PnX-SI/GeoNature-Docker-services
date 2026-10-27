@@ -17,11 +17,13 @@ if [ ! -f "$GEONATURE_CONFIG_DIR/geonature/geonature_config.toml" ]; then
     echo "SECRET_KEY = \"$(openssl rand -hex 16)\"" > "$GEONATURE_CONFIG_DIR/geonature/geonature_config.toml"
 fi
 
+# TODO: enrober dans un "if [usershub dans COMPOSE_PROFILES]"
 if [ ! -f "$GEONATURE_CONFIG_DIR/usershub/config.py" ]; then
     mkdir -p "$GEONATURE_CONFIG_DIR/usershub"
     echo "SECRET_KEY = \"$(openssl rand -hex 16)\"" > "$GEONATURE_CONFIG_DIR/usershub/config.py"
 fi
 
+# TODO: enrober dans un "if [atlas dans COMPOSE_PROFILES]"
 if [ ! -f "$GEONATURE_CONFIG_DIR/atlas/configuration/config.py" ] || [ ! -f "$GEONATURE_CONFIG_DIR/atlas/configuration/settings.ini" ]; then
     mkdir -p "$GEONATURE_CONFIG_DIR/atlas/configuration/"
     atlas_container_id=$(docker create "$ATLAS_IMAGE")
@@ -54,12 +56,14 @@ if [ ! -f "$GEONATURE_CONFIG_DIR/atlas/configuration/config.py" ] || [ ! -f "$GE
     docker rm "$atlas_container_id"
 fi
 
+# TODO: enrober dans un "if [atlas dans COMPOSE_PROFILES]"
 if [ ! -f "$GEONATURE_CONFIG_DIR/atlas/configuration/settings.ini" ]; then
     mkdir -p "$GEONATURE_CONFIG_DIR/atlas/configuration/"
     touch "$GEONATURE_CONFIG_DIR/atlas/configuration/settings.ini"
     wget https://raw.githubusercontent.com/PnX-SI/GeoNature-atlas/refs/heads/master/atlas/configuration/settings.ini.sample -O "$GEONATURE_CONFIG_DIR/atlas/configuration/settings.ini"
 fi
 
+# TODO: enrober dans un "if [atlas dans COMPOSE_PROFILES]"
 if [ ! -d "$GEONATURE_DATA_DIR/atlas/static/custom" ]; then
     mkdir -p "$GEONATURE_DATA_DIR/atlas/static/custom"
 fi
