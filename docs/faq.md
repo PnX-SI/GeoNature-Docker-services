@@ -178,7 +178,9 @@ Sans make:
 - Lancer le script `build/build.sh` depuis la racine du dépôt.
 - Relancer `docker compose up -d` afin de recréer les conteneurs avec vos propres images Docker.
 
-## Comment mettre à jour les données de GeoNature-atlas ?
+## Utilisation de GeoNature-atlas
+
+### Comment mettre à jour les données de GeoNature-atlas ?
 
 ```bash
 docker compose exec postgres bash

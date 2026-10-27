@@ -45,44 +45,29 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
 7. **Changement des variables de configurations obligatoires dans le fichier `.env`**. Les variables obligatoires sont les suivantes :
    - `GEONATURE_DB_LOCAL_SRID` : Code des projections des géométries stockées dans GeoNature (par défaut 2154)
    - `POSTGRES_PASSWORD` : Mot de passe de la base de données [PostgreSQL](https://www.postgresql.org/)
+   - (Si activation de GeoNature-atlas) `PG_ATLAS_USER_NAME`, `PG_ATLAS_USER_PASS`, `PG_ATLAS_OWNER_NAME`, `PG_ATLAS_OWNER_PASS`, `PG_ATLAS_SOURCE_USER`, `PG_ATLAS_SOURCE_USER_PASS` : Noms et mots de passe des utilisateurs liés à GeoNature-atlas / a minima, changer les mots de passe
    - `TRAEFIK_PASSWORD` : Mot de passe de l'instance [Traefik](https://doc.traefik.io/traefik/)
    - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
    - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
 
-8. Si GeoNature-atlas est activé, lancer la commande suivante :
-   ```bash
-   make submodule_init
-   ```
-
-9. Si GeoNature-atlas est activé, initialiser et adapter le fichier settings.ini :
-   ```bash
-   cd sources/GeoNature-atlas/atlas/static/configuration
-
-   cp settings.ini.sample settings.ini
-
-   nano settings.ini
-   ```
-
-10. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature, UsersHub et GeoNature-atlas respectivement dans les fichiers suivants :
+8. **Initialisation des fichiers de configurations.** Lancer la commande `./init-config.sh` afin de créer les dossiers et les fichiers de configuration requis. Le script `init-config.sh` génère aléatoirement aussi les clés secrètes pour GeoNature, UsersHub et GeoNature-atlas respectivement dans les fichiers suivants :
 
    - `config/geonature/geonature_config.toml`
    - `config/usershub/config.py`
    - `sources/GeoNature-atlas/atlas/configuration/config.py`
 
-11. **Lancer la création des conteneurs Docker** : `docker compose up -d`
+9. **Lancer la création des conteneurs Docker** : `docker compose up -d`
 
-12. Si GeoNature-atlas est activé, il faut, au premier lancement, exécuter l'installation en base de données avec la commande suivante : 
+10. Si GeoNature-atlas est activé, il faut, au premier lancement, exécuter l'installation en base de données avec la commande suivante : 
    ```bash
+   # Si besoin, commencer par adapter le fichier settings.ini :
+
+   source .env
+   nano $GEONATURE_CONFIG_DIR/atlas/configuration/settings.ini
+
    docker compose exec geonature-atlas bash -c "./install/install_db.sh --docker"
    ```
-   - N.B. : pour une mise à jour ultérieure des données, voir la section "## Comment mettre à jour les données de GeoNature-atlas ?" de la FÀQ
-
-13. Si GeoNature-atlas est activé, il faut, au premier lancement, peupler le dossier "sources/GeoNature-atlas/atlas/static/custom" - on peut partir de ce qui est dans "sources/GeoNature-atlas/atlas/static/custom_samples" - avec la commande suivante, et, dans l'idéal, adapter :
-   ```bash
-   cd sources/GeoNature-atlas/atlas/static
-
-   cp -r custom_samples/* custom
-   ```
+   - N.B. : pour une mise à jour ultérieure des données, voir la section "### Comment mettre à jour les données de GeoNature-atlas ?" de la [FÀQ](docs/faq.md)
 
 ## Accéder aux logs
 
@@ -159,7 +144,7 @@ Voir la documentation des différentes applications pour renseigner les fichiers
 
 - GeoNature : `./config/geonature/geonature_config.toml` ([fichier d’exemple](https://github.com/PnX-SI/GeoNature/tree/master/config/geonature_config.toml.sample))
 - UsersHub : `./config/usershub/config.py` ([fichier d’exemple](https://github.com/PnX-SI/UsersHub/tree/master/config/config.py.sample))
-- GeoNature-atlas : `./sources/GeoNature-atlas/atlas/configuration/config.py` ([fichier d’exemple](https://github.com/PnX-SI/GeoNature-atlas/blob/master/atlas/configuration/config.py.sample))
+- GeoNature-atlas : `./config/atlas/configuration/config.py` ou `$GEONATURE_CONFIG_DIR/atlas/configuration/config.py` si la variable GEONATURE_CONFIG_DIR a été modifiée ([fichier d’exemple](https://github.com/PnX-SI/GeoNature-atlas/blob/master/atlas/configuration/config.py.sample))
 
 Ces fichiers doivent contenir _a minima_ le paramètre `SECRET_KEY`.  
 Vous pouvez générer automatiquement des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
@@ -182,7 +167,9 @@ de fonctionnement, voir [la section Surcharger son installation](#override).
 - Les fichiers de configuration de GeoNature, de ses modules et de UsersHub sont donc dans le dossier `GeoNature-Docker-services/config/`
 - Les fichiers de customisation de GeoNature sont stockés dans le dossier `GeoNature-Docker-services/data/geonature/custom/`
 - Les fichiers des médias de GeoNature (photos, application mobile...) sont stockés dans le dossier `GeoNature-Docker-services/data/geonature/media/`
-- Les fichiers de configuration de GeoNature-atlas sont dans le dossier `GeoNature-Docker-services/sources/GeoNature-atlas/atlas/configuration/config.py`
+- Le fichier de configuration de GeoNature-atlas est au chemin `GeoNature-Docker-services/config/atlas/configuration/config.py` ou `$GEONATURE_CONFIG_DIR/atlas/configuration/config.py` si la variable GEONATURE_CONFIG_DIR a été modifiée
+- Les fichiers de customisation de GeoNature-atlas sont dans le dossier `GeoNature-Docker-services/data/atlas/static/custom/` ou `$GEONATURE_DATA_DIR/atlas/static/custom/` si la variable GEONATURE_DATA_DIR a été modifiée
+#TODO: fix de pouvoir modifier les fichiers de custom sans sudo
 
 ### Configuration par variable d’environnement
 
@@ -214,7 +201,7 @@ Pour récupérer la dernière version de GeoNature-docker-services :
   >GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra:2.15.3"
   >```
 
-# TODO: décider si on conserve section sur variable d'env `ATLAS_IMAGE` dans cette docs et éventuellement dans fichier `.env.sample`
+# TODO: décider si on ajoute une section sur variable d'env `ATLAS_IMAGE` dans cette docs et si on conserve même dans fichier `.env.sample`
 
 
 ## Monitoring
