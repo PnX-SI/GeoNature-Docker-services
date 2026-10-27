@@ -228,9 +228,9 @@ volumes:
   custom-atlas:
     driver: local
     driver_opts:
-      type: noneRE_DATA_DIR:-./data}/atlas/static/custom
+      type: none
       o: bind
-      device: ${GEONATU
+      device: ${GEONATURE_DATA_DIR:-./data}/atlas/static/custom
 networks:
   gn:
     name: "${NETWORK_NAME:-geonature_network}"
