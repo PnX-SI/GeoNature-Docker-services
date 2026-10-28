@@ -199,11 +199,38 @@ services:
       io.geonature.service: "usershub"
     logging: *logging-json
     networks:
+      - gn  
+      
+  geonature-atlas:
+    <<: [*restart-policy]
+    image: ${ATLAS_IMAGE:-ghcr.io/pnx-si/geonature-atlas:2.0.0}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    profiles:
+      - atlas
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${GEONATURE_CONFIG_DIR:-./config}/atlas/configuration/config.py:/dist/atlas/configuration/config.py
+      - ${GEONATURE_CONFIG_DIR:-./config}/atlas/configuration/settings.ini:/dist/atlas/configuration/settings.ini
+      - type: volume
+        source: custom-atlas
+        target: /dist/atlas/static/custom
+    ports:
+      - 8082:${ATLAS_INTERNAL_PORT:-8080}
+    networks:
       - gn
 
 volumes:
   redis:
   postgres:
+  custom-atlas:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${GEONATURE_DATA_DIR:-./data}/atlas/static/custom
 networks:
   gn:
     name: "${NETWORK_NAME:-geonature_network}"
