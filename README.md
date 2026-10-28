@@ -86,7 +86,7 @@ Pour n'afficher les logs que d'un service en particulier, on utilise la commande
 - `geonature-worker` : exécution de certaines tâches de GeoNature en arrière-plan (import, export, mail, etc...)
 - `redis` : service de communication entre le worker et le backend
 - `traefik` : serveur web redirigeant les requêtes vers le bon service
-- `geonature-atlas` - si profile 'atlas' : l'application GeoNature-Atlas
+- `geonature-atlas` - si profile 'atlas' : l'application GeoNature-atlas
 
 ```
 SERVICE              PORTS
