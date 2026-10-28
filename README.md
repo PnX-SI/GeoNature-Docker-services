@@ -133,7 +133,7 @@ d'environnement `COMPOSE_PROFILES`.
 
 #### Ajout de GeoNature-atlas
 
-Si vous désirez avoir l'application GeoNature-atlas, il faut adapter la variable d'environnement `COMPOSE_PROFILES` pour qu'elle comprenne le profil `atlas`.
+Si vous désirez installer aussi l'application GeoNature-atlas, il faut adapter la variable d'environnement `COMPOSE_PROFILES` pour qu'elle comprenne le profil `atlas`.
 Le plus direct est de décommenter la ligne `#COMPOSE_PROFILES=db,usershub,atlas` à la fin du fichier `.env`.
 
 De plus, si vous êtes en mode `dev`, alors vous devez décommenter la ligne `#ATLAS_INTERNAL_PORT=5000`. Le port interne sera alors 5000 au lieu de 8080. Il n'est actuellement pas possible de renseigner un autre port que 5000 en mode dév, et que 8080 en mode prod.
