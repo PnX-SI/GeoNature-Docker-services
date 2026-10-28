@@ -45,7 +45,7 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
 7. **Changement des variables de configurations obligatoires dans le fichier `.env`**. Les variables obligatoires sont les suivantes :
    - `GEONATURE_DB_LOCAL_SRID` : Code des projections des géométries stockées dans GeoNature (par défaut 2154)
    - `POSTGRES_PASSWORD` : Mot de passe de la base de données [PostgreSQL](https://www.postgresql.org/)
-   - (Si activation de GeoNature-atlas) `PG_ATLAS_USER_NAME`, `PG_ATLAS_USER_PASS`, `PG_ATLAS_OWNER_NAME`, `PG_ATLAS_OWNER_PASS`, `PG_ATLAS_SOURCE_USER`, `PG_ATLAS_SOURCE_USER_PASS` : Noms et mots de passe des utilisateurs liés à GeoNature-atlas / a minima, changer les mots de passe
+   - (Si activation de GeoNature-atlas) `PG_ATLAS_USER_NAME`, `PG_ATLAS_USER_PASS`, `PG_ATLAS_OWNER_NAME`, `PG_ATLAS_OWNER_PASS`, `PG_ATLAS_SOURCE_USER`, `PG_ATLAS_SOURCE_USER_PASS` : Noms et mots de passe des utilisateurs de BDD liés à GeoNature-atlas / a minima, changer les mots de passe
    - `TRAEFIK_PASSWORD` : Mot de passe de l'instance [Traefik](https://doc.traefik.io/traefik/)
    - `DOCKER_UID` et `DOCKER_GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `DOCKER_UID` et `id -g` pour récupérer la valeur pour `DOCKER_GID`
    - `ACME_EMAIL`: Adresse mail utilisée pour la génération du certificat SSL par [Let's Encrypt](https://letsencrypt.org/fr/) via traefik
