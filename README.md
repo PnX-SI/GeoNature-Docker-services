@@ -58,7 +58,7 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
 
 9. **Lancer la création des conteneurs Docker** : `docker compose up -d`
 
-10. Si GeoNature-atlas est activé, il faut, au premier lancement, exécuter l'installation en base de données avec la commande suivante : 
+10. Si GeoNature-atlas est activé, il faut, au premier lancement, exécuter l'installation de sa base de données avec la commande suivante : 
    ```bash
    # Si besoin, commencer par adapter le fichier settings.ini :
 
