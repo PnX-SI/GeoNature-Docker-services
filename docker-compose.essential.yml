@@ -123,7 +123,7 @@ services:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
       - postgres:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       # during db init, postgres is not listening on localhost so this avoid false healthy status
       test:
