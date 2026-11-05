@@ -52,7 +52,7 @@ services:
   geonature-pre-built-db:
     image: ${GEONATURE_PRE_BUILT_DB}
     ports:
-      - ${POSTGRES_PORT_ON_HOST}:5432
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT_ON_HOST:-5432}:5432"
     environment:
       user_pg: ${POSTGRES_USER}
       password_pg: ${POSTGRES_PASSWORD}
