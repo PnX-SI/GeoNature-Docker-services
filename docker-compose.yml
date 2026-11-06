@@ -31,8 +31,6 @@
 #       conteneur (cible du volume ${DATA_DIR}/geonature/custom).
 #   GEONATURE_CACHE_FOLDER [défaut: /dist/cache] — dossier du cache dans le conteneur; exposé aussi
 #       comme DATA_DIRECTORY et utilisé pour le schedule Celery (celerybeat-schedule.db).
-#   GEONATURE_BACKEND_PORT (obligatoire) — port hôte du backend (ignoré avec docker-compose.traefik.yml).
-#   GEONATURE_FRONTEND_PORT (obligatoire) — port hôte du frontend (ignoré avec docker-compose.traefik.yml).
 #   GEONATURE_FRONTEND_PREFIX [défaut: /] — chemin de base du frontend (ex: /geonature).
 #   GEONATURE_WORKER_LOG_LEVEL [défaut: INFO] — niveau de log du worker Celery.
 #
@@ -50,7 +48,6 @@
 #   GEONATURE_DB_INSTALL_USERSHUB_SAMPLES [défaut: true] — insert les données d'exemple UsersHub.
 #
 # --- UsersHub ---
-#   USERSHUB_PORT (obligatoire) — port hôte d'UsersHub (ignoré avec docker-compose.traefik.yml).
 #   USERSHUB_URL_APPLICATION (obligatoire) — URL publique d'UsersHub.
 #   USERSHUB_SETTINGS [défaut: /dist/config/config.py] — chemin de la config UsersHub dans le conteneur.
 #   USERSHUB_ACTIVATE_APP [défaut: true] — active l'application UsersHub.
@@ -58,6 +55,27 @@
 #   USERSHUB_COOKIE_EXPIRATION [défaut: 3600] — durée de vie des cookies UsersHub, en secondes.
 #   USERSHUB_FILL_MD5_PASS [défaut: false] — recalcule les mots de passe stockés en MD5.
 #
+#   --- Traefik ---
+#   TRAEFIK_HTTP_PORT (obligatoire) — port d'écoute HTTP de Traefik; laisser vide dans `.env`
+#       pour utiliser le port 80, mais la variable doit être définie.
+#   TRAEFIK_ACCESS_LOG [défaut: false] — active le log d'accès de Traefik.
+#       Généralement redondant avec les logs des services eux-mêmes.
+#   TRAEFIK_ENTRYPOINT [défaut: web] - entrypoint à utiliser pour le backend, le frontend et usershub.
+#       Normalement définie dans .env à web, ou websecure si TRAEFIK_HTTPS_PORT est définie,
+#       auquel cas il faut également utiliser docker-compose.traefik-https.yml.
+#   COMPOSE_PROJECT_NAME — nom du projet compose; utilisé comme contrainte de label pour que
+#       Traefik ne route que les services de ce projet (défaut: nom du dossier du projet).
+#   DOCKER_SOCK [défaut: /var/run/docker.sock] — chemin du socket Docker monté en lecture seule,
+#       nécessaire au provider Docker de Traefik.
+#       Pour Docker rootless, définir par exemple à /run/user/1000/docker.sock.
+#   GEONATURE_BACKEND_HOST (obligatoire) — domaine du backend.
+#   GEONATURE_BACKEND_PREFIX (obligatoire) — chemin de base de l'API (ex: /api).
+#   GEONATURE_FRONTEND_HOST (obligatoire) — domaine du frontend.
+#   GEONATURE_FRONTEND_PREFIX (obligatoire) — chemin de base du frontend (ex: /).
+#   USERSHUB_HOST (obligatoire) — domaine de UsersHub.
+#   USERSHUB_PREFIX (obligatoire) — chemin de base d'UsersHub (ex: /usershub).
+#
+# Les variables *_HOST sont en général calculées à partir de BASE_HOST dans `.env`.
 # --- Notes ---
 #   * Fichiers `.env` optionnels chargés par les services :
 #     geonature-backend.env, geonature-frontend.env, usershub.env (`required: false`).
@@ -116,6 +134,30 @@ x-geonature-backend-defaults: &geonature-backend-defaults
       required: false
 
 services:
+
+  traefik:
+    image: traefik:3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      # Observability
+      TRAEFIK_LOG_LEVEL: "INFO"
+      TRAEFIK_ACCESSLOG: "${TRAEFIK_ACCESS_LOG:-false}"
+      # Providers
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS: "Label(`com.docker.compose.project`, `${COMPOSE_PROJECT_NAME}`)"
+      # EntryPoints
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":${TRAEFIK_HTTP_PORT:-80}"
+    volumes:
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - ./config/traefik/dynamic:/dynamic
+    ports:
+      - ${TRAEFIK_HTTP_PORT:-80}:${TRAEFIK_HTTP_PORT:-80}
+    labels:
+      - "traefik.enable=true"
+
   redis:
     <<: *restart-policy
     image: ${REDIS_IMAGE:-redis:7-alpine}
@@ -139,8 +181,6 @@ services:
       - usershub
     volumes:
       - ${CONFIG_DIR:-./config}/usershub:/dist/config/
-    ports:
-      - ${USERSHUB_PORT?}:5001
     environment:
       <<: *env
       USERSHUB_URL_APPLICATION: "${USERSHUB_URL_APPLICATION?}"
@@ -153,6 +193,11 @@ services:
     env_file:
       - path: usershub.env
         required: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.usershub.rule=Host(`${USERSHUB_HOST?}`) && PathPrefix(`${USERSHUB_PREFIX?}`)"
+      - "traefik.http.routers.usershub.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
+      - "traefik.http.services.usershub.loadbalancer.server.port=5001"
 
   geonature-install-db:
     <<: *geonature-backend-defaults
@@ -194,14 +239,15 @@ services:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
         condition: service_healthy
-    ports:
-      - ${GEONATURE_BACKEND_PORT?}:8000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-backend.rule=Host(`${GEONATURE_BACKEND_HOST?}`) && PathPrefix(`${GEONATURE_BACKEND_PREFIX?}`)"
+      - "traefik.http.routers.geonature-backend.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
+      - "traefik.http.services.geonature-backend.loadbalancer.server.port=8000"
 
   geonature-frontend:
     <<: *restart-policy
     image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}
-    ports:
-      - ${GEONATURE_FRONTEND_PORT?}:4200
     environment:
       <<: *env
       NGINX_PORT: 4200
@@ -210,6 +256,11 @@ services:
     env_file:
       - path: geonature-frontend.env
         required: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.geonature-frontend.rule=Host(`${GEONATURE_FRONTEND_HOST?}`) && PathPrefix(`${GEONATURE_FRONTEND_PREFIX?}`)"
+      - "traefik.http.routers.geonature-frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
+      - "traefik.http.services.geonature-frontend.loadbalancer.server.port=4200"
 
 volumes:
   redis:
