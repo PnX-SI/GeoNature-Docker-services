@@ -131,12 +131,14 @@ Voir la documentation des différentes applications pour renseigner les fichiers
 - GeoNature : `./config/geonature/geonature_config.toml` ([fichier d’exemple](https://github.com/PnX-SI/GeoNature/tree/master/config/geonature_config.toml.sample))
 - UsersHub : `./config/usershub/config.py` ([fichier d’exemple](https://github.com/PnX-SI/UsersHub/tree/master/config/config.py.sample))
 
-Ces fichiers doivent contenir _a minima_ le paramètre `SECRET_KEY`.  
+Ces fichiers doivent contenir _a minima_ le paramètre `SECRET_KEY` (sauf à la fournir par variable d’environnement).
 Vous pouvez générer automatiquement des fichiers vierges contenant des clés secrètes aléatoires avec le script `./init-config.sh`.
 
-Si vous modifiez les fichiers de configuration de GeoNature, d'un de ses modules, de UsersHub, vous devez relancer les conteneurs Docker avec la commande `docker compose restart` (ou idéalement seulement le conteneur concerné, par exemple `docker compose restart usershub`).
+Si vous modifiez les fichiers de configuration de GeoNature ou d'un de ses modules, GeoNature va automatiquement redémarrer.
+Vous pouvez toutefois forcer le redémarrage d’un service avec la commande `docker compose restart <service>` (ou de l’ensemble des services avec `docker compose restart`).
+UsersHub ne bénéficie pas d’un mécanisme de redémarrage automatique et doit donc nécessairement être relancé manuellement.
 
-À noter que certaines variables seront fournies en tant que variables d'environnement (voir les fichiers [`.env`](./.env.sample) et [`docker-compose.yml`](./docker-compose.yml)), comme par exemple :
+À noter que certains paramètres de configuration sont fournis en tant que variables d'environnement (voir les fichiers [`.env`](./.env.sample) et [`docker-compose.yml`](./docker-compose.yml)), comme par exemple :
 
 - `URL_APPLICATION`
 - `SQLALCHEMY_DATABASE_URI`
@@ -223,7 +225,9 @@ Pour des informations spécifiques sur le mode développement, voir la section [
 1. Initialisez le sous-module `GeoNature-images` :
 
     ```
-   git submodule update --init --recursive --depth 1 --remote
+   git submodule update --init --remote
+   git -C GeoNature-images submodule update --init --depth=1 --remote
+   git -C GeoNature-images/GeoNature submodule update --init --depth=1
    ```
 
 1. Vous pouvez à présent entrer dans le dossier `GeoNature-images` et consulter son README afin de suivre la procédure de création des images. En théorie, celle-ci se résume à lancer `make docker-dev`. Vous pouvez visualiser le nom des images produites avec la commande `make docker-list-images`.
