@@ -1,16 +1,4 @@
-[submodule "GeoNature"]
-	path = sources/GeoNature
-	url = ../GeoNature.git
-[submodule "UsersHub"]
-	path = sources/UsersHub
-	url = ../UsersHub.git
-	branch = develop
-[submodule "gn_module_export"]
-	path = sources/gn_module_export
-	url = ../gn_module_export.git
-[submodule "gn_module_dashboard"]
-	path = sources/gn_module_dashboard
-	url = ../gn_module_dashboard.git
-[submodule "gn_module_monitoring"]
-	path = sources/gn_module_monitoring
-	url = ../gn_module_monitoring
+[submodule "GeoNature-images"]
+	path = GeoNature-images
+	url = https://github.com/PnX-SI/GeoNature-images.git
+  branch = develop

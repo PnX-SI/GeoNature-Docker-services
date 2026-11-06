@@ -1,0 +1,85 @@
+###
+# Migrate postgres
+#
+# Contexte :
+#   Ce compose déclare un un service postgres-migrate et un service postgres-old permettant
+#   d’effectuer une monter de version majeur de postgres.
+#   Le service postgres-old doit servir l’ancienne base de données. Il est paramétrer par les variables d’environment suivantes :
+#     - POSTGRES_OLD_IMAGE: par défaut, PostgreSQL 15
+#     - POSTGRES_OLD_VOLUME_NAME: par défaut, postgres15, préfixé par le nom du projet compose.
+#     - POSTGRES_OLD_USER: par défaut, POSTGRES_USER
+#     - POSTGRES_OLD_PASSWORD: par défaut, POSTGRES_PASSWORD
+#     - POSTGRES_OLD_DB: par défaut, POSTGRES_DB
+#   Le service postgres-migrate est masqué par un profile. Il doit être explicitement démarré :
+#
+#     docker compose up -d postgres-migrate
+#
+#   À la fin de la migration, des services postgres-old & postgres-migrate doivent être down avant de
+#   retirer ce compose de COMPOSE_FILES (sinon, utilisez --remove-orphans).
+###
+services:
+  postgres-old:
+    image: ${POSTGRES_OLD_IMAGE:-postgis/postgis:15-3.4}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    environment:
+      TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
+      POSTGRES_DB: ${POSTGRES_OLD_DB:-${POSTGRES_DB:-geonature2db}}
+      POSTGRES_USER: ${POSTGRES_OLD_USER:-${POSTGRES_USER:-geonatadmin}}
+      POSTGRES_PASSWORD: ${POSTGRES_OLD_PASSWORD:-${POSTGRES_PASSWORD}}
+    volumes:
+      - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
+      - postgres-old:/var/lib/postgresql/data
+    healthcheck:
+      # during db init, postgres is not listening on localhost so this avoid false healthy status
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB:-geonature2db}",
+          "-U",
+          "${POSTGRES_USER:-geonatadmin}",
+          "-h",
+          "localhost",
+          "-p",
+          "5432",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-migrate:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:18-3.6}
+    restart: "no"
+    depends_on:
+      postgres-old:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    profiles:
+      - migrate
+    environment:
+      TZ: "${TIMEZONE:-Europe/Paris}"
+      POSTGRES_OLD_HOST: postgres-old
+      POSTGRES_OLD_USER: ${POSTGRES_OLD_USER:-${POSTGRES_USER:-geonatadmin}}
+      POSTGRES_OLD_PASSWORD: ${POSTGRES_OLD_PASSWORD:-${POSTGRES_PASSWORD}}
+      POSTGRES_OLD_DB: ${POSTGRES_OLD_DB:-${POSTGRES_DB:-geonature2db}}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-geonatadmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-geonature2db}
+    command: >
+      bash -c '
+        echo "Starting migration database from $${POSTGRES_OLD_HOST} to $${POSTGRES_HOST}…";
+        PGPASSWORD="$${POSTGRES_OLD_PASSWORD}" pg_dump --format=custom --no-owner --no-acl -h $${POSTGRES_OLD_HOST} -U $${POSTGRES_OLD_USER} -d $${POSTGRES_OLD_DB} | PGPASSWORD="$${POSTGRES_PASSWORD}" pg_restore --no-owner --no-acl -h $${POSTGRES_HOST} -U $${POSTGRES_USER} -d $${POSTGRES_DB};
+        echo "Migration completed successfully.";
+      '
+
+  geonature-install-db:
+    depends_on:
+      postgres:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-old:
+    name: ${POSTGRES_OLD_VOLUME_NAME:-${COMPOSE_PROJECT_NAME}_postgres15}

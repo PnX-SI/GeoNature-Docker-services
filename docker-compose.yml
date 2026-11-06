@@ -1,4 +1,215 @@
-include:
-  - path:
-      - docker-compose.essential.yml
-      - docker-compose.traefik.yml
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+# --- Général / Docker ---
+#   RESTART_POLICY [défaut: unless-stopped] — politique `restart:` appliquée aux services.
+#   DOCKER_UID / DOCKER_GID [défaut: 0] — UID:GID de l'utilisateur dans les conteneurs.
+#       Doit correspondre à l’utilisateur courant pour éviter les problèmes de droit d’accès.
+#   TIMEZONE [défaut: Europe/Paris] — fuseau horaire (TZ) des conteneurs, pour dater les logs.
+#   CONFIG_DIR [défaut: ./config] — dossier hôte des configurations montées dans /dist/config.
+#   DATA_DIR [défaut: ./data] — dossier hôte des données (media, custom, cache).
+#
+# --- Images ---
+#   REDIS_IMAGE [défaut: redis:7-alpine] — image du service redis.
+#   GEONATURE_BACKEND_IMAGE [défaut: ghcr.io/pnx-si/geonature-backend-extra:latest] — image du backend.
+#   GEONATURE_FRONTEND_IMAGE [défaut: ghcr.io/pnx-si/geonature-frontend-extra:latest] — image du frontend.
+#   USERSHUB_IMAGE [défaut: ghcr.io/pnx-si/usershub:latest] — image d'UsersHub.
+#
+# --- GeoNature (backend, worker, install-db) ---
+#   SQLALCHEMY_DATABASE_URI (obligatoire) — URI PostgreSQL de GeoNature et UsersHub
+#       (postgresql://user:password@host:port/db).
+#   GEONATURE_URL_APPLICATION (obligatoire) — URL publique du frontend GeoNature.
+#   GEONATURE_API_ENDPOINT (obligatoire) — URL publique de l'API GeoNature.
+#   GEONATURE_CONFIG_FILE [défaut: /dist/config/geonature_config.toml] — chemin du fichier de
+#       configuration GeoNature dans le conteneur.
+#   GEONATURE_CELERY__broker_url [défaut: redis://redis] — broker Celery; les doubles underscores
+#       `__` imbriquent la clé dans la config GeoNature (celery.broker_url).
+#   GEONATURE_CELERY__result_backend [défaut: redis://redis] — backend de résultats Celery.
+#   GEONATURE_MEDIA_FOLDER [défaut: /dist/media] — dossier des médias dans le conteneur (cible du
+#       volume ${DATA_DIR}/geonature/media).
+#   GEONATURE_CUSTOM_STATIC_FOLDER [défaut: /dist/custom] — dossier des personnalisations dans le
+#       conteneur (cible du volume ${DATA_DIR}/geonature/custom).
+#   GEONATURE_CACHE_FOLDER [défaut: /dist/cache] — dossier du cache dans le conteneur; exposé aussi
+#       comme DATA_DIRECTORY et utilisé pour le schedule Celery (celerybeat-schedule.db).
+#   GEONATURE_BACKEND_PORT (obligatoire) — port hôte du backend (ignoré avec docker-compose.traefik.yml).
+#   GEONATURE_FRONTEND_PORT (obligatoire) — port hôte du frontend (ignoré avec docker-compose.traefik.yml).
+#   GEONATURE_FRONTEND_PREFIX [défaut: /] — chemin de base du frontend (ex: /geonature).
+#   GEONATURE_WORKER_LOG_LEVEL [défaut: INFO] — niveau de log du worker Celery.
+#
+# --- Installation de la base (service geonature-install-db) ---
+#   GEONATURE_DB_LOCAL_SRID (obligatoire) — SRID local des géométries stockées (ex: 2154);
+#       /!\ doit être correctement défini au premier démarrage.
+#   GEONATURE_SUPERGRANT_ARGS [défaut: vide] — arguments de `geonature permissions supergrant`;
+#       si vide, la commande supergrant n’est pas lancée.
+#   GEONATURE_DB_ADD_SAMPLE_DATA [défaut: false] — insert les données d'exemple.
+#   GEONATURE_DB_INSTALL_BDC_STATUTS [défaut: true] — insert les statuts.
+#   GEONATURE_DB_INSTALL_SIG_LAYERS [défaut: true] — insert les couches SIG.
+#   GEONATURE_DB_INSTALL_GRID_LAYER [défaut: true] — insert les couches de maille.
+#   GEONATURE_DB_INSTALL_REF_SENSITIVITY [défaut: true] — insert les référentiels de sensibilité.
+#   GEONATURE_DB_INSTALL_USERSHUB [défaut: true] — installe UsersHub dans la base.
+#   GEONATURE_DB_INSTALL_USERSHUB_SAMPLES [défaut: true] — insert les données d'exemple UsersHub.
+#
+# --- UsersHub ---
+#   USERSHUB_PORT (obligatoire) — port hôte d'UsersHub (ignoré avec docker-compose.traefik.yml).
+#   USERSHUB_URL_APPLICATION (obligatoire) — URL publique d'UsersHub.
+#   USERSHUB_SETTINGS [défaut: /dist/config/config.py] — chemin de la config UsersHub dans le conteneur.
+#   USERSHUB_ACTIVATE_APP [défaut: true] — active l'application UsersHub.
+#   USERSHUB_ACTIVATE_API [défaut: true] — active l'API UsersHub.
+#   USERSHUB_COOKIE_EXPIRATION [défaut: 3600] — durée de vie des cookies UsersHub, en secondes.
+#   USERSHUB_FILL_MD5_PASS [défaut: false] — recalcule les mots de passe stockés en MD5.
+#
+# --- Notes ---
+#   * Fichiers `.env` optionnels chargés par les services :
+#     geonature-backend.env, geonature-frontend.env, usershub.env (`required: false`).
+#     Les variables préfixées
+#       GEONATURE_ dans geonature-backend.env
+#       USERSHUB_ dans usershub.env
+#     sont injectées dans la config des applications (voir flask.Config.from_prefixed_env).
+###
+
+x-restart-policy: &restart-policy
+  restart: ${RESTART_POLICY:-unless-stopped}
+
+x-defaults: &defaults
+  user: ${DOCKER_UID:-0}:${DOCKER_GID:-0}
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+x-geonature-depends-on-defaults: &geonature-depends-on-defaults
+  redis:
+    condition: service_healthy
+
+x-env: &env
+  TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
+
+x-geonature-backend-env: &geonature-backend-env
+  <<: *env
+  GEONATURE_SKIP_POPULATE_DB: true
+  GEONATURE_SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI?}
+  GEONATURE_URL_APPLICATION: ${GEONATURE_URL_APPLICATION?}
+  GEONATURE_API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
+  GEONATURE_CONFIG_FILE: ${GEONATURE_CONFIG_FILE:-/dist/config/geonature_config.toml}
+  GEONATURE_CELERY__broker_url: ${GEONATURE_CELERY__broker_url:-redis://redis}
+  GEONATURE_CELERY__result_backend: ${GEONATURE_CELERY__result_backend:-redis://redis}
+  GEONATURE_MEDIA_FOLDER: ${GEONATURE_MEDIA_FOLDER:-/dist/media}
+  GEONATURE_CUSTOM_STATIC_FOLDER: ${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+  DATA_DIRECTORY: ${GEONATURE_CACHE_FOLDER:-/dist/cache}
+
+
+x-geonature-backend-defaults: &geonature-backend-defaults
+  <<: *defaults
+  image: ${GEONATURE_BACKEND_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}
+  depends_on:
+    <<: *geonature-depends-on-defaults
+  volumes:
+    - ${CONFIG_DIR:-./config}/geonature:/dist/config
+    - ${DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
+    - ${DATA_DIR:-./data}/geonature/custom:${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
+    - ${DATA_DIR:-./data}/geonature/cache:${GEONATURE_CACHE_FOLDER:-/dist/cache}
+  environment:
+    <<: *geonature-backend-env
+  env_file:
+    - path: geonature-backend.env
+      required: false
+
+services:
+  redis:
+    <<: *restart-policy
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    volumes:
+      - redis:/data
+    environment:
+      <<: *env
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usershub:
+    <<: [*restart-policy, *defaults]
+    image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
+    depends_on:
+      geonature-install-db:
+        condition: service_healthy
+    profiles:
+      - usershub
+    volumes:
+      - ${CONFIG_DIR:-./config}/usershub:/dist/config/
+    ports:
+      - ${USERSHUB_PORT?}:5001
+    environment:
+      <<: *env
+      USERSHUB_URL_APPLICATION: "${USERSHUB_URL_APPLICATION?}"
+      USERSHUB_SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI?}
+      USERSHUB_SETTINGS: ${USERSHUB_SETTINGS:-/dist/config/config.py}
+      USERSHUB_ACTIVATE_APP: ${USERSHUB_ACTIVATE_APP:-true}
+      USERSHUB_ACTIVATE_API: ${USERSHUB_ACTIVATE_API:-true}
+      USERSHUB_COOKIE_EXPIRATION: ${USERSHUB_COOKIE_EXPIRATION:-3600}
+      USERSHUB_FILL_MD5_PASS: ${USERSHUB_FILL_MD5_PASS:-false}
+    env_file:
+      - path: usershub.env
+        required: false
+
+  geonature-install-db:
+    <<: *geonature-backend-defaults
+    command: [ "sleep", "infinity"]
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 1s
+      timeout: 1s
+      retries: 99999
+    environment:
+      <<: *geonature-backend-env
+      GEONATURE_SKIP_POPULATE_DB: false
+      GEONATURE_SUPERGRANT_ARGS: ${GEONATURE_SUPERGRANT_ARGS:-}
+      srid_local: ${GEONATURE_DB_LOCAL_SRID?}
+      add_sample_data: ${GEONATURE_DB_ADD_SAMPLE_DATA:-false}
+      install_bdc_statuts: ${GEONATURE_DB_INSTALL_BDC_STATUTS:-true}
+      install_sig_layers: ${GEONATURE_DB_INSTALL_SIG_LAYERS:-true}
+      install_grid_layer: ${GEONATURE_DB_INSTALL_GRID_LAYER:-true}
+      install_ref_sensitivity: ${GEONATURE_DB_INSTALL_REF_SENSITIVITY:-true}
+      usershub: ${GEONATURE_DB_INSTALL_USERSHUB:-true}
+      usershub_samples: ${GEONATURE_DB_INSTALL_USERSHUB_SAMPLES:-true}
+
+  geonature-worker:
+    <<: [*restart-policy, *geonature-backend-defaults]
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_healthy
+    command:
+      [
+        "celery", "-A", "geonature.celery_app:app", "worker", "--beat",
+        "--loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO}",
+        "--schedule-filename=${GEONATURE_CACHE_FOLDER:-/dist/cache}/celerybeat-schedule.db"
+      ]
+
+  geonature-backend:
+    <<: [*restart-policy, *geonature-backend-defaults]
+    depends_on:
+      <<: *geonature-depends-on-defaults
+      geonature-install-db:
+        condition: service_healthy
+    ports:
+      - ${GEONATURE_BACKEND_PORT?}:8000
+
+  geonature-frontend:
+    <<: *restart-policy
+    image: ${GEONATURE_FRONTEND_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:latest}
+    ports:
+      - ${GEONATURE_FRONTEND_PORT?}:4200
+    environment:
+      <<: *env
+      NGINX_PORT: 4200
+      GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
+      API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
+    env_file:
+      - path: geonature-frontend.env
+        required: false
+
+volumes:
+  redis:
