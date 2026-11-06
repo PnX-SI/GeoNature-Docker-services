@@ -1,12 +1,22 @@
 ###
+# Expose PostgreSQL database on host
+#
+# Permet de rendre accessible la base de données PostgreSQL en dehors de Docker
+# pour y accéder avec d’autres outils tels que dbeaver.
+#
 # VARIABLES D'ENVIRONNEMENT
 #
 #   POSTGRES_EXPOSED_PORT [défaut: 5432] — port publié sur l'hôte pour accéder à PostgreSQL.
 #       Il est généralement nécessaire de définir une valeur distinctes afin d’éviter les conflits avec
 #       une éventuelle base de données déjà présente sur l’hôte.
+#   POSTGRES_EXPOSED_ADDRESS [défaut: 127.0.0.1] — adresse d’écoûte sur l’hôte pour accéder à PostgreSQL.
+#       Pour accéder à la base de données depuis un hôte distant, il est recommandé d’utiliser une
+#       redirection de port SSH : ssh -L5432:localhost:5432 <serveur geonature>
+#       Vous pouvez également changer POSTGRES_EXPOSED_ADDRESS pour 0.0.0.0 mais assurez vous dans ce cas
+#       que votre machine geonature n’est pas accessible depuis l’internet (réseaux isolé ou règles iptables) !
 ###
 
 services:
   postgres:
     ports:
-      - ${POSTGRES_EXPOSED_PORT:-5432}:5432
+      - ${POSTGRES_EXPOSED_ADDRESS:-127.0.0.1}:${POSTGRES_EXPOSED_PORT:-5432}:5432
