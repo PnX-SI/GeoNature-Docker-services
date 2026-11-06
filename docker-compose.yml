@@ -83,7 +83,7 @@ x-geonature-depends-on-defaults: &geonature-depends-on-defaults
     condition: service_healthy
 
 x-env: &env
-  TZ: "${TIMEZONE:-Europe/Paris}" # show logs timestamp in local TZ!
+  TZ: "${TIMEZONE:-Europe/Paris}"  # show logs timestamp in local TZ!
 
 x-geonature-backend-env: &geonature-backend-env
   <<: *env
@@ -97,6 +97,7 @@ x-geonature-backend-env: &geonature-backend-env
   GEONATURE_MEDIA_FOLDER: ${GEONATURE_MEDIA_FOLDER:-/dist/media}
   GEONATURE_CUSTOM_STATIC_FOLDER: ${GEONATURE_CUSTOM_STATIC_FOLDER:-/dist/custom}
   DATA_DIRECTORY: ${GEONATURE_CACHE_FOLDER:-/dist/cache}
+
 
 x-geonature-backend-defaults: &geonature-backend-defaults
   <<: *defaults
@@ -133,7 +134,7 @@ services:
     image: ${USERSHUB_IMAGE:-ghcr.io/pnx-si/usershub:latest}
     depends_on:
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     profiles:
       - usershub
     volumes:
@@ -155,9 +156,12 @@ services:
 
   geonature-install-db:
     <<: *geonature-backend-defaults
-    # l'entrypoint installe/migre la base, puis le conteneur s'arrête
-    command: ["true"]
-    restart: "no"
+    command: [ "sleep", "infinity"]
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 1s
+      timeout: 1s
+      retries: 99999
     environment:
       <<: *geonature-backend-env
       GEONATURE_SKIP_POPULATE_DB: false
@@ -176,16 +180,12 @@ services:
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     command:
       [
-        "celery",
-        "-A",
-        "geonature.celery_app:app",
-        "worker",
-        "--beat",
+        "celery", "-A", "geonature.celery_app:app", "worker", "--beat",
         "--loglevel=${GEONATURE_WORKER_LOG_LEVEL:-INFO}",
-        "--schedule-filename=${GEONATURE_CACHE_FOLDER:-/dist/cache}/celerybeat-schedule.db",
+        "--schedule-filename=${GEONATURE_CACHE_FOLDER:-/dist/cache}/celerybeat-schedule.db"
       ]
 
   geonature-backend:
@@ -193,7 +193,7 @@ services:
     depends_on:
       <<: *geonature-depends-on-defaults
       geonature-install-db:
-        condition: service_completed_successfully
+        condition: service_healthy
     ports:
       - ${GEONATURE_BACKEND_PORT?}:8000
 
@@ -206,9 +206,7 @@ services:
       <<: *env
       NGINX_PORT: 4200
       GEONATURE_FRONTEND_PREFIX: ${GEONATURE_FRONTEND_PREFIX:-/}
-      # guillemets littéraux requis par le script 50-set-api-endpoint.sh des images antérieures au correctif
-      # (à retirer avec une image dont le script ajoute lui-même les guillemets)
-      API_ENDPOINT: '"${GEONATURE_API_ENDPOINT?}"'
+      API_ENDPOINT: ${GEONATURE_API_ENDPOINT?}
     env_file:
       - path: geonature-frontend.env
         required: false
