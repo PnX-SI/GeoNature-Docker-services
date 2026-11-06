@@ -18,7 +18,14 @@
         subMaxLevel: 2,
         auto2top: true,
         // Le README.md racine est l'unique source ; docsify ne sert pas au-dessus de docs/
-        homepage: 'https://raw.githubusercontent.com/PnX-SI/GeoNature-Docker-services/main/README.md',
+        // Local (localhost) : on lit le README de la copie de travail, exposé dans docs/ par `make docs`
+        // (lien symbolique docs/README.md -> ../README.md, ignoré par git), ou ../README.md si le serveur
+        // est lancé à la racine du dépôt. Sinon (GitHub Pages...), on lit le README publié sur GitHub.
+        homepage: ['localhost', '127.0.0.1'].includes(location.hostname)
+          ? location.pathname.startsWith('/docs/')
+            ? '../README.md'
+            : 'README.md'
+          : 'https://raw.githubusercontent.com/PnX-SI/GeoNature-Docker-services/main/README.md',
         plugins: [
           function (hook) {
             // Le README racine référence docs/xxx.md et /docs/xxx.md ; docsify sert depuis docs/
