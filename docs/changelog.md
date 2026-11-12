@@ -1,6 +1,33 @@
 # CHANGELOG
 
+
+## 3.0.0
+
+
+### ⚙️ Compatibilités
+
+Cette version de GDS nécessite d'utiliser des images de GeoNature d'une version supérieure ou égale à 2.18.0
+
+### 🚀 Nouveautés
+
+- Séparation de la création des images Docker et des docker composes. Ce repository ne crée plus les images, elles le sont maintenant dans le repository [GeoNature-images](https://github.com/PnX-SI/GeoNature-images) (par @bouttier)
+- Les numéros de versions de GDS sont maintenant indépendants de la version de GeoNature
+- Mise à jour de la documentation de GDS (#139 par @jacquesfize). Elle est maintenant directement disponible [sur GitHub Pages](https://pnx-si.github.io/GeoNature-Docker-services/#/)
+- Usage des profils abandonné pour db et install_db (#134 par @bouttier)
+- Ajout dans la documentation d'une méthode permettant d'appeler les commandes geonature et pytest sans utiliser `docker compose exec` grâce à direnv (#134 par @bouttier)
+- Ajout de nouveaux exemples d'override dans override gallery (exposition d'un port postgres, migration de version postgres, utilisation des secrets, dashboard traefik) (#134 par @bouttier)
+- Le service `geonature-install-db` continue en fond ce qui évite d'avoir à le relancer quand on redémarre un autre service. Il est toujours possible d'utiliser `GEONATURE_SKIP_POPULATE_DB` en passant par un override (voir override gallery) (#134 par @bouttier)
+- Suppression des commandes `make dev` et `make prod` au profit de `docker compose up`
+
+### 🖥️ Développement
+
+- La stack de développement est maintenant plus proche de celle de production (#134 par @bouttier)
+- Abandon du fichier `generate_env.py`
+
 ## 2.17.4
+
+**🏷️ Versions**
+
 
 ### 🚀 Nouveautés
 
