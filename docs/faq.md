@@ -1,37 +1,19 @@
 # FAQ
 
-## Comment lancer des commandes `geonature` ?
-
-Pour exécuter une commande `geonature`, lancer la commande :
-
-```shell
-docker compose exec -it geonature-backend geonature nom_de_la_commande
-```
-
-Exemples :
-
-```shell
-docker compose exec -it geonature-backend geonature --help
-docker compose exec -it geonature-backend geonature dashboard refresh-vm
-```
-
 ## Comment ouvrir à l'accès à la base de données ?
 
-Créer un fichier `docker-compose.override.yml` contenant :
+Activer le fichier d’override `expose-postgres` :
 
-```yaml
-services:
-  postgres:
-    ports:
-      - 5432:5432
+```env
+COMPOSE_FILE=${COMPOSE_FILE}:override_gallery/docker-compose.expose-postgres.yml
+POSTGRES_EXPOSED_PORT=5439
 ```
 
 puis relancer `docker compose up -d`
 
-Il se peut que vous ayez déjà une base de données localement.  
-Dans ce cas, vous pouvez utiliser un autre port : `-5433:5432`.  
-La base de données sera alors accessible localement sur le port 5433.  
-Attention, le deuxième port est celui d’écoute dans le conteneur et doit rester à 5432.
+La base de données sera alors accessible localement sur le port 5439.
+Si vous omettez `POSTGRES_EXPOSED_PORT`, la base de données sera exposé sur le port par défaut de PostgreSQL, le port 5432.
+Se méfier de ne pas avoir déjà une base de données localement en écoute sur ce port.
 
 ## Comment déployer GeoNature et UsersHub sur des domaines séparés ?
 
@@ -53,7 +35,7 @@ GEONATURE_FRONTEND_PREFIX="/"
 
 Puis relancer `docker compose up -d`
 
-Vous pourrez alors accéder, par exemple, à GeoNature à l’adresse https://geonature.mon-domaine.org et UsersHub à l'adresse https://usershub.mon-domaine.org.
+Vous pourrez alors accéder, par exemple, à GeoNature à l’adresse <https://geonature.mon-domaine.org> et UsersHub à l'adresse <https://usershub.mon-domaine.org>.
 
 ## Comment importer le MNT / DEM ?
 
@@ -98,81 +80,3 @@ ou, pour plus d’informations :
 ```shell
 docker image inspect ghcr.io/pnx-si/geonature-backend-extra --format '{{json .Config.Labels}}'
 ```
-
-## Installation d'un module externe
-
-Cette section décrit la procédure d'ajout d'un module externe sur une instance GeoNature dockerisée. Cette procédure nécessite de créer une image Docker dédiée.
-
-### Étape 1 : Ajouter le code source du module
-
-Pour commencer, il est nécessaire d'intégrer le code source du module dans le dossier `sources`. Si vous avez cloné le dépôt `GeonatureDockerServices`, exécutez simplement la commande suivante :
-
-```shell
-git submodule add <repo_module> --path sources/nom_module
-```
-
-### Étape 2 : Ajouter le module dans l'image Docker
-
-Une fois que le code source du module est dans le dossier `sources`, vous devez l'ajouter à la construction des images Docker pour le backend et le frontend de GeoNature (`geonature-backend-extra` et `geonature-frontend-extra`).
-
-1. Ouvrez le fichier `Dockerfile-geonature-backend` et ajoutez les lignes suivantes **avant** la ligne `FROM ${GEONATURE_BACKEND_IMAGE}-wheels AS prod-extra` :
-
-   ```docker
-   FROM build AS build-nom-module
-   WORKDIR /build/
-   COPY ./sources/nom_module .
-   RUN python setup.py bdist_wheel
-   ```
-
-2. Toujours dans le même fichier, ajoutez la ligne suivante **avant** `RUN --mount=type=cache,target=/root/.cache pip install *.whl sentry_sdk[flask]` :
-
-   ```docker
-   COPY --from=build-nom-module /build/dist/*.whl .
-   ```
-
-3. Si votre module possède un frontend, ouvrez le fichier `Dockerfile-geonature-frontend` et ajouter les lignes suivantes **avant**`FROM source-extra AS build-extra` :
-
-```docker
-WORKDIR /build/external_modules/module_code
-COPY ./sources/nom_module/frontend/ .
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev --omit=peer
-```
-
-### Étape 3 : Ajouter le fichier de configuration (si applicable)
-
-Si votre module GeoNature nécessite un fichier de configuration spécifique, déposez-le dans le dossier `data/geonature/config`.
-
-## Comment rebuilder localement les images Docker ?
-
-- Initialiser et cloner les sous-modules git :
-
-Avec make : 
-  ```bash
-  make submodule_init
-  ```
-Sans make:
-
-  ```shell
-  git submodule init
-  git submodule update
-  ```
-
-- Faire de même pour les sous-modules de GeoNature et UsersHub, exemple pour GeoNature :
-  ```shell
-  cd sources/GeoNature
-  git submodule init
-  git submodule update
-  cd ../..
-  ```
-- Apporter vos éventuelles modifications au code source.
-- Il est conseillé de renommer les images dans le fichier `.env` afin de ne pas rentrer en conflit avec les images officielles, par exemple en leur rajoutant un suffix `-local` :
-  ```shell
-  USERSHUB_IMAGE="ghcr.io/pnx-si/usershub-local:latest"
-  GEONATURE_BACKEND_IMAGE="ghcr.io/pnx-si/geonature-backend-local:latest"
-  GEONATURE_BACKEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-backend-extra-local:latest"
-  GEONATURE_FRONTEND_IMAGE="ghcr.io/pnx-si/geonature-frontend-local:latest"
-  GEONATURE_FRONTEND_EXTRA_IMAGE="ghcr.io/pnx-si/geonature-frontend-extra-local:latest"
-  ```
-- Lancer le script `build/build.sh` depuis la racine du dépôt.
-- Relancer `docker compose up -d` afin de recréer les conteneurs avec vos propres images Docker.
