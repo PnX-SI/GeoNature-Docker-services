@@ -39,9 +39,8 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
    - `UID` et `GID` : Indique l'utilisateur utilisé par les conteneurs. Utiliser la commande `id -u` pour récupérer la valeur pour `UID` et `id -g` pour récupérer la valeur pour `GID`
    - `COMPOSE_FILE` : Indique les fichiers compose que vous souhaitez utiliser.
     - `docker-compose.postgres.yml` : À désactiver pour utiliser une base de données externe (voir section dédiée).
-    - `docker-compose.traefik.yml` : À activer pour utiliser traefik et servir GeoNature et UsersHub derrière un même port. Dans ce cas, vous devez renseigner également `TRAEFIK_HTTP_PORT` (laisser vide pour utiliser le port 80, mais la variable doit être impérativement définie), `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX`.
     - `docker-compose.traefik-https.yml` : À activer pour que traefik écoute également en HTTPS. Dans ce cas vous devez également renseigner `TRAEFIK_HTTPS_PORT` (laisser vide pour utiliser le port  443, mais la variable doit impérativement être définie). Vous devez également définir `ACME_EMAIL` pour que soit générer des certificats SSL valides par [Let's Encrypt](https://letsencrypt.org/fr/).
-    - `docker-compose.dev.yml`: À activer pour le développement (voir section dédiée).
+    - `docker-compose.dev.yml`: À activer pour le développement ([voir section dédiée](./dev.md)).
 
 - Pour éviter les mise à jour inattendues, il est recommandé de décommenter les variables `GEONATURE_BACKEND_IMAGE`, `GEONATURE_FRONTEND_IMAGE` et `USERSHUB_IMAGE` et de remplacer `latest` par le numéro de version à utiliser.
 
@@ -51,13 +50,13 @@ Le projet ne doit pas inclure de fonctionnalités trop spécifiques à un contex
    - `config/geonature/geonature_config.toml`
    - `config/usershub/config.py`
 
-2. **Lancer la création des conteneurs Docker** : `docker compose up -d`
-
+2. **Lancer la création des conteneurs Docker** : `docker compose up -d`. La première execution prends un temps bien plus long que les suivantes 
+car necessitant l'installtion de referentiels.
 ## Exécuter la commande `geonature`
 
 Utilisez `docker compose exec -it geonature-backend /entrypoint.sh geonature --help`
 
-Pour faciliter l’accès à la commande `geonature`, vous pouvez utiliser [`direnv`](https://direnv.net/). Une fois installé, lancez `direnv allow` dans le dossier GeoNature-Docker-services. Le dossier `bin` sera alors automatiquement ajouter à votre `PATH` lorsque vous rentrez dans le dossier, et vous pourrez alors exécuter la commande `geonature` directement.
+Pour faciliter l’accès à la commande `geonature`, vous pouvez utiliser [`direnv`](https://direnv.net/). Une fois installé et configuré (bien suivre [la documention](https://direnv.net/), lancez `direnv allow` dans le dossier GeoNature-Docker-services. Le dossier `bin` sera alors automatiquement ajouter à votre `PATH` lorsque vous rentrez dans le dossier, et vous pourrez alors exécuter la commande `geonature` directement.
 
 ## Les services
 
