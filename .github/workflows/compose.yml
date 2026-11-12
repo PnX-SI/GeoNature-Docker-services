@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - fix/ci_traefik
   pull_request:
     branches:
       - main
@@ -13,11 +14,18 @@ on:
 jobs:
   test-docker-compose:
     runs-on: ubuntu-latest
-    name: "geonature=${{ matrix.version }} traefik=${{ matrix.traefik }}"
+    name: "geonature=${{ matrix.version }} without_uh=${{ matrix.without_uh }} https=${{ matrix.https }}"
     strategy:
       matrix:
         version: ["2.17.5", "develop"]
-        traefik: [false, true]
+        without_uh: [false, true]
+        https: [false, true]
+        # We do only basic test (http with uh) for this version
+        exclude:
+          - version: "2.17.5"
+            without_uh: true
+          - version: "2.17.5"
+            https: true
         include: # /!\ image_owner must be lowercase
           - version: "2.17.5"
             image_owner: bouttier
@@ -25,14 +33,11 @@ jobs:
           - version: "develop"
             image_owner: "pnx-si"
             image_tag: "develop"
-          - traefik: false
-            expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker"
-            backend_port: 8000
-            frontend_port: 4200
-          - traefik: true
+          - without_uh: false
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
-            backend_port: 8080
-            frontend_port: 8080
+          - without_uh: true
+            expected_services: "geonature-backend geonature-frontend postgres redis geonature-worker traefik"
+
 
     steps:
       - name: Checkout repository
@@ -51,15 +56,6 @@ jobs:
           sed -i "s|^DOCKER_GID=.*|DOCKER_GID=$(id -g)|" .env
           sed  -i 's/.*\(GEONATURE_FRONTEND_PREFIX=.*\)/GEONATURE_FRONTEND_PREFIX=\/geonature/' .env
           sed  -i 's/.*\(GEONATURE_BACKEND_PREFIX=.*\)/GEONATURE_BACKEND_PREFIX=\/geonature\/api/' .env
-          if [ "${{ matrix.traefik }}" = true ]; then
-            echo Enable traefik
-            sed -i 's/.*\(COMPOSE_FILE=.*:docker-compose.traefik.yml.*\)/\1/' .env
-            sed -i 's/.*\(TRAEFIK_HTTP_PORT=.*\)/TRAEFIK_HTTP_PORT=8080/' .env
-          else
-            echo Disable traefik
-            sed -i 's/.*\(COMPOSE_FILE=.*:docker-compose.traefik.yml.*\)/# \1/' .env
-            sed -i 's/.*\(TRAEFIK_HTTP_PORT=.*\)/# \1/' .env
-          fi
           sed -i "s|^GEONATURE_BACKEND_IMAGE=.*|# &|" .env
           sed -i "s|^GEONATURE_FRONTEND_IMAGE=.*|# &|" .env
           sed -i "s|^GEONATURE_BACKEND_DEV_IMAGE=.*|# &|" .env
@@ -70,6 +66,16 @@ jobs:
             echo "GEONATURE_BACKEND_DEV_IMAGE=\"${GEONATURE_BACKEND_IMAGE}\""
             echo "GEONATURE_FRONTEND_DEV_IMAGE=\"${GEONATURE_FRONTEND_IMAGE}\""
           } >> .env
+          
+          if [ "${{ matrix.without_uh }}" = "true" ]; then
+            echo "Removing usershub profiles..."
+            sed -i 's/^COMPOSE_PROFILES=\(.*\)usershub\(.*\)$/COMPOSE_PROFILES=\1\2/' .env
+          fi
+          if [ "${{ matrix.https }}" = "true" ]; then
+            echo "Enabling Traefik HTTPS..."
+            echo 'COMPOSE_FILE=${COMPOSE_FILE}:docker-compose.traefik-https.yml' >> .env
+            sed -i 's|^#[[:space:]]*\(TRAEFIK_HTTPS_PORT=.*\)|\1|' .env
+          fi
           echo "----- .env -----"
           cat .env
           echo "----- docker compose config -----"
@@ -134,14 +140,21 @@ jobs:
       - name: Run integration tests
         env:
           CHECK_CURL: /usr/lib/nagios/plugins/check_curl --onredirect=curl
-          BACKEND_PORT: ${{ matrix.backend_port }}
           BACKEND_URI: /geonature/api/healthz
-          FRONTEND_PORT: ${{ matrix.frontend_port }}
           FRONTEND_URI: /geonature
         run: |
           MAX_ATTEMPTS=5
           SLEEP_TIME=10
-
+          
+          if [ "${{ matrix.https }}" = "true" ]; then
+            BACKEND_PORT=443
+            FRONTEND_PORT=443
+            CHECK_CURL="$CHECK_CURL --ssl"
+          else
+            BACKEND_PORT=80
+            FRONTEND_PORT=80
+          fi
+          
           check_backend() {
             echo "--- backend check (localhost:${BACKEND_PORT}${BACKEND_URI}, expect 'OK') ---"
              $CHECK_CURL \
@@ -230,7 +243,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: compose-logs-${{ matrix.version }}-traefik=${{ matrix.traefik }}
+          name: compose-logs-${{ matrix.version }}-without_uh=${{ matrix.without_uh }}-https=${{ matrix.https }}
           path: logs/
           retention-days: 7
           if-no-files-found: warn
