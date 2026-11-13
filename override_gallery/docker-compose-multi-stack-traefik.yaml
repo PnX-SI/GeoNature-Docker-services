@@ -1,0 +1,49 @@
+###
+# VARIABLES D'ENVIRONNEMENT
+#
+#   TRAEFIK_ALIAS [défaut: gds1] — à renseigner différement sur chaque stack GDS
+#   GLOBAL_TRAEFIK_IP [défaut: 127.0.0.1/32] — adresse IP du traefik global, permet de transmettre l'ip de l'utilisateur
+#   à la stack GDS
+#
+# L'utilisation de ce compose est expliqué dans la catégorie reverse proxy de la documentation.
+# Il permet de rajouter le lien vers le reseau traefik global qui sert de reverse proxy et d'eviter les conflits entre
+# les traefiks de différentes stacks.
+#
+###
+
+services:
+  traefik:
+    networks:
+      default:
+      traefik_global:
+        aliases:
+          - ${TRAEFIK_ALIAS:-gds1}
+    environment:
+      TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS: "Label(`traefik.stack`, `${COMPOSE_PROJECT_NAME?}`)"
+      TRAEFIK_PROVIDERS_DOCKER_NETWORK: "${COMPOSE_PROJECT_NAME?}_default"
+      TRAEFIK_ENTRYPOINTS_WEB_FORWARDEDHEADERS_TRUSTEDIPS: "${GLOBAL_TRAEFIK_IP:-127.0.0.1/32}"
+
+  geonature-backend:
+    networks:
+      - traefik_global
+      - default
+    labels:
+      - "traefik.stack=${COMPOSE_PROJECT_NAME?}"
+      - "traefik.docker.network=${COMPOSE_PROJECT_NAME?}_default"
+  geonature-frontend:
+    networks:
+      - traefik_global
+      - default
+    labels:
+      - "traefik.stack=${COMPOSE_PROJECT_NAME?}"
+      - "traefik.docker.network=${COMPOSE_PROJECT_NAME?}_default"
+  usershub:
+    networks:
+      - traefik_global
+      - default
+    labels:
+      - "traefik.stack=${COMPOSE_PROJECT_NAME?}"
+      - "traefik.docker.network=${COMPOSE_PROJECT_NAME?}_default"
+networks:
+  traefik_global:
+    external: true
