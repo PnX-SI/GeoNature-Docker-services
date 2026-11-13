@@ -5,6 +5,7 @@
   - [Scénarios d'installation](scenarios.md)
   - [Surcharger son installation](override.md)
   - [Mettre à jour GeoNature et ses modules](update.md)
+  - [Configurer un reverse proxy externe](proxy.md)
 
 - Configuration
 
