@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - chore/reduce_actions_number
+      - feat/add_test_compose_dev
   pull_request:
     branches:
       - main
@@ -241,6 +241,138 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: compose-logs-${{ matrix.version }}-without_uh_with_https=${{ matrix.without_uh_with_https }}
+          path: logs/
+          retention-days: 7
+          if-no-files-found: warn
+          include-hidden-files: true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+# ... existing code ...
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  test-docker-compose-dev:
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    name: "dev compose (docker-compose.dev.yml)"
+    timeout-minutes: 90
+    env:
+      # Noms produits par `make -C GeoNature-images docker-dev` (DEV_TAG=dev par défaut)
+      GEONATURE_BACKEND_DEV_IMAGE: geonature-backend-extra:dev
+      GEONATURE_FRONTEND_DEV_IMAGE: geonature-frontend-extra:dev
+      EXPECTED_SERVICES: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
+
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install -y curl make jq git-lfs openssl monitoring-plugins-standard
+
+      - name: Build dev images
+        run: |
+          make -C GeoNature-images docker-list-images
+          make -C GeoNature-images docker-dev
+          docker image ls
+
+      - name: Configure compose
+        run: |
+          cp .env.sample .env
+          sed -i "s|^DOCKER_UID=.*|DOCKER_UID=$(id -u)|" .env
+          sed -i "s|^DOCKER_GID=.*|DOCKER_GID=$(id -g)|" .env
+          sed  -i 's/.*\(GEONATURE_FRONTEND_PREFIX=.*\)/GEONATURE_FRONTEND_PREFIX=\/geonature/' .env
+          sed  -i 's/.*\(GEONATURE_BACKEND_PREFIX=.*\)/GEONATURE_BACKEND_PREFIX=\/geonature\/api/' .env
+          sed -i "s|^GEONATURE_BACKEND_DEV_IMAGE=.*|# &|" .env
+          sed -i "s|^GEONATURE_FRONTEND_DEV_IMAGE=.*|# &|" .env
+          {
+            echo "GEONATURE_BACKEND_DEV_IMAGE=\"${GEONATURE_BACKEND_DEV_IMAGE}\""
+            echo "GEONATURE_FRONTEND_DEV_IMAGE=\"${GEONATURE_FRONTEND_DEV_IMAGE}\""
+            echo 'COMPOSE_FILE=${COMPOSE_FILE}:docker-compose.dev.yml'
+          } >> .env
+          echo "----- .env -----"
+          cat .env
+          echo "----- docker compose config -----"
+          docker compose config
+          # Vérifie que les images de dev sont bien utilisées
+          docker compose config --images | grep -q "${GEONATURE_BACKEND_DEV_IMAGE}"
+          docker compose config --images | grep -q "${GEONATURE_FRONTEND_DEV_IMAGE}"
+
+      - name: Start stack
+        run: |
+          ./init-config.sh
+          docker compose up -d --pull never
+
+      - name: Wait for services to be running
+        run: |
+          MAX_RETRIES=10
+          RETRY_INTERVAL=10
+          for service in $EXPECTED_SERVICES; do
+            ok=0
+            for i in $(seq 1 $MAX_RETRIES); do
+              if docker compose ps $service | grep -q "Up"; then
+                echo "✅ $service is running"; ok=1; break
+              fi
+              echo "Waiting for $service (attempt $i/$MAX_RETRIES)..."
+              sleep $RETRY_INTERVAL
+            done
+            if [ "$ok" -eq 0 ]; then
+              echo "❌ $service failed to start"
+              docker compose logs $service
+              exit 1
+            fi
+          done
+
+      - name: Run integration tests
+        env:
+          CHECK_CURL: /usr/lib/nagios/plugins/check_curl --onredirect=curl --timeout=30
+        run: |
+          # Le frontend de dev compile avec `ng serve` : on laisse jusqu'à ~20 min
+          MAX_ATTEMPTS=80
+          SLEEP_TIME=15
+          backend_ok=0
+          frontend_ok=0
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "===== Attempt $i/$MAX_ATTEMPTS ====="
+            if [ "$backend_ok" -eq 0 ] && $CHECK_CURL --hostname localhost --port 80 --url /geonature/api/healthz --string OK; then
+              echo "✅ backend is up"; backend_ok=1
+            fi
+            if [ "$frontend_ok" -eq 0 ] && $CHECK_CURL --hostname localhost --port 80 --url /geonature/ --string GeoNature; then
+              echo "✅ frontend is up"; frontend_ok=1
+            fi
+            if [ "$backend_ok" -eq 1 ] && [ "$frontend_ok" -eq 1 ]; then
+              echo "✅ GeoNature dev stack is ready!"
+              exit 0
+            fi
+            sleep $SLEEP_TIME
+          done
+          [ "$backend_ok" -eq 0 ] && echo "🚨 BACKEND failed"
+          [ "$frontend_ok" -eq 0 ] && echo "🚨 FRONTEND failed"
+          exit 1
+
+      - name: Collect diagnostics
+        if: always()
+        run: |
+          mkdir -p logs
+          docker compose ps -a > logs/compose-ps.txt 2>&1 || true
+          docker compose config > logs/compose-config.yml 2>&1 || true
+          docker compose logs --no-color --timestamps --tail=all > logs/compose-logs.txt 2>&1 || true
+          for file in .env geonature-backend.env usershub.env geonature-frontend.env; do
+            [ -f "$file" ] && cp "$file" "logs/$file" || true
+          done
+          docker compose ps -a
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs-dev
           path: logs/
           retention-days: 7
           if-no-files-found: warn
