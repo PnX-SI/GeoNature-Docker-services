@@ -15,8 +15,6 @@ Pour la suite nous allons partir de la supposition que vous avez trois applicati
 Si vous avez plusieurs autres applications, ou une seule instance de GeoNature, vous pouvez utiliser la même logique et
 l'adapter à votre cas.
 
-Sur chaque stack GeoNature:
-
 - Utiliser Traefik en HTTP sur un port custom (on prendra pour la suite gds1 sur 8080 et gds2 sur 8081) en modifiant
   dans chaque stack la variable `TRAEFIK_HTTP_PORT`
 - `COMPOSE_FILE` ne doit pas contenir `docker-compose.traefik-https.yml`
@@ -25,7 +23,11 @@ Sur chaque stack GeoNature:
   sauf si port exotique différent de 80 en http ou 443 en https)
 - Assurez vous que `GEONATURE_BACKEND_PREFIX`, `GEONATURE_FRONTEND_PREFIX` et `USERSHUB_PREFIX` vous convienne
 - Modfier votre host : `BASE_HOST="gds1.example.org"`
-- Si vous avez plusieurs stacks GeoNature, faire les mêmes modifications sur la deuxième stack
+
+Si vous avez plusieurs stacks GeoNature:
+- Faire les mêmes modifications sur toutes les stacks
+- S'assurer que le nom du dossier où se trouve chaque stack est différent ou que `COMPOSE_PROJECT_NAME` est bien 
+  différent pour chaque stack.
 
 Pour la suite, nous rentrons dans le detail de quelques proxies connus. La version proposé est en http mais facilement
 transposable pour du https
@@ -53,8 +55,8 @@ server {
     location / { proxy_pass http://gds2; }
 }
 ```
-Vous pourrez ensuite accéder à vos instances de GeoNature sur `gds1.example.org` et `gds2.example.org`.
 
+Vous pourrez ensuite accéder à vos instances de GeoNature sur `gds1.example.org` et `gds2.example.org`.
 
 ## Apache
 
@@ -78,3 +80,68 @@ Dans votre fichier de configuration ajouter les lignes suivantes (à adapter à 
 
 Vous pourrez ensuite accéder à vos instances de GeoNature sur `gds1.example.org` et `gds2.example.org`.
 
+## Traefik
+
+Ci dessous un exemple de configuration pour Traefik qui sert les traefiks des différentes stacks.
+
+```
+services:
+  traefik:
+    image: traefik:v3.6
+    restart: unless-stopped
+    command:
+      - --log.level=DEBUG
+      - --accesslog=true
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+    configs:
+      - source: traefik_dynamic
+        target: /etc/traefik/dynamic.yml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      traefik_global:
+        aliases:
+          - gds1.example.org
+          - gds2.example.org
+          - app.example.com
+
+configs:
+  traefik_dynamic:
+    content: |
+      http:
+        routers:
+          gds1:
+            rule: Host(`gds1.example.org`)
+            service: gds1
+          gds2:
+            rule: Host(`gds2.example.org`)
+            service: gds2
+          app:
+            rule: Host(`app.example.com`)
+            service: app
+        services:
+          gds1:
+            loadBalancer:
+              servers:
+                - url: http://gds1:8091/
+          gds2:
+            loadBalancer:
+              servers:
+                - url: http://gds2:8090/
+          app:
+            loadBalancer:
+              servers:
+                - url: http://app:8080/
+
+networks:
+  traefik_global:
+    name: traefik_global
+    driver: bridge
+```
+
+Il faut par ailleurs, dans chacune de vos stacks GeoNature, ajouter au .env
+`COMPOSE_FILE=${COMPOSE_FILE}:override_gallery/docker-compose-multi-stack-traefik.yaml` et ajouter `TRAEFIK_ALIAS` pour
+qu'il vaille `gds1` dans la stack `gds1` et `gds2` dans la stack `gds2`.
