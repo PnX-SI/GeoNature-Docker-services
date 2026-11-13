@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - fix/ci_traefik
+      - chore/reduce_actions_number
   pull_request:
     branches:
       - main
@@ -14,18 +14,15 @@ on:
 jobs:
   test-docker-compose:
     runs-on: ubuntu-latest
-    name: "geonature=${{ matrix.version }} without_uh=${{ matrix.without_uh }} https=${{ matrix.https }}"
+    name: "geonature=${{ matrix.version }} without_uh_with_https=${{ matrix.without_uh_with_https }}"
     strategy:
       matrix:
         version: ["2.17.5", "develop"]
-        without_uh: [false, true]
-        https: [false, true]
+        without_uh_with_https: [false, true]
         # We do only basic test (http with uh) for this version
         exclude:
           - version: "2.17.5"
-            without_uh: true
-          - version: "2.17.5"
-            https: true
+            without_uh_with_https: true
         include: # /!\ image_owner must be lowercase
           - version: "2.17.5"
             image_owner: bouttier
@@ -33,9 +30,9 @@ jobs:
           - version: "develop"
             image_owner: "pnx-si"
             image_tag: "develop"
-          - without_uh: false
+          - without_uh_with_https: false
             expected_services: "geonature-backend geonature-frontend postgres redis usershub geonature-worker traefik"
-          - without_uh: true
+          - without_uh_with_https: true
             expected_services: "geonature-backend geonature-frontend postgres redis geonature-worker traefik"
 
 
@@ -67,11 +64,11 @@ jobs:
             echo "GEONATURE_FRONTEND_DEV_IMAGE=\"${GEONATURE_FRONTEND_IMAGE}\""
           } >> .env
           
-          if [ "${{ matrix.without_uh }}" = "true" ]; then
+          if [ "${{ matrix.without_uh_with_https }}" = "true" ]; then
             echo "Removing usershub profiles..."
             sed -i 's/^COMPOSE_PROFILES=\(.*\)usershub\(.*\)$/COMPOSE_PROFILES=\1\2/' .env
           fi
-          if [ "${{ matrix.https }}" = "true" ]; then
+          if [ "${{ matrix.without_uh_with_https }}" = "true" ]; then
             echo "Enabling Traefik HTTPS..."
             echo 'COMPOSE_FILE=${COMPOSE_FILE}:docker-compose.traefik-https.yml' >> .env
             sed -i 's|^#[[:space:]]*\(TRAEFIK_HTTPS_PORT=.*\)|\1|' .env
@@ -146,7 +143,7 @@ jobs:
           MAX_ATTEMPTS=5
           SLEEP_TIME=10
           
-          if [ "${{ matrix.https }}" = "true" ]; then
+          if [ "${{ matrix.without_uh_with_https }}" = "true" ]; then
             BACKEND_PORT=443
             FRONTEND_PORT=443
             CHECK_CURL="$CHECK_CURL --ssl"
@@ -243,7 +240,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: compose-logs-${{ matrix.version }}-without_uh=${{ matrix.without_uh }}-https=${{ matrix.https }}
+          name: compose-logs-${{ matrix.version }}-without_uh_with_https=${{ matrix.without_uh_with_https }}
           path: logs/
           retention-days: 7
           if-no-files-found: warn
