@@ -28,15 +28,15 @@ Sur chaque stack GeoNature:
 - Si vous avez plusieurs stacks GeoNature, faire les mêmes modifications sur la deuxième stack
 
 Pour la suite, nous rentrons dans le detail de quelques proxies connus. La version proposé est en http mais facilement
-transposable pour du https
+transposable pour du https. Si jamais votre proxy est déployé dans un docker, vous pouvez remplacer les usages de `localhost` par `host.docker.internal`
 
 ## Nginx
 
 Dans votre fichier de configuration ajouter les lignes suivantes (à adapter à votre contexte):
 
 ```
-upstream gds1 { server host.docker.internal:8081; }
-upstream gds2 { server host.docker.internal:8080; }
+upstream gds1 { server localhost:8081; }
+upstream gds2 { server localhost:8080; }
 
 # VOS CONFIGURATIONS
 # ----
@@ -65,14 +65,14 @@ Dans votre fichier de configuration ajouter les lignes suivantes (à adapter à 
 # ----
 <VirtualHost *:80>
     ServerName gds1.example.org
-    ProxyPass        / http://host.docker.internal:8091/
-    ProxyPassReverse / http://host.docker.internal:8091/
+    ProxyPass        / http://localhost:8091/
+    ProxyPassReverse / http://localhost:8091/
 </VirtualHost>
 
 <VirtualHost *:80>
     ServerName gds2.example.org
-    ProxyPass        / http://host.docker.internal:8090/
-    ProxyPassReverse / http://host.docker.internal:8090/
+    ProxyPass        / http://localhost:8090/
+    ProxyPassReverse / http://localhost:8090/
 </VirtualHost>
 ```
 
