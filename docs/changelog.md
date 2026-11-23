@@ -7,9 +7,10 @@
 
 **⚠️ Notes de version**
 
-Attention, l'image par défaut de PostGIS a été mise à jour en version 17. Si vous ne voulez pas mettre à jour PostGIS,
-vous pouvez spécifier la version de PostGIS dans la variable `POSTGRES_IMAGE` du fichier `.env`. Pour des raisons de 
-sécurité, il est fortement recommandé de mettre à jour PostGIS dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum. Si vous mettez à jour PostgreSQL, merci de suivre la procédure proposé par la documentation officielle. 
+Attention, l'image par défaut de `postgis/postgis` a été mise à jour en version 17-3.7. **Merci de suivre la procédure proposée par la documentation officielle pour effectuer la mise à jour de la base de données PostgreSQL.**
+
+> [!NOTE]
+> Si vous ne voulez pas mettre à jour cette image, vous pouvez spécifier la version dans la variable `POSTGRES_IMAGE` du fichier `.env`. **Pour des raisons de sécurité, il est fortement recommandé de mettre à jour `postgis/postgis` dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum. [Voir CERTFR-2026-AVI-1530](https://cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1530/)** 
 
 **🏷️ Versions**
 
