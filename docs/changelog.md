@@ -2,14 +2,14 @@
 
 ## 2.17.6
 
-- N'expose plus la base de donnée sur internet par défaut (#137 par @TheoLechemia) 
-- Modification de la version par défaut de postgres
+- N'expose plus la base de données sur internet par défaut (#137 par @TheoLechemia) 
+- Modification de la version par défaut de PostgreSQL
 
 **⚠️ Notes de version**
 
-Attention, l'image par défaut de postgres a été mise à jour en version 18. Si vous ne voulez pas mettre à jour,
-vous pouvez spécifier la version de postgres dans la variable `POSTGRES_IMAGE` du fichier `.env`. Pour des raisons de 
-sécurité, il est fortement recommandé de mettre à jour dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum.
+Attention, l'image par défaut de PostgreSQL a été mise à jour en version 18. Si vous ne voulez pas mettre à jour PostgreSQL,
+vous pouvez spécifier la version de PostgreSQL dans la variable `POSTGRES_IMAGE` du fichier `.env`. Pour des raisons de 
+sécurité, il est fortement recommandé de mettre à jour PostgreSQL dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum.
 
 **🏷️ Versions**
 
