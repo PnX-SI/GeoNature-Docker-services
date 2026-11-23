@@ -7,9 +7,9 @@
 
 **⚠️ Notes de version**
 
-Attention, l'image par défaut de PostgreSQL a été mise à jour en version 18. Si vous ne voulez pas mettre à jour PostgreSQL,
-vous pouvez spécifier la version de PostgreSQL dans la variable `POSTGRES_IMAGE` du fichier `.env`. Pour des raisons de 
-sécurité, il est fortement recommandé de mettre à jour PostgreSQL dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum.
+Attention, l'image par défaut de PostGIS a été mise à jour en version 17. Si vous ne voulez pas mettre à jour PostGIS,
+vous pouvez spécifier la version de PostGIS dans la variable `POSTGRES_IMAGE` du fichier `.env`. Pour des raisons de 
+sécurité, il est fortement recommandé de mettre à jour PostGIS dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum. Si vous mettez à jour PostgreSQL, merci de suivre la procédure proposé par la documentation officielle. 
 
 **🏷️ Versions**
 
