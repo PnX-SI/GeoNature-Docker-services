@@ -25,7 +25,7 @@ services:
       <<: *backend-env
     ports:
       - 8000:8000
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
@@ -73,7 +73,7 @@ services:
 
   geonature-worker:
     <<: *restart-policy
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}
     user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
       <<: *backend-env
@@ -87,7 +87,7 @@ services:
       - gn
 
   geonature-install-db:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:latest}
     user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
@@ -121,7 +121,7 @@ services:
       PGPORT: ${POSTGRES_PORT:-5432}
     volumes:
       - ./assets/postgres/initdb:/docker-entrypoint-initdb.d/
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     ports:
       - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT_ON_HOST:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
