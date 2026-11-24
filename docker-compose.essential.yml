@@ -25,7 +25,7 @@ services:
       <<: *backend-env
     ports:
       - 8000:8000
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.4}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
@@ -50,7 +50,7 @@ services:
 
   geonature-frontend:
     <<: *restart-policy
-    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:2.17.4}
+    image: ${GEONATURE_FRONTEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-frontend-extra:2.17.6}
     ports:
       - 80:80
     environment:
@@ -73,12 +73,18 @@ services:
 
   geonature-worker:
     <<: *restart-policy
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.4}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
     user: ${DOCKER_UID}:${DOCKER_GID}
     environment:
       <<: *backend-env
     entrypoint: []
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    depends_on:
+      # geonature-install-db is only enabled with the "db" / "install-db" profiles:
+      # `required: false` makes compose ignore it when its profile is not active.
+      geonature-install-db:
+        condition: service_completed_successfully
+        required: false
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
@@ -87,7 +93,7 @@ services:
       - gn
 
   geonature-install-db:
-    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.4}
+    image: ${GEONATURE_BACKEND_EXTRA_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.6}
     user: ${DOCKER_UID}:${DOCKER_GID}
     profiles:
       - db
@@ -113,7 +119,7 @@ services:
     <<: *restart-policy
     profiles:
       - db
-    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4}
+    image: ${POSTGRES_IMAGE:-postgis/postgis:17-3.7}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

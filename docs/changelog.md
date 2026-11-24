@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 2.17.6
+
+- N'expose plus la base de données sur internet par défaut (#137 par @TheoLechemia) 
+- Modification de la version par défaut de PostgreSQL (version 15-3.4 vers 17-3.7)
+
+**⚠️ Notes de version**
+
+Attention, l'image par défaut de `postgis/postgis` a été mise à jour en version 17-3.7. **Merci de suivre la procédure proposée par la documentation officielle de PostgreSQL pour effectuer la mise à jour sa version. Celle-ci consiste à faire une sauvegarde de la base de données (dump) dans sa version actuelle puis de la restaurer dans la nouvelle version de PostgreSQL, puis de brancher votre GeoNature sur celle-ci.**
+
+> [!NOTE]
+> Si vous ne voulez pas mettre à jour l'image de PostgreSQL, vous pouvez spécifier la version dans la variable `POSTGRES_IMAGE` du fichier `.env`. **Pour des raisons de sécurité, il est fortement recommandé de mettre à jour `postgis/postgis` dans une version 15-3.7, 16-3.7, 17-3.7 ou 18-3.7 au minimum. [Voir CERTFR-2026-AVI-1530](https://cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1530/)** 
+
+**🏷️ Versions**
+
+- GeoNature 2.17.6
+- UsersHub 2.4.8
+- GeoNature-dashboard 1.6.1
+- GeoNature-export 1.8.2
+- GeoNature-monitoring 1.3.2
+
 ## 2.17.4
 
 ### 🚀 Nouveautés
