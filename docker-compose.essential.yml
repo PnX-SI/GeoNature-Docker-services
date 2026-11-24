@@ -79,6 +79,12 @@ services:
       <<: *backend-env
     entrypoint: []
     command: celery -A geonature.celery_app:app worker --beat --schedule-filename=/dist/media/celerybeat-schedule.db
+    depends_on:
+      # geonature-install-db is only enabled with the "db" / "install-db" profiles:
+      # `required: false` makes compose ignore it when its profile is not active.
+      geonature-install-db:
+        condition: service_completed_successfully
+        required: false
     volumes:
       - ${GEONATURE_CONFIG_DIR:-./config}/geonature:/dist/config
       - ${GEONATURE_DATA_DIR:-./data}/geonature/media:${GEONATURE_MEDIA_FOLDER:-/dist/media}
