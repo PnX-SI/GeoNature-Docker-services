@@ -18,7 +18,7 @@ Attention, l'image par défaut de `postgis/postgis` a été mise à jour en vers
 - UsersHub 2.4.8
 - GeoNature-dashboard 1.6.1
 - GeoNature-export 1.8.2
-- GeoNature-monitoring 1.3.1
+- GeoNature-monitoring 1.3.2
 
 ## 2.17.4
 
